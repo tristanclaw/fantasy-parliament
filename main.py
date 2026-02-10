@@ -1,4 +1,5 @@
 from fastapi import FastAPI, BackgroundTasks, HTTPException, Header, Depends, Query
+from fastapi.middleware.cors import CORSMiddleware
 from pony.orm import db_session, select
 from models import MP, init_db, db
 from scraper import run_sync
@@ -9,6 +10,19 @@ from typing import Optional
 load_dotenv()
 
 app = FastAPI(title="Canadian Politics Fantasy League API")
+
+origins = [
+    "https://fantasy-parliament.onrender.com",
+    "http://localhost:5173",
+]
+
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins=origins,
+    allow_credentials=True,
+    allow_methods=["*"],
+    allow_headers=["*"],
+)
 
 API_KEY = os.getenv("SYNC_API_KEY")
 
