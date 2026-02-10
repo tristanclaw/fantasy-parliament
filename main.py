@@ -46,6 +46,13 @@ async def startup():
         host=os.getenv('DB_HOST', 'localhost'),
         database=os.getenv('DB_NAME', 'fantasy_politics')
     )
+    
+    # Auto-migration for schema updates (ensure total_score exists)
+    try:
+        with db_session:
+            db.execute('ALTER TABLE "MP" ADD COLUMN IF NOT EXISTS "total_score" INTEGER NOT NULL DEFAULT 0')
+    except Exception as e:
+        print(f"Migration warning: {e}")
 
 @app.get("/mps")
 @db_session
@@ -58,9 +65,9 @@ def get_mps():
 def search_mps(name: Optional[str] = Query(None), party: Optional[str] = Query(None)):
     query = select(m for m in MP)
     if name:
-        query = select(m for m in query if name.lower() in m.name.lower())
+        query = query.filter(lambda m: name.lower() in m.name.lower())
     if party:
-        query = select(m for m in query if party.lower() in m.party.lower())
+        query = query.filter(lambda m: party.lower() in m.party.lower())
     
     results = query.order_by(lambda m: -m.total_score)
     return [{"name": m.name, "party": m.party, "score": m.total_score, "slug": m.slug} for m in results]
