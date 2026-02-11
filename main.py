@@ -1,15 +1,29 @@
-from fastapi import FastAPI, BackgroundTasks, HTTPException, Header, Depends, Query
+from fastapi import FastAPI, BackgroundTasks, HTTPException, Header, Depends, Query, Request
+from fastapi.responses import JSONResponse
 from fastapi.middleware.cors import CORSMiddleware
 from pony.orm import db_session, select, desc
 from models import MP, init_db, db
 from scraper import run_sync
 import os
+import traceback
 from dotenv import load_dotenv
 from typing import Optional
 
 load_dotenv()
 
 app = FastAPI(title="Canadian Politics Fantasy League API")
+
+# DEBUG: Global exception handler to expose tracebacks
+@app.exception_handler(Exception)
+async def debug_exception_handler(request: Request, exc: Exception):
+    return JSONResponse(
+        status_code=500,
+        content={
+            "message": "Internal Server Error",
+            "error": str(exc),
+            "traceback": traceback.format_exc()
+        }
+    )
 
 origins = ["*"]
 
