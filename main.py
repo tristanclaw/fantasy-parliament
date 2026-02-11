@@ -65,6 +65,7 @@ async def startup():
     try:
         with db_session:
             db.execute('ALTER TABLE "MP" ADD COLUMN IF NOT EXISTS "total_score" INTEGER NOT NULL DEFAULT 0')
+            db.execute('ALTER TABLE "MP" ADD COLUMN IF NOT EXISTS "image_url" TEXT')
     except Exception as e:
         print(f"Migration warning: {e}")
 
