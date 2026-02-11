@@ -38,18 +38,26 @@ class Bill(db.Entity):
     date_introduced = Required(date)
 
 def init_db(provider='postgres', user=None, password=None, host=None, database=None, **kwargs):
-    params = {k: v for k, v in locals().items() if k != 'kwargs' and v is not None}
-    params.update(kwargs)
-    db.bind(**params)
-    
-    # Run manual migrations before generating mapping
-    # This prevents Pony from crashing when columns are missing in existing tables
-    try:
-        from pony.orm import db_session
-        with db_session:
-            db.execute('ALTER TABLE "MP" ADD COLUMN IF NOT EXISTS "total_score" INTEGER NOT NULL DEFAULT 0')
-            db.execute('ALTER TABLE "MP" ADD COLUMN IF NOT EXISTS "image_url" TEXT')
-    except Exception as e:
-        print(f"Migration warning (can be ignored if DB is fresh): {e}")
-        
+    # Run manual migrations using psycopg2 directly before Pony binds
+    # This ensures Pony's generate_mapping doesn't crash on schema mismatch
+    if provider == 'postgres':
+        try:
+            import psycopg2
+            conn = psycopg2.connect(
+                user=user,
+                password=password,
+                host=host,
+                database=database,
+                sslmode='require'
+            )
+            conn.autocommit = True
+            with conn.cursor() as cur:
+                cur.execute('ALTER TABLE "MP" ADD COLUMN IF NOT EXISTS "total_score" INTEGER NOT NULL DEFAULT 0')
+                cur.execute('ALTER TABLE "MP" ADD COLUMN IF NOT EXISTS "image_url" TEXT')
+            conn.close()
+            print("Direct Postgres migration successful")
+        except Exception as e:
+            print(f"Direct migration warning (normal for fresh DB): {e}")
+
+    db.bind(provider=provider, user=user, password=password, host=host, database=database, **kwargs)
     db.generate_mapping(create_tables=True)
