@@ -111,11 +111,21 @@ const Welcome = ({ onComplete }) => {
                                         onClick={() => setSelectedMp(mp)}
                                         className="w-full text-left p-3 rounded-lg border border-transparent hover:border-red-200 hover:bg-red-50 transition group flex justify-between items-center"
                                     >
-                                        <div>
-                                            <div className="font-bold text-gray-800 group-hover:text-red-700">{mp.name}</div>
-                                            <div className="text-xs text-gray-500">{mp.constituency}</div>
+                                        <div className="flex items-center gap-3">
+                                            {mp.image_url && (
+                                                <img 
+                                                    src={mp.image_url} 
+                                                    alt={mp.name} 
+                                                    className="w-10 h-10 rounded-full object-cover bg-gray-100"
+                                                    onError={(e) => {e.target.style.display = 'none'}}
+                                                />
+                                            )}
+                                            <div>
+                                                <div className="font-bold text-gray-800 group-hover:text-red-700">{mp.name}</div>
+                                                <div className="text-xs text-gray-500">{mp.constituency}</div>
+                                            </div>
                                         </div>
-                                        <div className="text-xs font-medium bg-gray-100 text-gray-600 px-2 py-1 rounded group-hover:bg-red-200 group-hover:text-red-800">
+                                        <div className="text-xs font-medium bg-gray-100 text-gray-600 px-2 py-1 rounded group-hover:bg-red-200 group-hover:text-red-800 flex-shrink-0 ml-2">
                                             {mp.party}
                                         </div>
                                     </button>
@@ -135,6 +145,14 @@ const Welcome = ({ onComplete }) => {
 
                             <div className="bg-gradient-to-br from-yellow-50 to-white border-2 border-yellow-400 rounded-xl p-6 shadow-sm relative overflow-hidden">
                                 <div className="absolute top-0 right-0 bg-yellow-400 text-yellow-900 text-[10px] font-black px-2 py-1 rounded-bl">TEAM CAPTAIN</div>
+                                {selectedMp.image_url && (
+                                    <img 
+                                        src={selectedMp.image_url} 
+                                        alt={selectedMp.name} 
+                                        className="w-24 h-24 rounded-full mx-auto mb-4 object-cover border-4 border-white shadow-sm bg-gray-100"
+                                        onError={(e) => {e.target.style.display = 'none'}}
+                                    />
+                                )}
                                 <h3 className="text-2xl font-bold text-gray-900 mb-1">{selectedMp.name}</h3>
                                 <p className="text-sm font-medium text-gray-600 uppercase tracking-wide mb-3">{selectedMp.constituency}</p>
                                 <span className="inline-block bg-gray-900 text-white text-xs font-bold px-3 py-1 rounded-full">

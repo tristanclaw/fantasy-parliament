@@ -10,6 +10,37 @@ load_dotenv()
 
 BASE_URL = "https://openparliament.ca/api/v1"
 
+PARTY_MAPPING = {
+    "Conservative": "CPC",
+    "Liberal": "Lib",
+    "NDP": "NDP",
+    "Bloc Québécois": "BQ",
+    "Green Party": "GPC",
+    "Independent": "Ind"
+}
+
+def construct_image_url(name, party_name):
+    # Heuristic: Remove spaces/special chars from Last and First names
+    # Try to handle complex names simply first
+    parts = name.replace(".", "").split()
+    if len(parts) >= 2:
+        first = parts[0]
+        last = "".join(parts[1:])
+    else:
+        first = name
+        last = ""
+        
+    # Clean up for URL (OurCommons usually removes hyphens in filenames, or keeps them? 
+    # Let's try removing them to be safe, or check a real URL if possible. 
+    # Actually, standardizing on simple alphanumerics is safest guess.)
+    first = first.replace("-", "").replace("'", "")
+    last = last.replace("-", "").replace("'", "")
+    
+    party_code = PARTY_MAPPING.get(party_name, "Ind")
+    
+    # 44th Parliament
+    return f"https://www.ourcommons.ca/Content/Parliamentarians/Images/OfficialMPPhotos/44/{last}{first}_{party_code}.jpg"
+
 async def fetch_json(url):
     async with httpx.AsyncClient() as client:
         # OpenParliament API often requires a trailing slash
@@ -31,17 +62,44 @@ def cleanup_old_data():
 
 @db_session
 async def sync_mps():
-    data = await fetch_json(f"{BASE_URL}/politicians/")
+    # Fetch all politicians (limit=1000 to get all)
+    url = f"{BASE_URL}/politicians/?limit=1000"
+    data = await fetch_json(url)
+    
     if not data: return
+    
+    count = 0
     for mp_data in data['objects']:
+        # Filter for current MPs only? 
+        # The API returns all, but we only want current probably?
+        # The prompt says "current MPs".
+        # We can check if 'current_party' exists or uses 'include=current' filter if available.
+        # But looking at the JSON, 'current_party' is present for active ones.
+        
+        # Let's try to grab party and riding from the nested objects
+        party_info = mp_data.get('current_party')
+        if not party_info:
+            continue # Skip if no current party (likely not an active MP)
+            
+        party_name = party_info.get('short_name', {}).get('en')
+        
+        riding_info = mp_data.get('current_riding')
+        riding_name = riding_info.get('name', {}).get('en') if riding_info else None
+        
         slug = mp_data['url'].strip('/').split('/')[-1]
+        name = mp_data['name']
+        
         mp = MP.get(slug=slug)
         if not mp:
-            mp = MP(name=mp_data['name'], slug=slug)
-        mp.party = mp_data.get('party')
-        # Riding is often in a nested dict or needs extra fetch
-        # For now, keep it simple
-    print(f"Synced {len(data['objects'])} MPs")
+            mp = MP(name=name, slug=slug)
+        
+        mp.party = party_name
+        mp.riding = riding_name
+        mp.image_url = construct_image_url(name, party_name)
+        
+        count += 1
+        
+    print(f"Synced {count} MPs")
 
 @db_session
 async def process_mp_data(mp, yesterday_str):

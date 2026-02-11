@@ -67,16 +67,26 @@ const DraftPool = ({ onDraft }) => {
             ) : (
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4 max-h-[600px] overflow-y-auto pr-2">
                     {mps.map((mp) => (
-                        <div key={mp.id} className="border border-gray-100 p-4 rounded-lg hover:border-red-200 hover:shadow-sm transition group cursor-pointer">
-                            <h3 className="font-bold text-gray-800 group-hover:text-red-600 transition">{mp.name}</h3>
-                            <p className="text-sm text-gray-600">{mp.party}</p>
-                            <p className="text-xs text-gray-400">{mp.constituency}</p>
-                            <div className="mt-2 flex justify-end">
+                        <div key={mp.id} className="border border-gray-100 p-4 rounded-lg hover:border-red-200 hover:shadow-sm transition group cursor-pointer flex gap-4 items-center">
+                            {mp.image_url && (
+                                <img 
+                                    src={mp.image_url} 
+                                    alt={mp.name} 
+                                    className="w-16 h-16 rounded-full object-cover border-2 border-gray-100 bg-gray-50 flex-shrink-0" 
+                                    onError={(e) => {e.target.style.display = 'none'}}
+                                />
+                            )}
+                            <div className="flex-1">
+                                <h3 className="font-bold text-gray-800 group-hover:text-red-600 transition">{mp.name}</h3>
+                                <p className="text-sm text-gray-600">{mp.party}</p>
+                                <p className="text-xs text-gray-400">{mp.constituency}</p>
+                            </div>
+                            <div className="flex-shrink-0">
                                 <button 
                                     onClick={() => onDraft(mp)}
                                     className="text-xs bg-red-50 text-red-600 px-2 py-1 rounded font-semibold hover:bg-red-600 hover:text-white transition"
                                 >
-                                    + Draft to Team
+                                    + Draft
                                 </button>
                             </div>
                         </div>

@@ -8,6 +8,7 @@ class MP(db.Entity):
     slug = Required(str, unique=True)
     party = Optional(str)
     riding = Optional(str)
+    image_url = Optional(str)
     speeches = Set('Speech')
     votes = Set('VoteAttendance')
     sponsored_bills = Set('Bill', reverse='sponsor')

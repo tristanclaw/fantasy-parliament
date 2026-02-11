@@ -75,7 +75,8 @@ def mp_to_dict(mp):
         "party": mp.party,
         "constituency": mp.riding,
         "score": mp.total_score,
-        "slug": mp.slug
+        "slug": mp.slug,
+        "image_url": mp.image_url
     }
 
 @app.get("/mps")
