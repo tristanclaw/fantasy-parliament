@@ -61,14 +61,6 @@ async def startup():
         sslmode='require'
     )
     
-    # Auto-migration for schema updates (ensure total_score exists)
-    try:
-        with db_session:
-            db.execute('ALTER TABLE "MP" ADD COLUMN IF NOT EXISTS "total_score" INTEGER NOT NULL DEFAULT 0')
-            db.execute('ALTER TABLE "MP" ADD COLUMN IF NOT EXISTS "image_url" TEXT')
-    except Exception as e:
-        print(f"Migration warning: {e}")
-
 def mp_to_dict(mp):
     return {
         "id": mp.id,

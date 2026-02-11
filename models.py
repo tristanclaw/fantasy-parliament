@@ -41,4 +41,15 @@ def init_db(provider='postgres', user=None, password=None, host=None, database=N
     params = {k: v for k, v in locals().items() if k != 'kwargs' and v is not None}
     params.update(kwargs)
     db.bind(**params)
+    
+    # Run manual migrations before generating mapping
+    # This prevents Pony from crashing when columns are missing in existing tables
+    try:
+        from pony.orm import db_session
+        with db_session:
+            db.execute('ALTER TABLE "MP" ADD COLUMN IF NOT EXISTS "total_score" INTEGER NOT NULL DEFAULT 0')
+            db.execute('ALTER TABLE "MP" ADD COLUMN IF NOT EXISTS "image_url" TEXT')
+    except Exception as e:
+        print(f"Migration warning (can be ignored if DB is fresh): {e}")
+        
     db.generate_mapping(create_tables=True)
