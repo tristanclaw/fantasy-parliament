@@ -41,7 +41,8 @@ async def startup():
         user=os.getenv('DB_USER', 'postgres'),
         password=db_password,
         host=os.getenv('DB_HOST', 'localhost'),
-        database=os.getenv('DB_NAME', 'fantasy_politics')
+        database=os.getenv('DB_NAME', 'fantasy_politics'),
+        sslmode='require'
     )
     
     # Auto-migration for schema updates (ensure total_score exists)

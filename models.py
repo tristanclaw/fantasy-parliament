@@ -31,7 +31,8 @@ class Bill(db.Entity):
     passed = Required(bool, default=False)
     date_introduced = Required(date)
 
-def init_db(provider='postgres', user=None, password=None, host=None, database=None):
-    params = {k: v for k, v in locals().items() if v is not None}
+def init_db(provider='postgres', user=None, password=None, host=None, database=None, **kwargs):
+    params = {k: v for k, v in locals().items() if k != 'kwargs' and v is not None}
+    params.update(kwargs)
     db.bind(**params)
     db.generate_mapping(create_tables=True)
