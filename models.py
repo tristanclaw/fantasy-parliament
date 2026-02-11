@@ -1,5 +1,5 @@
 from pony.orm import Database, Required, Optional, Set, PrimaryKey
-from datetime import date
+from datetime import date, datetime
 
 db = Database()
 
@@ -12,6 +12,11 @@ class MP(db.Entity):
     votes = Set('VoteAttendance')
     sponsored_bills = Set('Bill', reverse='sponsor')
     total_score = Required(int, default=0)
+
+class LeaderboardEntry(db.Entity):
+    username = Required(str, unique=True)
+    score = Required(int)
+    updated_at = Required(datetime)
 
 class Speech(db.Entity):
     mp = Required(MP)

@@ -2,12 +2,14 @@ from fastapi import FastAPI, BackgroundTasks, HTTPException, Header, Depends, Qu
 from fastapi.responses import JSONResponse
 from fastapi.middleware.cors import CORSMiddleware
 from pony.orm import db_session, select, desc
-from models import MP, init_db, db
+from models import MP, LeaderboardEntry, init_db, db
 from scraper import run_sync
 import os
 import traceback
 from dotenv import load_dotenv
 from typing import Optional
+from pydantic import BaseModel
+from datetime import datetime
 
 load_dotenv()
 
@@ -79,24 +81,45 @@ def mp_to_dict(mp):
 @app.get("/mps")
 @db_session
 def get_mps():
-    mps = select(m for m in MP).order_by(lambda m: -m.total_score)
+    mps = MP.select().order_by(desc(MP.total_score))
     return [mp_to_dict(m) for m in mps]
 
 @app.get("/mps/search")
 @db_session
 def search_mps(q: Optional[str] = Query(None)):
-    query = select(m for m in MP)
+    query = MP.select()
     if q:
         query = query.filter(lambda m: q.lower() in m.name.lower() or (m.party and q.lower() in m.party.lower()) or (m.riding and q.lower() in m.riding.lower()))
     
-    results = query.order_by(lambda m: -m.total_score)
+    results = query.order_by(desc(MP.total_score))
     return [mp_to_dict(m) for m in results]
 
 @app.get("/scoreboard")
 @db_session
 def get_scoreboard():
-    mps = select(m for m in MP).order_by(lambda m: -m.total_score)[:10]
+    mps = MP.select().order_by(desc(MP.total_score))[:10]
     return [mp_to_dict(m) for m in mps]
+
+class LeaderboardSubmission(BaseModel):
+    username: str
+    score: int
+
+@app.get("/leaderboard")
+@db_session
+def get_leaderboard():
+    entries = LeaderboardEntry.select().order_by(desc(LeaderboardEntry.score))[:50]
+    return [{"username": e.username, "score": e.score, "updated_at": e.updated_at.isoformat()} for e in entries]
+
+@app.post("/leaderboard")
+@db_session
+def update_leaderboard(submission: LeaderboardSubmission):
+    entry = LeaderboardEntry.get(username=submission.username)
+    if entry:
+        entry.score = submission.score
+        entry.updated_at = datetime.now()
+    else:
+        LeaderboardEntry(username=submission.username, score=submission.score, updated_at=datetime.now())
+    return {"status": "success"}
 
 @app.post("/sync")
 async def trigger_sync(background_tasks: BackgroundTasks, api_key: str = Depends(verify_api_key)):

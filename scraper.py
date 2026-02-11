@@ -1,7 +1,7 @@
 import httpx
 import asyncio
 from datetime import datetime, date, timedelta
-from pony.orm import db_session, select
+from pony.orm import db_session, select, delete
 from models import MP, Speech, VoteAttendance, Bill, db
 import os
 from dotenv import load_dotenv
@@ -20,6 +20,14 @@ async def fetch_json(url):
             return None
         response.raise_for_status()
         return response.json()
+
+@db_session
+def cleanup_old_data():
+    cutoff_date = date.today() - timedelta(days=7)
+    print(f"Cleaning up data older than {cutoff_date}")
+    delete(s for s in Speech if s.date < cutoff_date)
+    delete(v for v in VoteAttendance if v.date < cutoff_date)
+    delete(b for b in Bill if b.date_introduced < cutoff_date)
 
 @db_session
 async def sync_mps():
@@ -112,6 +120,9 @@ async def run_sync():
         await asyncio.sleep(0.2) # Rate limiting
     
     await sync_votes(yesterday_str)
+    
+    # Run cleanup
+    cleanup_old_data()
 
 if __name__ == "__main__":
     from models import init_db
