@@ -1,6 +1,6 @@
 from fastapi import FastAPI, BackgroundTasks, HTTPException, Header, Depends, Query
 from fastapi.middleware.cors import CORSMiddleware
-from pony.orm import db_session, select
+from pony.orm import db_session, select, desc
 from models import MP, init_db, db
 from scraper import run_sync
 import os
@@ -11,10 +11,7 @@ load_dotenv()
 
 app = FastAPI(title="Canadian Politics Fantasy League API")
 
-origins = [
-    "https://fantasy-parliament.onrender.com",
-    "http://localhost:5173",
-]
+origins = ["*"]
 
 app.add_middleware(
     CORSMiddleware,
@@ -54,29 +51,37 @@ async def startup():
     except Exception as e:
         print(f"Migration warning: {e}")
 
+def mp_to_dict(mp):
+    return {
+        "id": mp.id,
+        "name": mp.name,
+        "party": mp.party,
+        "constituency": mp.riding,
+        "score": mp.total_score,
+        "slug": mp.slug
+    }
+
 @app.get("/mps")
 @db_session
 def get_mps():
     mps = select(m for m in MP).order_by(lambda m: -m.total_score)
-    return [{"name": m.name, "party": m.party, "score": m.total_score, "slug": m.slug} for m in mps]
+    return [mp_to_dict(m) for m in mps]
 
 @app.get("/mps/search")
 @db_session
-def search_mps(name: Optional[str] = Query(None), party: Optional[str] = Query(None)):
+def search_mps(q: Optional[str] = Query(None)):
     query = select(m for m in MP)
-    if name:
-        query = query.filter(lambda m: name.lower() in m.name.lower())
-    if party:
-        query = query.filter(lambda m: party.lower() in m.party.lower())
+    if q:
+        query = query.filter(lambda m: q.lower() in m.name.lower() or (m.party and q.lower() in m.party.lower()) or (m.riding and q.lower() in m.riding.lower()))
     
     results = query.order_by(lambda m: -m.total_score)
-    return [{"name": m.name, "party": m.party, "score": m.total_score, "slug": m.slug} for m in results]
+    return [mp_to_dict(m) for m in results]
 
 @app.get("/scoreboard")
 @db_session
 def get_scoreboard():
     mps = select(m for m in MP).order_by(lambda m: -m.total_score)[:10]
-    return [{"name": m.name, "party": m.party, "score": m.total_score, "slug": m.slug} for m in mps]
+    return [mp_to_dict(m) for m in mps]
 
 @app.post("/sync")
 async def trigger_sync(background_tasks: BackgroundTasks, api_key: str = Depends(verify_api_key)):

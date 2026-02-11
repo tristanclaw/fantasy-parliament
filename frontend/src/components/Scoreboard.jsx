@@ -41,7 +41,7 @@ const Scoreboard = () => {
                             </div>
                         </div>
                         <div className="text-right">
-                            <span className="text-xl font-bold text-indigo-700">{mp.points}</span>
+                            <span className="text-xl font-bold text-indigo-700">{mp.score}</span>
                             <p className="text-xs text-indigo-400 uppercase tracking-wider font-semibold">Points</p>
                         </div>
                     </div>
