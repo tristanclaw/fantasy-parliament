@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import Scoreboard from './components/Scoreboard';
 import DraftPool from './components/DraftPool';
 import MyTeam from './components/MyTeam';
+import Welcome from './components/Welcome';
 
 function App() {
   const [username, setUsername] = useState(() => localStorage.getItem('fp_username') || '');
@@ -17,6 +18,11 @@ function App() {
   useEffect(() => {
     localStorage.setItem('fp_team', JSON.stringify(team));
   }, [team]);
+
+  const handleOnboardingComplete = (name, captain) => {
+    setUsername(name);
+    setTeam({ captain, members: [] });
+  };
 
   const handleDraft = (mp) => {
     // Check duplicates
@@ -50,16 +56,15 @@ function App() {
 
   const handleSubmitScore = async (score) => {
     if (!username) {
-      const name = prompt("Please enter a username for the leaderboard:");
-      if (name) setUsername(name);
-      else return;
+      alert("Please set a username first.");
+      return;
     }
 
     try {
       const response = await fetch('https://fantasy-parliament-api.onrender.com/leaderboard', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ username: username || "Anonymous", score })
+        body: JSON.stringify({ username: username, score })
       });
       if (response.ok) {
         alert("Score submitted to leaderboard!");
@@ -71,6 +76,11 @@ function App() {
       alert("Error submitting score.");
     }
   };
+
+  // If no username, show onboarding
+  if (!username) {
+    return <Welcome onComplete={handleOnboardingComplete} />;
+  }
 
   return (
     <div className="min-h-screen bg-gray-50 font-sans text-gray-900">
@@ -89,14 +99,7 @@ function App() {
               </div>
             </div>
             <div className="flex items-center space-x-2">
-                {username ? (
-                    <span className="text-red-200 text-sm font-medium">Welcome, {username}</span>
-                ) : (
-                    <button onClick={() => {
-                        const name = prompt("Enter username:");
-                        if (name) setUsername(name);
-                    }} className="text-xs bg-red-800 px-2 py-1 rounded">Set Username</button>
-                )}
+                <span className="text-red-200 text-sm font-medium">Welcome, {username}</span>
                 <div className="bg-red-800 p-2 rounded-full h-8 w-8 flex items-center justify-center font-bold text-xs">
                     {username ? username.substring(0,2).toUpperCase() : '??'}
                 </div>
