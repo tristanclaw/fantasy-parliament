@@ -37,9 +37,22 @@ class Bill(db.Entity):
     passed = Required(bool, default=False)
     date_introduced = Required(date)
 
-def init_db(provider='postgres', user=None, password=None, host=None, database=None, **kwargs):
+def init_db(provider_or_url='postgres', **kwargs):
+    # If a URL is passed, use it directly
+    if provider_or_url.startswith('postgres://') or provider_or_url.startswith('postgresql://'):
+        print(f"init_db: Binding with URL...")
+        db.bind(provider='postgres', dsn=provider_or_url)
+        db.generate_mapping(create_tables=True)
+        return
+
+    # Fallback to keyword params
+    provider = provider_or_url
+    user = kwargs.get('user')
+    password = kwargs.get('password')
+    host = kwargs.get('host')
+    database = kwargs.get('database')
+
     # Run manual migrations using psycopg2 directly before Pony binds
-    # This ensures Pony's generate_mapping doesn't crash on schema mismatch
     if provider == 'postgres':
         try:
             import psycopg2
