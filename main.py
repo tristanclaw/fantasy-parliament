@@ -48,18 +48,27 @@ async def verify_api_key(x_api_key: str = Header(None)):
 
 @app.on_event("startup")
 async def startup():
+    print("STARTUP: Initializing...")
     db_password = os.getenv('DB_PASSWORD')
     if not db_password:
+        print("STARTUP ERROR: DB_PASSWORD missing")
         raise ValueError("DB_PASSWORD environment variable is required")
         
-    init_db(
-        provider='postgres',
-        user=os.getenv('DB_USER', 'postgres'),
-        password=db_password,
-        host=os.getenv('DB_HOST', 'localhost'),
-        database=os.getenv('DB_NAME', 'fantasy_politics'),
-        sslmode='require'
-    )
+    try:
+        print(f"STARTUP: Connecting to {os.getenv('DB_HOST')}...")
+        init_db(
+            provider='postgres',
+            user=os.getenv('DB_USER', 'postgres'),
+            password=db_password,
+            host=os.getenv('DB_HOST', 'localhost'),
+            database=os.getenv('DB_NAME', 'fantasy_politics'),
+            sslmode='require'
+        )
+        print("STARTUP: Database initialized successfully")
+    except Exception as e:
+        print(f"STARTUP CRASH: {e}")
+        traceback.print_exc()
+        raise e
     
 def mp_to_dict(mp):
     return {
