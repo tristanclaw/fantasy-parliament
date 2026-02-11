@@ -11,7 +11,7 @@ const DraftPool = () => {
         try {
             const url = query 
                 ? `https://fantasy-parliament-api.onrender.com/mps/search?q=${encodeURIComponent(query)}`
-                : `https://fantasy-parliament-api.onrender.com/mps/search`; // Assuming default empty search works or adjustment needed
+                : `https://fantasy-parliament-api.onrender.com/mps/search`; 
             const response = await fetch(url);
             if (!response.ok) {
                 throw new Error('Failed to fetch MPs');
@@ -40,7 +40,7 @@ const DraftPool = () => {
 
     return (
         <div className="bg-white rounded-xl shadow-lg p-6 border border-gray-100 h-full">
-            <h2 className="text-2xl font-bold mb-6 text-indigo-900 border-b pb-2">Draft Pool</h2>
+            <h2 className="text-2xl font-bold mb-6 text-red-700 border-b pb-2">Draft Pool</h2>
             
             <form onSubmit={handleSearchSubmit} className="mb-6">
                 <div className="relative">
@@ -49,11 +49,11 @@ const DraftPool = () => {
                         value={search}
                         onChange={handleSearchChange}
                         placeholder="Search MPs by name, party, or riding..."
-                        className="w-full px-4 py-3 rounded-lg border border-gray-200 focus:ring-2 focus:ring-indigo-500 focus:border-transparent outline-none transition"
+                        className="w-full px-4 py-3 rounded-lg border border-gray-200 focus:ring-2 focus:ring-red-500 focus:border-transparent outline-none transition"
                     />
                     <button 
                         type="submit"
-                        className="absolute right-2 top-2 bg-indigo-600 text-white px-4 py-1 rounded-md hover:bg-indigo-700 transition"
+                        className="absolute right-2 top-2 bg-red-600 text-white px-4 py-1 rounded-md hover:bg-red-700 transition"
                     >
                         Search
                     </button>
@@ -67,12 +67,12 @@ const DraftPool = () => {
             ) : (
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4 max-h-[600px] overflow-y-auto pr-2">
                     {mps.map((mp) => (
-                        <div key={mp.id} className="border border-gray-100 p-4 rounded-lg hover:border-indigo-200 hover:shadow-sm transition group cursor-pointer">
-                            <h3 className="font-bold text-gray-800 group-hover:text-indigo-600 transition">{mp.name}</h3>
+                        <div key={mp.id} className="border border-gray-100 p-4 rounded-lg hover:border-red-200 hover:shadow-sm transition group cursor-pointer">
+                            <h3 className="font-bold text-gray-800 group-hover:text-red-600 transition">{mp.name}</h3>
                             <p className="text-sm text-gray-600">{mp.party}</p>
                             <p className="text-xs text-gray-400">{mp.constituency}</p>
                             <div className="mt-2 flex justify-end">
-                                <button className="text-xs bg-indigo-50 text-indigo-600 px-2 py-1 rounded font-semibold hover:bg-indigo-600 hover:text-white transition">
+                                <button className="text-xs bg-red-50 text-red-600 px-2 py-1 rounded font-semibold hover:bg-red-600 hover:text-white transition">
                                     + Draft to Team
                                 </button>
                             </div>
