@@ -38,7 +38,7 @@ admin_router = APIRouter(prefix="/admin", tags=["admin"])
 @admin_router.post("/migrate")
 async def manual_migrate(api_key: str = Depends(verify_api_key)):
     print("ADMIN: Triggering manual migration...")
-    db_url = os.getenv('DATABASE_URL_INTERNAL') or os.getenv('DATABASE_URL')
+    db_url = os.getenv('INTERNAL_DATABASE_URL') or os.getenv('DATABASE_URL_INTERNAL') or os.getenv('DATABASE_URL')
     
     success = False
     msg = ""
@@ -90,9 +90,9 @@ app.include_router(admin_router)
 async def startup():
     print("STARTUP: Initializing...")
     
-    db_url = os.getenv('DATABASE_URL_INTERNAL') or os.getenv('DATABASE_URL')
+    db_url = os.getenv('INTERNAL_DATABASE_URL') or os.getenv('DATABASE_URL_INTERNAL') or os.getenv('DATABASE_URL')
     if db_url:
-        print(f"STARTUP: Using {'DATABASE_URL_INTERNAL' if os.getenv('DATABASE_URL_INTERNAL') else 'DATABASE_URL'}...")
+        print(f"STARTUP: Using {'INTERNAL_DATABASE_URL' if os.getenv('INTERNAL_DATABASE_URL') else 'DATABASE_URL_INTERNAL' if os.getenv('DATABASE_URL_INTERNAL') else 'DATABASE_URL'}...")
         init_db(db_url)
     else:
         db_password = os.getenv('DB_PASSWORD')
@@ -121,6 +121,27 @@ def mp_to_dict(mp):
         "slug": mp.slug,
         "image_url": mp.image_url
     }
+
+@app.get("/diag/db")
+@db_session
+def diag_db():
+    try:
+        from pony.orm import count
+        mp_count = select(count(m) for m in MP).first()
+        lb_count = select(count(l) for l in LeaderboardEntry).first()
+        return {
+            "status": "connected",
+            "mp_count": mp_count,
+            "leaderboard_count": lb_count,
+            "database": str(db.provider_name)
+        }
+    except Exception as e:
+        import traceback
+        return {
+            "status": "error",
+            "error": str(e),
+            "traceback": traceback.format_exc()
+        }
 
 @app.get("/mps")
 @db_session
