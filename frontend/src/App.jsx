@@ -13,7 +13,13 @@ function App() {
   });
 
   // Simple state-based routing for /admin
-  const is_admin = window.location.pathname === '/admin';
+  const [isAdmin, setIsAdmin] = useState(window.location.hash === '#/admin');
+
+  useEffect(() => {
+    const handleHashChange = () => setIsAdmin(window.location.hash === '#/admin');
+    window.addEventListener('hashchange', handleHashChange);
+    return () => window.removeEventListener('hashchange', handleHashChange);
+  }, []);
 
   useEffect(() => {
     localStorage.setItem('fp_username', username);
@@ -82,7 +88,7 @@ function App() {
   };
 
   // Route: Admin
-  if (is_admin) {
+  if (isAdmin) {
     return <Admin />;
   }
 
