@@ -146,8 +146,14 @@ def diag_db():
 @db_session
 def get_mps():
     print("DEBUG: Entering /mps endpoint")
-    mps = MP.select().order_by(desc(MP.total_score))
-    return [mp_to_dict(m) for m in mps]
+    try:
+        mps = MP.select().order_by(desc(MP.total_score))
+        return [mp_to_dict(m) for m in mps]
+    except Exception as e:
+        import traceback
+        print(f"ERROR in /mps: {e}")
+        traceback.print_exc()
+        raise HTTPException(status_code=500, detail=str(e))
 
 @app.get("/mps/search")
 @db_session
