@@ -48,14 +48,15 @@ def run_migrations(dsn=None, **kwargs):
     print("Starting manual migrations...")
     try:
         if dsn:
-            conn = psycopg2.connect(dsn, sslmode='require')
+            conn = psycopg2.connect(dsn, sslmode='require', connect_timeout=10)
         else:
             conn = psycopg2.connect(
                 user=kwargs.get('user'),
                 password=kwargs.get('password'),
                 host=kwargs.get('host'),
                 database=kwargs.get('database'),
-                sslmode='require'
+                sslmode='require',
+                connect_timeout=10
             )
         
         conn.autocommit = True
@@ -119,7 +120,8 @@ def init_db(provider_or_url='postgres', safe_mode=True, **kwargs):
     try:
         if dsn:
             print(f"init_db: Binding with URL...")
-            db.bind(provider='postgres', dsn=dsn)
+            # Ensure sslmode is required for Pony/psycopg2
+            db.bind(provider='postgres', dsn=dsn, sslmode='require')
         else:
             # Pass through the original provider string (e.g. 'sqlite') if not a URL
             db.bind(provider=provider, **kwargs)

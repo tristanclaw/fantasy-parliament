@@ -3,6 +3,7 @@ import Scoreboard from './components/Scoreboard';
 import DraftPool from './components/DraftPool';
 import MyTeam from './components/MyTeam';
 import Welcome from './components/Welcome';
+import Admin from './components/Admin';
 
 function App() {
   const [username, setUsername] = useState(() => localStorage.getItem('fp_username') || '');
@@ -10,6 +11,9 @@ function App() {
     const saved = localStorage.getItem('fp_team');
     return saved ? JSON.parse(saved) : { captain: null, members: [] };
   });
+
+  // Simple state-based routing for /admin
+  const is_admin = window.location.pathname === '/admin';
 
   useEffect(() => {
     localStorage.setItem('fp_username', username);
@@ -77,6 +81,11 @@ function App() {
     }
   };
 
+  // Route: Admin
+  if (is_admin) {
+    return <Admin />;
+  }
+
   // If no username, show onboarding
   if (!username) {
     return <Welcome onComplete={handleOnboardingComplete} />;
@@ -93,7 +102,7 @@ function App() {
             </div>
             <div className="hidden md:block">
               <div className="ml-10 flex items-baseline space-x-4">
-                <a href="#" className="bg-red-800 px-3 py-2 rounded-md text-sm font-medium">Dashboard</a>
+                <a href="/" className="bg-red-800 px-3 py-2 rounded-md text-sm font-medium transition">Dashboard</a>
                 <a href="#" className="text-red-100 hover:bg-red-800 hover:text-white px-3 py-2 rounded-md text-sm font-medium transition">My Team</a>
                 <a href="#" className="text-red-100 hover:bg-red-800 hover:text-white px-3 py-2 rounded-md text-sm font-medium transition">Rules</a>
               </div>
