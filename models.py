@@ -4,6 +4,7 @@ from datetime import date, datetime
 db = Database()
 
 class MP(db.Entity):
+    _table_ = 'mp'
     name = Required(str)
     slug = Required(str, unique=True)
     party = Optional(str)
@@ -15,22 +16,26 @@ class MP(db.Entity):
     total_score = Required(int, default=0)
 
 class LeaderboardEntry(db.Entity):
+    _table_ = 'leaderboardentry'
     username = Required(str, unique=True)
     score = Required(int)
     updated_at = Required(datetime)
 
 class Speech(db.Entity):
+    _table_ = 'speech'
     mp = Required(MP)
     date = Required(date)
     content_url = Required(str)
 
 class VoteAttendance(db.Entity):
+    _table_ = 'voteattendance'
     mp = Required(MP)
     vote_url = Required(str)
     attended = Required(bool)
     date = Required(date)
 
 class Bill(db.Entity):
+    _table_ = 'bill'
     number = Required(str)
     title = Required(str)
     sponsor = Required(MP)
