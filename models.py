@@ -65,25 +65,28 @@ def run_migrations(dsn=None, **kwargs):
         conn.autocommit = True
         with conn.cursor() as cur:
             # Migration 1: MP.total_score
-            try:
-                cur.execute('ALTER TABLE "MP" ADD COLUMN IF NOT EXISTS "total_score" INTEGER NOT NULL DEFAULT 0')
-                print("Applied/Checked: MP.total_score")
-            except Exception as e:
-                print(f"Migration warning (MP.total_score): {e}")
+            for table in ['MP', 'mp']:
+                try:
+                    cur.execute(f'ALTER TABLE "{table}" ADD COLUMN IF NOT EXISTS "total_score" INTEGER NOT NULL DEFAULT 0')
+                    print(f"Applied/Checked: {table}.total_score")
+                except Exception as e:
+                    print(f"Migration warning ({table}.total_score): {e}")
             
             # Migration 2: MP.image_url
-            try:
-                cur.execute('ALTER TABLE "MP" ADD COLUMN IF NOT EXISTS "image_url" TEXT')
-                print("Applied/Checked: MP.image_url")
-            except Exception as e:
-                print(f"Migration warning (MP.image_url): {e}")
+            for table in ['MP', 'mp']:
+                try:
+                    cur.execute(f'ALTER TABLE "{table}" ADD COLUMN IF NOT EXISTS "image_url" TEXT')
+                    print(f"Applied/Checked: {table}.image_url")
+                except Exception as e:
+                    print(f"Migration warning ({table}.image_url): {e}")
 
             # Migration 3: Bill.date_passed
-            try:
-                cur.execute('ALTER TABLE "Bill" ADD COLUMN IF NOT EXISTS "date_passed" DATE')
-                print("Applied/Checked: Bill.date_passed")
-            except Exception as e:
-                print(f"Migration warning (Bill.date_passed): {e}")
+            for table in ['Bill', 'bill']:
+                try:
+                    cur.execute(f'ALTER TABLE "{table}" ADD COLUMN IF NOT EXISTS "date_passed" DATE')
+                    print(f"Applied/Checked: {table}.date_passed")
+                except Exception as e:
+                    print(f"Migration warning ({table}.date_passed): {e}")
                 
         conn.close()
         print("Direct Postgres migration successful")
