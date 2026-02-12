@@ -36,6 +36,7 @@ class Bill(db.Entity):
     sponsor = Required(MP)
     passed = Required(bool, default=False)
     date_introduced = Required(date)
+    date_passed = Optional(date)
 
 def init_db(provider_or_url='postgres', **kwargs):
     # If a URL is passed, use it directly
@@ -67,6 +68,7 @@ def init_db(provider_or_url='postgres', **kwargs):
             with conn.cursor() as cur:
                 cur.execute('ALTER TABLE "MP" ADD COLUMN IF NOT EXISTS "total_score" INTEGER NOT NULL DEFAULT 0')
                 cur.execute('ALTER TABLE "MP" ADD COLUMN IF NOT EXISTS "image_url" TEXT')
+                cur.execute('ALTER TABLE "Bill" ADD COLUMN IF NOT EXISTS "date_passed" DATE')
             conn.close()
             print("Direct Postgres migration successful")
         except Exception as e:
