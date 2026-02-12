@@ -39,31 +39,32 @@ class Bill(db.Entity):
     date_passed = Optional(date)
 
 def init_db(provider_or_url='postgres', **kwargs):
-    # If a URL is passed, use it directly
-    if provider_or_url.startswith('postgres://') or provider_or_url.startswith('postgresql://'):
-        print(f"init_db: Binding with URL...")
-        db.bind(provider='postgres', dsn=provider_or_url)
-        db.generate_mapping(create_tables=True)
-        return
-
-    # Fallback to keyword params
+    dsn = None
     provider = provider_or_url
-    user = kwargs.get('user')
-    password = kwargs.get('password')
-    host = kwargs.get('host')
-    database = kwargs.get('database')
+
+    # Check if first arg is a URL
+    if provider_or_url.startswith('postgres://') or provider_or_url.startswith('postgresql://'):
+        provider = 'postgres'
+        dsn = provider_or_url
 
     # Run manual migrations using psycopg2 directly before Pony binds
+    # Only if provider is postgres
     if provider == 'postgres':
         try:
             import psycopg2
-            conn = psycopg2.connect(
-                user=user,
-                password=password,
-                host=host,
-                database=database,
-                sslmode='require'
-            )
+            if dsn:
+                # Handle Render's postgres:// vs postgresql:// for psycopg2 if needed
+                # psycopg2 usually handles postgres:// fine, but let's pass it directly.
+                conn = psycopg2.connect(dsn, sslmode='require')
+            else:
+                conn = psycopg2.connect(
+                    user=kwargs.get('user'),
+                    password=kwargs.get('password'),
+                    host=kwargs.get('host'),
+                    database=kwargs.get('database'),
+                    sslmode='require'
+                )
+            
             conn.autocommit = True
             with conn.cursor() as cur:
                 cur.execute('ALTER TABLE "MP" ADD COLUMN IF NOT EXISTS "total_score" INTEGER NOT NULL DEFAULT 0')
@@ -72,7 +73,14 @@ def init_db(provider_or_url='postgres', **kwargs):
             conn.close()
             print("Direct Postgres migration successful")
         except Exception as e:
-            print(f"Direct migration warning (normal for fresh DB): {e}")
+            print(f"Direct migration warning (normal for fresh DB or connection error): {e}")
 
-    db.bind(provider=provider, user=user, password=password, host=host, database=database, **kwargs)
+    # Bind Pony
+    if dsn:
+        print(f"init_db: Binding with URL...")
+        db.bind(provider='postgres', dsn=dsn)
+    else:
+        # Pass through the original provider string (e.g. 'sqlite') if not a URL
+        db.bind(provider=provider_or_url, **kwargs)
+
     db.generate_mapping(create_tables=True)
