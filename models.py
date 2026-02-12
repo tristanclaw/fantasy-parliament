@@ -65,11 +65,16 @@ def run_migrations(dsn=None, **kwargs):
             tables = [t[0] for t in cur.fetchall()]
             print(f"Found tables: {tables}")
 
-            # Force lowercase 'mp' check first
+            # Migration 0: Create tables if missing (Pony should have done this, but let's be sure)
+            if 'mp' not in tables and 'MP' not in tables:
+                print("CRITICAL: MP table missing from audit!")
+            
+            # Migration 1: MP.total_score
             for table in ['mp', 'MP']:
                 if table in tables:
                     try:
                         print(f"Applying MP.total_score to table: {table}")
+                        # Ensure we don't have a name conflict or type issue
                         cur.execute(f'ALTER TABLE "{table}" ADD COLUMN IF NOT EXISTS "total_score" INTEGER NOT NULL DEFAULT 0')
                         print(f"Applied/Checked: {table}.total_score")
                     except Exception as e:
@@ -79,7 +84,15 @@ def run_migrations(dsn=None, **kwargs):
                 if table in tables:
                     try:
                         print(f"Applying MP.image_url to table: {table}")
-                        cur.execute(f'ALTER TABLE "{table}" ADD COLUMN IF NOT EXISTS "image_url" TEXT')
+                        # TRY WITHOUT IF NOT EXISTS to see error
+                        try:
+                            cur.execute(f'ALTER TABLE "{table}" ADD COLUMN "image_url" TEXT')
+                        except Exception as inner:
+                            if "already exists" in str(inner):
+                                print(f"Column image_url already exists in {table}")
+                            else:
+                                raise inner
+                        
                         print(f"Applied/Checked: {table}.image_url")
                         
                         # Verify column existence immediately
@@ -89,7 +102,7 @@ def run_migrations(dsn=None, **kwargs):
                         else:
                             print(f"CRITICAL: {table}.image_url MISSING even after ALTER")
                     except Exception as e:
-                        print(f"Migration warning ({table}.image_url): {e}")
+                        print(f"Migration error ({table}.image_url): {e}")
 
             for table in ['bill', 'Bill']:
                 if table in tables:
