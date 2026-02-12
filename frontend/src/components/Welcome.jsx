@@ -90,7 +90,7 @@ const Welcome = ({ onComplete }) => {
                                     <input
                                         type="text"
                                         className="flex-1 px-4 py-3 rounded-lg border border-gray-300 focus:ring-2 focus:ring-red-500 outline-none bg-gray-50 focus:bg-white transition"
-                                        placeholder="e.g. Halifax, Trudeau..."
+                                        placeholder="e.g. Halifax, Pierre..."
                                         value={searchQuery}
                                         onChange={(e) => setSearchQuery(e.target.value)}
                                     />

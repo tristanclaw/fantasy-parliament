@@ -100,12 +100,19 @@ def calculate_all_scores():
 async def sync_mps():
     url = f"{BASE_URL}/politicians/?limit=1000"
     total_synced = 0
+    total_created = 0
     
     while url:
+        print(f"Scraper: Fetching MPs from {url}")
         data = await fetch_json(url)
-        if not data: break
+        if not data: 
+            print("Scraper: No data returned from fetch_json")
+            break
         
-        for mp_data in data['objects']:
+        objects = data.get('objects', [])
+        print(f"Scraper: Found {len(objects)} objects in page")
+        
+        for mp_data in objects:
             party_info = mp_data.get('current_party')
             if not party_info:
                 continue
@@ -121,6 +128,7 @@ async def sync_mps():
             mp = MP.get(slug=slug)
             if not mp:
                 mp = MP(name=name, slug=slug)
+                total_created += 1
             
             mp.party = party_name
             mp.riding = riding_name
@@ -135,7 +143,7 @@ async def sync_mps():
         else:
              url = None
         
-    print(f"Synced {total_synced} MPs")
+    print(f"Synced {total_synced} MPs ({total_created} new)")
 
 @db_session
 async def process_mp_data(mp, yesterday_str):

@@ -38,7 +38,7 @@ admin_router = APIRouter(prefix="/admin", tags=["admin"])
 @admin_router.post("/migrate")
 async def manual_migrate(api_key: str = Depends(verify_api_key)):
     print("ADMIN: Triggering manual migration...")
-    db_url = os.getenv('DATABASE_URL')
+    db_url = os.getenv('DATABASE_URL_INTERNAL') or os.getenv('DATABASE_URL')
     
     success = False
     msg = ""
@@ -70,8 +70,19 @@ async def manual_migrate(api_key: str = Depends(verify_api_key)):
 
 @admin_router.post("/sync")
 async def manual_sync(background_tasks: BackgroundTasks, api_key: str = Depends(verify_api_key)):
-    background_tasks.add_task(run_sync)
+    print("ADMIN: Triggering manual sync...")
+    background_tasks.add_task(run_sync_with_logging)
     return {"message": "Sync started in background via Admin"}
+
+async def run_sync_with_logging():
+    try:
+        print("BACKGROUND: Starting sync...")
+        await run_sync()
+        print("BACKGROUND: Sync finished successfully.")
+    except Exception as e:
+        import traceback
+        print(f"BACKGROUND ERROR: Sync failed: {e}")
+        traceback.print_exc()
 
 app.include_router(admin_router)
 
@@ -79,9 +90,9 @@ app.include_router(admin_router)
 async def startup():
     print("STARTUP: Initializing...")
     
-    db_url = os.getenv('DATABASE_URL')
+    db_url = os.getenv('DATABASE_URL_INTERNAL') or os.getenv('DATABASE_URL')
     if db_url:
-        print("STARTUP: Using DATABASE_URL...")
+        print(f"STARTUP: Using {'DATABASE_URL_INTERNAL' if os.getenv('DATABASE_URL_INTERNAL') else 'DATABASE_URL'}...")
         init_db(db_url)
     else:
         db_password = os.getenv('DB_PASSWORD')
