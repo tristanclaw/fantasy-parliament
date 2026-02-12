@@ -81,6 +81,13 @@ def run_migrations(dsn=None, **kwargs):
                         print(f"Applying MP.image_url to table: {table}")
                         cur.execute(f'ALTER TABLE "{table}" ADD COLUMN IF NOT EXISTS "image_url" TEXT')
                         print(f"Applied/Checked: {table}.image_url")
+                        
+                        # Verify column existence immediately
+                        cur.execute(f"SELECT column_name FROM information_schema.columns WHERE table_name = '{table}' AND column_name = 'image_url'")
+                        if cur.fetchone():
+                            print(f"VERIFIED: {table}.image_url EXISTS")
+                        else:
+                            print(f"CRITICAL: {table}.image_url MISSING even after ALTER")
                     except Exception as e:
                         print(f"Migration warning ({table}.image_url): {e}")
 
