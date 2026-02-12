@@ -1,4 +1,4 @@
-from pony.orm import Database, Required, Optional, Set, PrimaryKey
+from pony.orm import Database, Required, Optional, Set, PrimaryKey, db_session
 from datetime import date, datetime
 
 db = Database()
@@ -43,6 +43,7 @@ class Bill(db.Entity):
     date_introduced = Required(date)
     date_passed = Optional(date)
 
+@db_session
 def run_migrations(dsn=None, **kwargs):
     """
     Run manual migrations using psycopg2 directly.
@@ -52,22 +53,11 @@ def run_migrations(dsn=None, **kwargs):
     
     print("Starting manual migrations...")
     try:
-        if dsn:
-            if 'sslmode=' not in dsn:
-                separator = '&' if '?' in dsn else '?'
-                dsn += f"{separator}sslmode=require"
-            conn = psycopg2.connect(dsn, connect_timeout=10)
-        else:
-            conn = psycopg2.connect(
-                user=kwargs.get('user'),
-                password=kwargs.get('password'),
-                host=kwargs.get('host'),
-                database=kwargs.get('database'),
-                sslmode='require',
-                connect_timeout=10
-            )
-        
+        # Get raw connection from Pony
+        provider = db.provider
+        conn = provider.connect()
         conn.autocommit = True
+        
         with conn.cursor() as cur:
             # Audit tables first to debug
             print("Auditing tables in public schema...")
@@ -102,7 +92,7 @@ def run_migrations(dsn=None, **kwargs):
                     except Exception as e:
                         print(f"Migration warning ({table}.date_passed): {e}")
                 
-        conn.close()
+        # Pony handles closing or returning to pool
         print("Direct Postgres migration successful")
         return True, f"Migrations completed. Tables found: {tables}"
     except Exception as e:
@@ -121,22 +111,7 @@ def init_db(provider_or_url='postgres', safe_mode=True, **kwargs):
         if dsn.startswith('postgres://'):
             dsn = dsn.replace('postgres://', 'postgresql://', 1)
 
-    # Run manual migrations using psycopg2 directly before Pony binds
-    # Only if provider is postgres
-    if provider == 'postgres':
-        # In safe_mode, we log errors but don't crash
-        # In unsafe mode (e.g. manual trigger), we might want to propagate, 
-        # but here we just rely on run_migrations return value if we were calling it directly.
-        # Since init_db is usually startup, we default to safe behavior for migrations.
-        
-        success, msg = run_migrations(dsn, **kwargs)
-        if not success:
-            if safe_mode:
-                print(f"WARNING: {msg} - Continuing startup in safe mode.")
-            else:
-                raise Exception(msg)
-
-    # Bind Pony
+    # Bind Pony first so run_migrations can use the provider
     try:
         if dsn:
             print(f"init_db: Binding with URL (len={len(dsn)})...")
@@ -155,3 +130,12 @@ def init_db(provider_or_url='postgres', safe_mode=True, **kwargs):
         print(f"PonyORM binding failed: {e}")
         if not safe_mode:
             raise
+
+    # Run manual migrations using psycopg2 directly via Pony connection
+    if provider == 'postgres':
+        success, msg = run_migrations(dsn, **kwargs)
+        if not success:
+            if safe_mode:
+                print(f"WARNING: {msg} - Continuing startup in safe mode.")
+            else:
+                raise Exception(msg)
