@@ -125,6 +125,7 @@ def mp_to_dict(mp):
 @app.get("/mps")
 @db_session
 def get_mps():
+    print("DEBUG: Entering /mps endpoint")
     mps = MP.select().order_by(desc(MP.total_score))
     return [mp_to_dict(m) for m in mps]
 
@@ -133,7 +134,10 @@ def get_mps():
 def search_mps(q: Optional[str] = Query(None)):
     query = MP.select()
     if q:
-        query = query.filter(lambda m: q.lower() in m.name.lower() or (m.party and q.lower() in m.party.lower()) or (m.riding and q.lower() in m.riding.lower()))
+        search_term = f"%{q.lower()}%"
+        query = query.filter(lambda m: search_term in m.name.lower() or 
+                             (m.party and search_term in m.party.lower()) or 
+                             (m.riding and search_term in m.riding.lower()))
     
     results = query.order_by(desc(MP.total_score))
     return [mp_to_dict(m) for m in results]
