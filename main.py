@@ -1,11 +1,10 @@
-from fastapi import FastAPI, BackgroundTasks, HTTPException, Header, Depends, Query, Request
+from fastapi import FastAPI, BackgroundTasks, HTTPException, Header, Depends, Query, Request, APIRouter
 from fastapi.responses import JSONResponse
 from fastapi.middleware.cors import CORSMiddleware
 from pony.orm import db_session, select, desc
-from models import MP, LeaderboardEntry, init_db, db
+from models import MP, LeaderboardEntry, init_db, run_migrations, db
 from scraper import run_sync
 import os
-import traceback
 from dotenv import load_dotenv
 from typing import Optional
 from pydantic import BaseModel
@@ -14,18 +13,6 @@ from datetime import datetime
 load_dotenv()
 
 app = FastAPI(title="Canadian Politics Fantasy League API")
-
-# DEBUG: Global exception handler to expose tracebacks
-@app.exception_handler(Exception)
-async def debug_exception_handler(request: Request, exc: Exception):
-    return JSONResponse(
-        status_code=500,
-        content={
-            "message": "Internal Server Error",
-            "error": str(exc),
-            "traceback": traceback.format_exc()
-        }
-    )
 
 origins = ["*"]
 
@@ -45,6 +32,48 @@ async def verify_api_key(x_api_key: str = Header(None)):
     if x_api_key != API_KEY:
         raise HTTPException(status_code=403, detail="Invalid API Key")
     return x_api_key
+
+admin_router = APIRouter(prefix="/admin", tags=["admin"])
+
+@admin_router.post("/migrate")
+async def manual_migrate(api_key: str = Depends(verify_api_key)):
+    print("ADMIN: Triggering manual migration...")
+    db_url = os.getenv('DATABASE_URL')
+    
+    success = False
+    msg = ""
+
+    if db_url:
+        dsn = db_url
+        if dsn.startswith('postgres://'):
+            dsn = dsn.replace('postgres://', 'postgresql://', 1)
+        success, msg = run_migrations(dsn)
+    else:
+        # Construct kwargs from environment if using separate vars
+        # This matches what we do in startup
+        db_password = os.getenv('DB_PASSWORD')
+        if not db_password:
+             raise HTTPException(status_code=500, detail="DB_PASSWORD missing in environment")
+             
+        kwargs = {
+            'user': os.getenv('DB_USER', 'postgres'),
+            'password': db_password,
+            'host': os.getenv('DB_HOST', 'localhost'),
+            'database': os.getenv('DB_NAME', 'fantasy_politics'),
+        }
+        success, msg = run_migrations(None, **kwargs)
+
+    if success:
+        return {"status": "success", "message": msg}
+    else:
+        raise HTTPException(status_code=500, detail=msg)
+
+@admin_router.post("/sync")
+async def manual_sync(background_tasks: BackgroundTasks, api_key: str = Depends(verify_api_key)):
+    background_tasks.add_task(run_sync)
+    return {"message": "Sync started in background via Admin"}
+
+app.include_router(admin_router)
 
 @app.on_event("startup")
 async def startup():

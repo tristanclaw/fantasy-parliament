@@ -29,7 +29,7 @@ if not db_password:
 try:
     print("Initializing database connection...")
     init_db(
-        provider='postgres',
+        'postgres', # provider_or_url
         user=db_user,
         password=db_password,
         host=db_host,

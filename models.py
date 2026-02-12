@@ -38,7 +38,58 @@ class Bill(db.Entity):
     date_introduced = Required(date)
     date_passed = Optional(date)
 
-def init_db(provider_or_url='postgres', **kwargs):
+def run_migrations(dsn=None, **kwargs):
+    """
+    Run manual migrations using psycopg2 directly.
+    This can be called at startup (safe mode) or via API.
+    """
+    import psycopg2
+    
+    print("Starting manual migrations...")
+    try:
+        if dsn:
+            conn = psycopg2.connect(dsn, sslmode='require')
+        else:
+            conn = psycopg2.connect(
+                user=kwargs.get('user'),
+                password=kwargs.get('password'),
+                host=kwargs.get('host'),
+                database=kwargs.get('database'),
+                sslmode='require'
+            )
+        
+        conn.autocommit = True
+        with conn.cursor() as cur:
+            # Migration 1: MP.total_score
+            try:
+                cur.execute('ALTER TABLE "MP" ADD COLUMN IF NOT EXISTS "total_score" INTEGER NOT NULL DEFAULT 0')
+                print("Applied/Checked: MP.total_score")
+            except Exception as e:
+                print(f"Migration warning (MP.total_score): {e}")
+            
+            # Migration 2: MP.image_url
+            try:
+                cur.execute('ALTER TABLE "MP" ADD COLUMN IF NOT EXISTS "image_url" TEXT')
+                print("Applied/Checked: MP.image_url")
+            except Exception as e:
+                print(f"Migration warning (MP.image_url): {e}")
+
+            # Migration 3: Bill.date_passed
+            try:
+                cur.execute('ALTER TABLE "Bill" ADD COLUMN IF NOT EXISTS "date_passed" DATE')
+                print("Applied/Checked: Bill.date_passed")
+            except Exception as e:
+                print(f"Migration warning (Bill.date_passed): {e}")
+                
+        conn.close()
+        print("Direct Postgres migration successful")
+        return True, "Migrations completed successfully"
+    except Exception as e:
+        error_msg = f"Direct migration failed: {e}"
+        print(error_msg)
+        return False, error_msg
+
+def init_db(provider_or_url='postgres', safe_mode=True, **kwargs):
     dsn = None
     provider = provider_or_url
 
@@ -52,48 +103,30 @@ def init_db(provider_or_url='postgres', **kwargs):
     # Run manual migrations using psycopg2 directly before Pony binds
     # Only if provider is postgres
     if provider == 'postgres':
-        try:
-            import psycopg2
-            if dsn:
-                # Handle Render's postgres:// vs postgresql:// for psycopg2 if needed
-                # psycopg2 usually handles postgres:// fine, but let's pass it directly.
-                conn = psycopg2.connect(dsn, sslmode='require')
+        # In safe_mode, we log errors but don't crash
+        # In unsafe mode (e.g. manual trigger), we might want to propagate, 
+        # but here we just rely on run_migrations return value if we were calling it directly.
+        # Since init_db is usually startup, we default to safe behavior for migrations.
+        
+        success, msg = run_migrations(dsn, **kwargs)
+        if not success:
+            if safe_mode:
+                print(f"WARNING: {msg} - Continuing startup in safe mode.")
             else:
-                conn = psycopg2.connect(
-                    user=kwargs.get('user'),
-                    password=kwargs.get('password'),
-                    host=kwargs.get('host'),
-                    database=kwargs.get('database'),
-                    sslmode='require'
-                )
-            
-            conn.autocommit = True
-            with conn.cursor() as cur:
-                try:
-                    cur.execute('ALTER TABLE "MP" ADD COLUMN IF NOT EXISTS "total_score" INTEGER NOT NULL DEFAULT 0')
-                except Exception as e:
-                    print(f"Migration warning (MP.total_score): {e}")
-                
-                try:
-                    cur.execute('ALTER TABLE "MP" ADD COLUMN IF NOT EXISTS "image_url" TEXT')
-                except Exception as e:
-                    print(f"Migration warning (MP.image_url): {e}")
-
-                try:
-                    cur.execute('ALTER TABLE "Bill" ADD COLUMN IF NOT EXISTS "date_passed" DATE')
-                except Exception as e:
-                    print(f"Migration warning (Bill.date_passed): {e}")
-            conn.close()
-            print("Direct Postgres migration successful")
-        except Exception as e:
-            print(f"Direct migration warning (normal for fresh DB or connection error): {e}")
+                raise Exception(msg)
 
     # Bind Pony
-    if dsn:
-        print(f"init_db: Binding with URL...")
-        db.bind(provider='postgres', dsn=dsn)
-    else:
-        # Pass through the original provider string (e.g. 'sqlite') if not a URL
-        db.bind(provider=provider_or_url, **kwargs)
+    try:
+        if dsn:
+            print(f"init_db: Binding with URL...")
+            db.bind(provider='postgres', dsn=dsn)
+        else:
+            # Pass through the original provider string (e.g. 'sqlite') if not a URL
+            db.bind(provider=provider, **kwargs)
 
-    db.generate_mapping(create_tables=True)
+        db.generate_mapping(create_tables=True)
+        print("PonyORM binding and mapping successful")
+    except Exception as e:
+        print(f"PonyORM binding failed: {e}")
+        if not safe_mode:
+            raise
