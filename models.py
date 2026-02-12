@@ -46,6 +46,8 @@ def init_db(provider_or_url='postgres', **kwargs):
     if provider_or_url.startswith('postgres://') or provider_or_url.startswith('postgresql://'):
         provider = 'postgres'
         dsn = provider_or_url
+        if dsn.startswith('postgres://'):
+            dsn = dsn.replace('postgres://', 'postgresql://', 1)
 
     # Run manual migrations using psycopg2 directly before Pony binds
     # Only if provider is postgres
@@ -67,9 +69,20 @@ def init_db(provider_or_url='postgres', **kwargs):
             
             conn.autocommit = True
             with conn.cursor() as cur:
-                cur.execute('ALTER TABLE "MP" ADD COLUMN IF NOT EXISTS "total_score" INTEGER NOT NULL DEFAULT 0')
-                cur.execute('ALTER TABLE "MP" ADD COLUMN IF NOT EXISTS "image_url" TEXT')
-                cur.execute('ALTER TABLE "Bill" ADD COLUMN IF NOT EXISTS "date_passed" DATE')
+                try:
+                    cur.execute('ALTER TABLE "MP" ADD COLUMN IF NOT EXISTS "total_score" INTEGER NOT NULL DEFAULT 0')
+                except Exception as e:
+                    print(f"Migration warning (MP.total_score): {e}")
+                
+                try:
+                    cur.execute('ALTER TABLE "MP" ADD COLUMN IF NOT EXISTS "image_url" TEXT')
+                except Exception as e:
+                    print(f"Migration warning (MP.image_url): {e}")
+
+                try:
+                    cur.execute('ALTER TABLE "Bill" ADD COLUMN IF NOT EXISTS "date_passed" DATE')
+                except Exception as e:
+                    print(f"Migration warning (Bill.date_passed): {e}")
             conn.close()
             print("Direct Postgres migration successful")
         except Exception as e:

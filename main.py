@@ -62,7 +62,7 @@ async def startup():
             
         print(f"STARTUP: Connecting to {os.getenv('DB_HOST')}...")
         init_db(
-            provider='postgres',
+            'postgres',
             user=os.getenv('DB_USER', 'postgres'),
             password=db_password,
             host=os.getenv('DB_HOST', 'localhost'),
