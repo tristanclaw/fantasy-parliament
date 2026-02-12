@@ -57,12 +57,14 @@ async def fetch_json(url):
 def cleanup_old_data():
     cutoff_date = date.today() - timedelta(days=7)
     print(f"Cleaning up data older than {cutoff_date}")
-    delete(s for s in Speech if s.date < cutoff_date)
-    delete(v for v in VoteAttendance if v.date < cutoff_date)
+    # Python 3.13: Use filter/delete instead of generator expression
+    Speech.select(lambda s: s.date < cutoff_date).delete(bulk=True)
+    VoteAttendance.select(lambda v: v.date < cutoff_date).delete(bulk=True)
     
     # Iterate to avoid decompilation issues with complex logic in Python 3.12
     # Select candidates for deletion (introduced > 7 days ago)
-    bills_to_check = select(b for b in Bill if b.date_introduced < cutoff_date)
+    # Python 3.13: Use .select()
+    bills_to_check = Bill.select(lambda b: b.date_introduced < cutoff_date)
     for b in bills_to_check:
         # If it hasn't passed, or passed long ago, delete it
         if b.date_passed is None or b.date_passed < cutoff_date:
@@ -70,7 +72,8 @@ def cleanup_old_data():
 
 @db_session
 def calculate_all_scores():
-    mps = select(m for m in MP)[:]
+    # Python 3.13: Use .select()
+    mps = MP.select()[:]
     cutoff_date = date.today() - timedelta(days=7)
     
     print("Recalculating scores...")
@@ -78,11 +81,11 @@ def calculate_all_scores():
         score = 0
         
         # Speeches: 1 point (active in last 7 days)
-        # Since we prune, we can just count, but to be safe vs db drift, verify date
-        score += count(s for s in mp.speeches if s.date >= cutoff_date) * 1
+        # Python 3.13: Use .select() and .count()
+        score += mp.speeches.select(lambda s: s.date >= cutoff_date).count() * 1
         
         # Votes: 2 points
-        score += count(v for v in mp.votes if v.date >= cutoff_date) * 2
+        score += mp.votes.select(lambda v: v.date >= cutoff_date).count() * 2
         
         # Bills:
         # +10 if introduced in last 7 days
@@ -255,7 +258,8 @@ async def run_sync():
     await sync_mps()
     
     with db_session:
-        mps = select(m for m in MP)[:]
+        # Python 3.13: Use .select()
+        mps = MP.select()[:]
     
     print("Processing individual MP data...")
     # Process MPs
