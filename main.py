@@ -126,9 +126,8 @@ def mp_to_dict(mp):
 @db_session
 def diag_db():
     try:
-        from pony.orm import count
-        mp_count = select(m for m in MP).count()
-        lb_count = select(l for l in LeaderboardEntry).count()
+        mp_count = MP.select().count()
+        lb_count = LeaderboardEntry.select().count()
         return {
             "status": "connected",
             "mp_count": mp_count,
