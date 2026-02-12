@@ -64,33 +64,42 @@ def run_migrations(dsn=None, **kwargs):
         
         conn.autocommit = True
         with conn.cursor() as cur:
+            # Audit tables first to debug
+            print("Auditing tables in public schema...")
+            cur.execute("SELECT table_name FROM information_schema.tables WHERE table_schema = 'public'")
+            tables = [t[0] for t in cur.fetchall()]
+            print(f"Found tables: {tables}")
+
             # Migration 1: MP.total_score
             for table in ['MP', 'mp']:
-                try:
-                    cur.execute(f'ALTER TABLE "{table}" ADD COLUMN IF NOT EXISTS "total_score" INTEGER NOT NULL DEFAULT 0')
-                    print(f"Applied/Checked: {table}.total_score")
-                except Exception as e:
-                    print(f"Migration warning ({table}.total_score): {e}")
+                if table in tables:
+                    try:
+                        cur.execute(f'ALTER TABLE "{table}" ADD COLUMN IF NOT EXISTS "total_score" INTEGER NOT NULL DEFAULT 0')
+                        print(f"Applied/Checked: {table}.total_score")
+                    except Exception as e:
+                        print(f"Migration warning ({table}.total_score): {e}")
             
             # Migration 2: MP.image_url
             for table in ['MP', 'mp']:
-                try:
-                    cur.execute(f'ALTER TABLE "{table}" ADD COLUMN IF NOT EXISTS "image_url" TEXT')
-                    print(f"Applied/Checked: {table}.image_url")
-                except Exception as e:
-                    print(f"Migration warning ({table}.image_url): {e}")
+                if table in tables:
+                    try:
+                        cur.execute(f'ALTER TABLE "{table}" ADD COLUMN IF NOT EXISTS "image_url" TEXT')
+                        print(f"Applied/Checked: {table}.image_url")
+                    except Exception as e:
+                        print(f"Migration warning ({table}.image_url): {e}")
 
             # Migration 3: Bill.date_passed
             for table in ['Bill', 'bill']:
-                try:
-                    cur.execute(f'ALTER TABLE "{table}" ADD COLUMN IF NOT EXISTS "date_passed" DATE')
-                    print(f"Applied/Checked: {table}.date_passed")
-                except Exception as e:
-                    print(f"Migration warning ({table}.date_passed): {e}")
+                if table in tables:
+                    try:
+                        cur.execute(f'ALTER TABLE "{table}" ADD COLUMN IF NOT EXISTS "date_passed" DATE')
+                        print(f"Applied/Checked: {table}.date_passed")
+                    except Exception as e:
+                        print(f"Migration warning ({table}.date_passed): {e}")
                 
         conn.close()
         print("Direct Postgres migration successful")
-        return True, "Migrations completed successfully"
+        return True, f"Migrations completed. Tables found: {tables}"
     except Exception as e:
         error_msg = f"Direct migration failed: {e}"
         print(error_msg)
