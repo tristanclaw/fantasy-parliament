@@ -9,7 +9,7 @@ from dotenv import load_dotenv
 
 load_dotenv()
 
-BASE_URL = "https://openparliament.ca/api/v1"
+BASE_URL = "https://openparliament.ca"
 
 PARTY_MAPPING = {
     "Conservative": "CPC",
