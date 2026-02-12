@@ -1,25 +1,17 @@
 import React, { useState, useEffect } from 'react';
+import { HashRouter, Routes, Route, Link } from 'react-router-dom';
 import Scoreboard from './components/Scoreboard';
 import DraftPool from './components/DraftPool';
 import MyTeam from './components/MyTeam';
 import Welcome from './components/Welcome';
 import Admin from './components/Admin';
 
-function App() {
+function MainApp() {
   const [username, setUsername] = useState(() => localStorage.getItem('fp_username') || '');
   const [team, setTeam] = useState(() => {
     const saved = localStorage.getItem('fp_team');
     return saved ? JSON.parse(saved) : { captain: null, members: [] };
   });
-
-  // Simple state-based routing for /admin
-  const [isAdmin, setIsAdmin] = useState(window.location.hash === '#/admin');
-
-  useEffect(() => {
-    const handleHashChange = () => setIsAdmin(window.location.hash === '#/admin');
-    window.addEventListener('hashchange', handleHashChange);
-    return () => window.removeEventListener('hashchange', handleHashChange);
-  }, []);
 
   useEffect(() => {
     localStorage.setItem('fp_username', username);
@@ -35,7 +27,6 @@ function App() {
   };
 
   const handleDraft = (mp) => {
-    // Check duplicates
     if (team.captain?.id === mp.id || team.members.some(m => m.id === mp.id)) {
       alert("This MP is already on your team!");
       return;
@@ -87,28 +78,21 @@ function App() {
     }
   };
 
-  // Route: Admin
-  if (isAdmin) {
-    return <Admin />;
-  }
-
-  // If no username, show onboarding
   if (!username) {
     return <Welcome onComplete={handleOnboardingComplete} />;
   }
 
   return (
-    <div className="min-h-screen bg-gray-50 font-sans text-gray-900">
-      {/* Navigation */}
+    <div className="min-h-screen bg-gray-50 font-sans text-gray-900 flex flex-col">
       <nav className="bg-red-700 text-white shadow-md">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="flex items-center justify-between h-16">
             <div className="flex items-center">
-              <span className="text-xl font-black tracking-tighter uppercase">Fantasy <span className="text-red-200">Parliament</span></span>
+              <Link to="/" className="text-xl font-black tracking-tighter uppercase">Fantasy <span className="text-red-200">Parliament</span></Link>
             </div>
             <div className="hidden md:block">
               <div className="ml-10 flex items-baseline space-x-4">
-                <a href="/" className="bg-red-800 px-3 py-2 rounded-md text-sm font-medium transition">Dashboard</a>
+                <Link to="/" className="bg-red-800 px-3 py-2 rounded-md text-sm font-medium">Dashboard</Link>
                 <a href="#" className="text-red-100 hover:bg-red-800 hover:text-white px-3 py-2 rounded-md text-sm font-medium transition">My Team</a>
                 <a href="#" className="text-red-100 hover:bg-red-800 hover:text-white px-3 py-2 rounded-md text-sm font-medium transition">Rules</a>
               </div>
@@ -123,8 +107,7 @@ function App() {
         </div>
       </nav>
 
-      {/* Main Content */}
-      <main className="max-w-7xl mx-auto py-8 px-4 sm:px-6 lg:px-8">
+      <main className="max-w-7xl mx-auto py-8 px-4 sm:px-6 lg:px-8 flex-grow">
         <header className="mb-8">
           <h1 className="text-4xl font-extrabold text-gray-900 tracking-tight">MP Dashboard</h1>
           <p className="text-gray-500 mt-2">Manage your fantasy team and track the latest parliamentary performance stats.</p>
@@ -148,13 +131,10 @@ function App() {
         )}
 
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
-          {/* Main Content Area - Draft Pool */}
           <div className="lg:col-span-2">
             <MyTeam team={team} onRemove={handleRemove} onSubmit={handleSubmitScore} />
             <DraftPool onDraft={handleDraft} />
           </div>
-
-          {/* Sidebar Area - Scoreboard */}
           <div className="lg:col-span-1">
             <Scoreboard />
           </div>
@@ -165,6 +145,17 @@ function App() {
         &copy; 2026 Fantasy Parliament League. Data powered by OpenParliament.
       </footer>
     </div>
+  );
+}
+
+function App() {
+  return (
+    <HashRouter>
+      <Routes>
+        <Route path="/" element={<MainApp />} />
+        <Route path="/admin" element={<Admin />} />
+      </Routes>
+    </HashRouter>
   );
 }
 
