@@ -65,28 +65,29 @@ def run_migrations(dsn=None, **kwargs):
             tables = [t[0] for t in cur.fetchall()]
             print(f"Found tables: {tables}")
 
-            # Migration 1: MP.total_score
-            for table in ['MP', 'mp']:
+            # Force lowercase 'mp' check first
+            for table in ['mp', 'MP']:
                 if table in tables:
                     try:
+                        print(f"Applying MP.total_score to table: {table}")
                         cur.execute(f'ALTER TABLE "{table}" ADD COLUMN IF NOT EXISTS "total_score" INTEGER NOT NULL DEFAULT 0')
                         print(f"Applied/Checked: {table}.total_score")
                     except Exception as e:
                         print(f"Migration warning ({table}.total_score): {e}")
             
-            # Migration 2: MP.image_url
-            for table in ['MP', 'mp']:
+            for table in ['mp', 'MP']:
                 if table in tables:
                     try:
+                        print(f"Applying MP.image_url to table: {table}")
                         cur.execute(f'ALTER TABLE "{table}" ADD COLUMN IF NOT EXISTS "image_url" TEXT')
                         print(f"Applied/Checked: {table}.image_url")
                     except Exception as e:
                         print(f"Migration warning ({table}.image_url): {e}")
 
-            # Migration 3: Bill.date_passed
-            for table in ['Bill', 'bill']:
+            for table in ['bill', 'Bill']:
                 if table in tables:
                     try:
+                        print(f"Applying Bill.date_passed to table: {table}")
                         cur.execute(f'ALTER TABLE "{table}" ADD COLUMN IF NOT EXISTS "date_passed" DATE')
                         print(f"Applied/Checked: {table}.date_passed")
                     except Exception as e:
