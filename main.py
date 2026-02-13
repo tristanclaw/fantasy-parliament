@@ -74,15 +74,34 @@ async def manual_sync(background_tasks: BackgroundTasks, api_key: str = Depends(
     background_tasks.add_task(run_sync_with_logging)
     return {"message": "Sync started in background via Admin"}
 
+@app.get("/admin/logs")
+def get_admin_logs(api_key: str = Header(None)):
+    if api_key != API_KEY:
+        raise HTTPException(status_code=403, detail="Invalid API Key")
+    if os.path.exists("sync.log"):
+        with open("sync.log", "r") as f:
+            return {"logs": f.read()}
+    return {"logs": "No log file found"}
+
 async def run_sync_with_logging():
+    import sys
+    from io import StringIO
+    
+    old_stdout = sys.stdout
+    sys.stdout = mystdout = StringIO()
+    
     try:
-        print("BACKGROUND: Starting sync...")
+        print(f"BACKGROUND: Starting sync at {datetime.now()}...")
         await run_sync()
-        print("BACKGROUND: Sync finished successfully.")
+        print(f"BACKGROUND: Sync finished successfully at {datetime.now()}.")
     except Exception as e:
         import traceback
         print(f"BACKGROUND ERROR: Sync failed: {e}")
         traceback.print_exc()
+    finally:
+        sys.stdout = old_stdout
+        with open("sync.log", "w") as f:
+            f.write(mystdout.getvalue())
 
 app.include_router(admin_router)
 

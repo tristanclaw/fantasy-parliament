@@ -105,9 +105,15 @@ async def sync_mps():
     total_synced = 0
     total_created = 0
     
+    print(f"Scraper: Starting MP sync from {url}")
     while url:
         print(f"Scraper: Fetching MPs from {url}")
-        data = await fetch_json(url)
+        try:
+            data = await fetch_json(url)
+        except Exception as e:
+            print(f"Scraper: fetch_json error: {e}")
+            break
+            
         if not data: 
             print("Scraper: No data returned from fetch_json")
             break
@@ -118,6 +124,7 @@ async def sync_mps():
         for mp_data in objects:
             party_info = mp_data.get('current_party')
             if not party_info:
+                print(f"Scraper: Skipping MP {mp_data.get('name')} (no party info)")
                 continue
                 
             party_name = party_info.get('short_name', {}).get('en')
