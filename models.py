@@ -50,14 +50,34 @@ def run_migrations(dsn=None, **kwargs):
     This can be called at startup (safe mode) or via API.
     """
     import psycopg2
+    import os
     
     print("Starting manual migrations...")
     try:
-        # Get raw connection from Pony
-        provider = db.provider
-        conn = provider.connect()
-        conn.autocommit = True
+        # Construct DSN if not provided
+        if not dsn:
+            db_url = os.getenv('INTERNAL_DATABASE_URL') or os.getenv('DATABASE_URL_INTERNAL') or os.getenv('DATABASE_URL')
+            if db_url:
+                dsn = db_url
+                if dsn.startswith('postgres://'):
+                    dsn = dsn.replace('postgres://', 'postgresql://', 1)
         
+        if dsn:
+            if 'sslmode=' not in dsn:
+                separator = '&' if '?' in dsn else '?'
+                dsn += f"{separator}sslmode=require"
+            conn = psycopg2.connect(dsn, connect_timeout=10)
+        else:
+            conn = psycopg2.connect(
+                user=kwargs.get('user') or os.getenv('DB_USER'),
+                password=kwargs.get('password') or os.getenv('DB_PASSWORD'),
+                host=kwargs.get('host') or os.getenv('DB_HOST'),
+                database=kwargs.get('database') or os.getenv('DB_NAME'),
+                sslmode='require',
+                connect_timeout=10
+            )
+        
+        conn.autocommit = True
         with conn.cursor() as cur:
             # Audit tables first to debug
             print("Auditing tables in public schema...")
@@ -65,55 +85,34 @@ def run_migrations(dsn=None, **kwargs):
             tables = [t[0] for t in cur.fetchall()]
             print(f"Found tables: {tables}")
 
-            # Migration 0: Create tables if missing (Pony should have done this, but let's be sure)
-            if 'mp' not in tables and 'MP' not in tables:
-                print("CRITICAL: MP table missing from audit!")
-            
             # Migration 1: MP.total_score
             for table in ['mp', 'MP']:
                 if table in tables:
                     try:
-                        print(f"Applying MP.total_score to table: {table}")
-                        # Ensure we don't have a name conflict or type issue
                         cur.execute(f'ALTER TABLE "{table}" ADD COLUMN IF NOT EXISTS "total_score" INTEGER NOT NULL DEFAULT 0')
                         print(f"Applied/Checked: {table}.total_score")
                     except Exception as e:
                         print(f"Migration warning ({table}.total_score): {e}")
             
+            # Migration 2: MP.image_url
             for table in ['mp', 'MP']:
                 if table in tables:
                     try:
-                        print(f"Applying MP.image_url to table: {table}")
-                        # TRY WITHOUT IF NOT EXISTS to see error
-                        try:
-                            cur.execute(f'ALTER TABLE "{table}" ADD COLUMN "image_url" TEXT')
-                        except Exception as inner:
-                            if "already exists" in str(inner):
-                                print(f"Column image_url already exists in {table}")
-                            else:
-                                raise inner
-                        
+                        cur.execute(f'ALTER TABLE "{table}" ADD COLUMN IF NOT EXISTS "image_url" TEXT')
                         print(f"Applied/Checked: {table}.image_url")
-                        
-                        # Verify column existence immediately
-                        cur.execute(f"SELECT column_name FROM information_schema.columns WHERE table_name = '{table}' AND column_name = 'image_url'")
-                        if cur.fetchone():
-                            print(f"VERIFIED: {table}.image_url EXISTS")
-                        else:
-                            print(f"CRITICAL: {table}.image_url MISSING even after ALTER")
                     except Exception as e:
-                        print(f"Migration error ({table}.image_url): {e}")
+                        print(f"Migration warning ({table}.image_url): {e}")
 
+            # Migration 3: Bill.date_passed
             for table in ['bill', 'Bill']:
                 if table in tables:
                     try:
-                        print(f"Applying Bill.date_passed to table: {table}")
                         cur.execute(f'ALTER TABLE "{table}" ADD COLUMN IF NOT EXISTS "date_passed" DATE')
                         print(f"Applied/Checked: {table}.date_passed")
                     except Exception as e:
                         print(f"Migration warning ({table}.date_passed): {e}")
                 
-        # Pony handles closing or returning to pool
+        conn.close()
         print("Direct Postgres migration successful")
         return True, f"Migrations completed. Tables found: {tables}"
     except Exception as e:
