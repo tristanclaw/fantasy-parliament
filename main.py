@@ -2,7 +2,7 @@ from fastapi import FastAPI, BackgroundTasks, HTTPException, Header, Depends, Qu
 from fastapi.responses import JSONResponse
 from fastapi.middleware.cors import CORSMiddleware
 from pony.orm import db_session, select, desc
-from models import MP, LeaderboardEntry, init_db, run_migrations, db
+from models import MP, LeaderboardEntry, Bill, Speech, VoteAttendance, init_db, run_migrations, db
 from scraper import run_sync
 import os
 from dotenv import load_dotenv
