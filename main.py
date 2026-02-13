@@ -185,15 +185,31 @@ def get_mps():
 @app.get("/mps/search")
 @db_session
 def search_mps(q: Optional[str] = Query(None)):
-    query = MP.select()
-    if q:
-        search_term = f"%{q.lower()}%"
-        query = query.filter(lambda m: search_term in m.name.lower() or 
-                             (m.party and search_term in m.party.lower()) or 
-                             (m.riding and search_term in m.riding.lower()))
-    
-    results = query.order_by(desc(MP.total_score))
-    return [mp_to_dict(m) for m in results]
+    print(f"DEBUG: Entering /mps/search with q='{q}'")
+    try:
+        query = MP.select()
+        if q:
+            search_term = q.strip().lower()
+            print(f"DEBUG: Searching for term: '{search_term}'")
+            # Using chained method syntax and avoiding lambda if possible, 
+            # though Pony select() typically uses lambda for the criteria.
+            # To avoid the generator/lambda issues in Python 3.13 / Render,
+            # we'll use simple filter expressions that Pony can translate.
+            query = query.filter(lambda m: search_term in m.name.lower() or 
+                                 search_term in m.party.lower() or 
+                                 search_term in m.riding.lower())
+        
+        results = query.order_by(desc(MP.total_score))
+        count = results.count()
+        print(f"DEBUG: Search found {count} results")
+        
+        return [mp_to_dict(m) for m in results]
+    except Exception as e:
+        import traceback
+        error_trace = traceback.format_exc()
+        print(f"ERROR in /mps/search: {e}")
+        print(error_trace)
+        raise HTTPException(status_code=500, detail={"error": str(e), "traceback": error_trace})
 
 @app.get("/scoreboard")
 @db_session
