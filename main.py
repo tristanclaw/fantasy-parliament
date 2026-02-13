@@ -187,22 +187,27 @@ def get_mps():
 def search_mps(q: Optional[str] = Query(None)):
     print(f"DEBUG: Entering /mps/search with q='{q}'")
     try:
-        query = MP.select()
         if q:
             search_term = q.strip().lower()
             print(f"DEBUG: Searching for term: '{search_term}'")
-            # Using chained method syntax and avoiding lambda if possible, 
-            # though Pony select() typically uses lambda for the criteria.
-            # To avoid the generator/lambda issues in Python 3.13 / Render,
-            # we'll use simple filter expressions that Pony can translate.
-            query = query.filter(lambda m: search_term in m.name.lower() or 
-                                 search_term in m.party.lower() or 
-                                 search_term in m.riding.lower())
+            # Chained .filter() acts as AND, which we don't want.
+            # Lambda with 'or' fails on Python 3.13 due to Pony ORM decompiler issue.
+            # Strategy: Fetch all and filter in Python. 
+            # (Note: For large datasets this is bad, but for 338 MPs it's fine)
+            all_mps = MP.select()[:]
+            results = [
+                m for m in all_mps 
+                if search_term in m.name.lower() or 
+                   search_term in m.party.lower() or 
+                   search_term in m.riding.lower()
+            ]
+            # Sort by score descending
+            results.sort(key=lambda x: x.total_score, reverse=True)
+            print(f"DEBUG: Search found {len(results)} results")
+            return [mp_to_dict(m) for m in results]
         
-        results = query.order_by(desc(MP.total_score))
-        count = results.count()
-        print(f"DEBUG: Search found {count} results")
-        
+        # If no query, return all ordered by score
+        results = MP.select().order_by(desc(MP.total_score))
         return [mp_to_dict(m) for m in results]
     except Exception as e:
         import traceback
