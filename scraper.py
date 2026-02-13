@@ -99,7 +99,6 @@ def calculate_all_scores():
         mp.total_score = score
     print("Score recalculation complete.")
 
-@db_session
 async def sync_mps():
     url = f"{BASE_URL}/politicians/?limit=1000"
     total_synced = 0
@@ -121,31 +120,32 @@ async def sync_mps():
         objects = data.get('objects', [])
         print(f"Scraper: Found {len(objects)} objects in page")
         
-        for mp_data in objects:
-            party_info = mp_data.get('current_party')
-            if not party_info:
-                print(f"Scraper: Skipping MP {mp_data.get('name')} (no party info)")
-                continue
+        with db_session:
+            for mp_data in objects:
+                party_info = mp_data.get('current_party')
+                if not party_info:
+                    print(f"Scraper: Skipping MP {mp_data.get('name')} (no party info)")
+                    continue
+                    
+                party_name = party_info.get('short_name', {}).get('en')
                 
-            party_name = party_info.get('short_name', {}).get('en')
-            
-            riding_info = mp_data.get('current_riding')
-            riding_name = riding_info.get('name', {}).get('en') if riding_info else None
-            
-            slug = mp_data['url'].strip('/').split('/')[-1]
-            name = mp_data['name']
-            
-            mp = MP.get(slug=slug)
-            if not mp:
-                mp = MP(name=name, slug=slug)
-                total_created += 1
-            
-            mp.party = party_name
-            mp.riding = riding_name
-            # Update image URL to ensuring latest session format
-            mp.image_url = construct_image_url(name, party_name)
-            
-            total_synced += 1
+                riding_info = mp_data.get('current_riding')
+                riding_name = riding_info.get('name', {}).get('en') if riding_info else None
+                
+                slug = mp_data['url'].strip('/').split('/')[-1]
+                name = mp_data['name']
+                
+                mp = MP.get(slug=slug)
+                if not mp:
+                    mp = MP(name=name, slug=slug)
+                    total_created += 1
+                
+                mp.party = party_name
+                mp.riding = riding_name
+                # Update image URL to ensuring latest session format
+                mp.image_url = construct_image_url(name, party_name)
+                
+                total_synced += 1
             
         next_path = data.get('pagination', {}).get('next_url')
         if next_path:
@@ -155,46 +155,51 @@ async def sync_mps():
         
     print(f"Synced {total_synced} MPs ({total_created} new)")
 
-@db_session
-async def process_mp_data(mp, yesterday_str):
+async def process_mp_data(mp_slug, yesterday_str):
     # 1. Speeches
-    speech_data = await fetch_json(f"{BASE_URL}/debates/?politician={quote(mp.slug)}&date={yesterday_str}")
+    speech_data = await fetch_json(f"{BASE_URL}/debates/?politician={quote(mp_slug)}&date={yesterday_str}")
     if speech_data:
-        for obj in speech_data.get('objects', []):
-            if not Speech.exists(content_url=obj['url']):
-                Speech(mp=mp, date=date.fromisoformat(yesterday_str), content_url=obj['url'])
+        with db_session:
+            mp = MP.get(slug=mp_slug)
+            if mp:
+                for obj in speech_data.get('objects', []):
+                    if not Speech.exists(content_url=obj['url']):
+                        Speech(mp=mp, date=date.fromisoformat(yesterday_str), content_url=obj['url'])
 
     # 2. Bills
-    bill_data = await fetch_json(f"{BASE_URL}/bills/?sponsor={quote(mp.slug)}")
+    bill_data = await fetch_json(f"{BASE_URL}/bills/?sponsor={quote(mp_slug)}")
     if bill_data:
-        for b in bill_data.get('objects', []):
-            bill = Bill.get(number=b['number'])
-            
-            # Determine introduced date
-            intro_date_str = b.get('introduced') or yesterday_str
-            intro_date = date.fromisoformat(intro_date_str)
-            
-            if not bill:
-                bill = Bill(number=b['number'], 
-                           title=b['name']['en'], 
-                           sponsor=mp, 
-                           date_introduced=intro_date)
-            else:
-                # Update introduced date if needed (e.g. data correction)
-                bill.date_introduced = intro_date
-            
-            # Check if status indicates Royal Assent
-            status_text = str(b.get('status', {}).get('en', ''))
-            if 'Royal Assent' in status_text:
-                if not bill.passed:
-                    bill.passed = True
-                    # If we just discovered it passed, and we assume it happened recently (yesterday or today),
-                    # set date_passed. Ideally API gives this date, but 'introduced' is the only top-level date.
-                    # We'll default to yesterday for scoring purposes if it's a new discovery.
-                    bill.date_passed = date.fromisoformat(yesterday_str)
-                elif bill.passed and not bill.date_passed:
-                    # Backfill if missing
-                    bill.date_passed = date.fromisoformat(yesterday_str)
+        with db_session:
+            mp = MP.get(slug=mp_slug)
+            if mp:
+                for b in bill_data.get('objects', []):
+                    bill = Bill.get(number=b['number'])
+                    
+                    # Determine introduced date
+                    intro_date_str = b.get('introduced') or yesterday_str
+                    intro_date = date.fromisoformat(intro_date_str)
+                    
+                    if not bill:
+                        bill = Bill(number=b['number'], 
+                                   title=b['name']['en'], 
+                                   sponsor=mp, 
+                                   date_introduced=intro_date)
+                    else:
+                        # Update introduced date if needed (e.g. data correction)
+                        bill.date_introduced = intro_date
+                    
+                    # Check if status indicates Royal Assent
+                    status_text = str(b.get('status', {}).get('en', ''))
+                    if 'Royal Assent' in status_text:
+                        if not bill.passed:
+                            bill.passed = True
+                            # If we just discovered it passed, and we assume it happened recently (yesterday or today),
+                            # set date_passed. Ideally API gives this date, but 'introduced' is the only top-level date.
+                            # We'll default to yesterday for scoring purposes if it's a new discovery.
+                            bill.date_passed = date.fromisoformat(yesterday_str)
+                        elif bill.passed and not bill.date_passed:
+                            # Backfill if missing
+                            bill.date_passed = date.fromisoformat(yesterday_str)
 
 async def sync_votes(yesterday_str):
     # Use session 45-1 explicitly as requested
@@ -266,12 +271,12 @@ async def run_sync():
     
     with db_session:
         # Python 3.13: Use .select()
-        mps = MP.select()[:]
+        mp_slugs = [mp.slug for mp in MP.select()]
     
     print("Processing individual MP data...")
     # Process MPs
-    for i, mp in enumerate(mps):
-        await process_mp_data(mp, yesterday_str)
+    for i, mp_slug in enumerate(mp_slugs):
+        await process_mp_data(mp_slug, yesterday_str)
         if i % 10 == 0:
             await asyncio.sleep(0.1) 
     
