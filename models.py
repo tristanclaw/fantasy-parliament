@@ -1,7 +1,18 @@
-from pony.orm import Database, Required, Optional, Set, PrimaryKey, db_session
+from pony.orm import Database, Required, Optional, Set, PrimaryKey, db_session, Json
 from datetime import date, datetime
 
 db = Database()
+
+class Registration(db.Entity):
+    _table_ = 'registration'
+    user_id = Required(str, unique=True)
+    display_name = Required(str)
+    team_name = Optional(str)
+    email = Required(str, unique=True)
+    captain_mp_id = Required(int)
+    team_mp_ids = Required(Json)
+    ip_address = Optional(str)
+    registered_at = Required(datetime, default=datetime.utcnow)
 
 class MP(db.Entity):
     _table_ = 'mp'
@@ -111,6 +122,15 @@ def run_migrations(dsn=None, **kwargs):
                         print(f"Applied/Checked: {table}.date_passed")
                     except Exception as e:
                         print(f"Migration warning ({table}.date_passed): {e}")
+
+            # Migration 4: Registration.ip_address
+            for table in ['registration', 'Registration']:
+                if table in tables:
+                    try:
+                        cur.execute(f'ALTER TABLE "{table}" ADD COLUMN IF NOT EXISTS "ip_address" TEXT')
+                        print(f"Applied/Checked: {table}.ip_address")
+                    except Exception as e:
+                        print(f"Migration warning ({table}.ip_address): {e}")
                 
         conn.close()
         print("Direct Postgres migration successful")
