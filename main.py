@@ -128,10 +128,18 @@ def diag_db():
     try:
         mp_count = MP.select().count()
         lb_count = LeaderboardEntry.select().count()
+        bill_count = Bill.select().count()
+        speech_count = Speech.select().count()
+        vote_count = VoteAttendance.select().count()
         return {
             "status": "connected",
-            "mp_count": mp_count,
-            "leaderboard_count": lb_count,
+            "counts": {
+                "mp": mp_count,
+                "leaderboard": lb_count,
+                "bill": bill_count,
+                "speech": speech_count,
+                "vote": vote_count
+            },
             "database": str(db.provider_name)
         }
     except Exception as e:
