@@ -2,7 +2,7 @@ from fastapi import FastAPI, BackgroundTasks, HTTPException, Header, Depends, Qu
 from fastapi.responses import JSONResponse
 from fastapi.middleware.cors import CORSMiddleware
 from pony.orm import db_session, select, desc
-from models import MP, LeaderboardEntry, Bill, Speech, VoteAttendance, Registration, init_db, run_migrations, db
+from models import MP, LeaderboardEntry, Bill, Speech, VoteAttendance, Registration, Subscriber, init_db, run_migrations, db
 from scraper import run_sync
 import os
 from dotenv import load_dotenv
@@ -12,6 +12,9 @@ from datetime import datetime, timedelta, date
 import uuid
 import re
 import random
+from better_profanity import profanity
+from apscheduler.schedulers.asyncio import AsyncIOScheduler
+from datetime import datetime as dt
 
 load_dotenv()
 
@@ -206,6 +209,15 @@ async def startup():
             sslmode='require'
         )
     print("STARTUP: Database initialized successfully")
+    
+    # Start scheduler for weekly emails (only on Render production)
+    if os.getenv("RENDER"):
+        try:
+            schedule_weekly_emails()
+            scheduler.start()
+            print("SCHEDULER: Started")
+        except Exception as e:
+            print(f"SCHEDULER ERROR: {e}")
     
 def mp_to_dict(mp):
     try:
@@ -478,6 +490,206 @@ def register_user(registration: RegistrationRequest, request: Request):
     except Exception as e:
         print(f"Registration error: {e}")
         raise HTTPException(status_code=500, detail="Registration failed")
+
+# ============================================
+# Email Subscription API
+# ============================================
+
+# Initialize profanity filter
+profanity.load_censor_words()
+
+# MailerSend configuration
+MAILERSEND_API_KEY = os.getenv("MAILERSEND_API_KEY")
+MAILERSEND_FROM_EMAIL = os.getenv("MAILERSEND_FROM_EMAIL", "noreply@yourdomain.com")
+
+class SubscribeRequest(BaseModel):
+    name: str
+    email: str
+    selected_mps: List[int]
+
+def sanitize_name(name: str) -> str:
+    """Sanitize display name: max 30 chars + profanity filter."""
+    # Character limit
+    if len(name) > 30:
+        raise HTTPException(status_code=400, detail="Display name too long (max 30 characters)")
+    
+    # Profanity filter
+    if profanity.contains_profanity(name):
+        raise HTTPException(status_code=400, detail="Display name contains inappropriate content")
+    
+    return name.strip()
+
+def calculate_team_score(mp_ids: List[int]) -> int:
+    """Calculate total score for a list of MP IDs."""
+    with db_session:
+        mps = MP.select(lambda m: m.id in mp_ids)
+        return sum(mp.total_score for mp in mps)
+
+async def send_score_email(email: str, name: str, mp_ids: List[int]) -> bool:
+    """Send weekly score email via MailerSend."""
+    if not MAILERSEND_API_KEY:
+        print(f"MAILERSEND: API key not configured, skipping email to {email}")
+        return False
+    
+    try:
+        import mailersend
+        from mailersend import emails
+        
+        # Calculate team score
+        team_score = calculate_team_score(mp_ids)
+        
+        # Get leaderboard benchmark
+        with db_session:
+            leader = LeaderboardEntry.select().order_by(desc(LeaderboardEntry.score)).first()
+            leader_score = leader.score if leader else 0
+        
+        # Get top 3 from scoreboard
+        with db_session:
+            top_mps = MP.select().order_by(desc(MP.total_score))[:3]
+            top_names = ", ".join([m.name for m in top_mps])
+        
+        # Email content
+        subject = f"Your Fantasy Parliament Score: {team_score} points"
+        body = f"""Hello {name},
+
+Your Fantasy Parliament team scored: {team_score} points this week.
+
+{'You are ahead of the Party Leaders benchmark!' if team_score > leader_score else f'Party Leaders benchmark: {leader_score} points'}
+
+Top MPs this week: {top_names}
+
+Keep picking wisely!
+
+- Fantasy Parliament Team
+"""
+        
+        # Send email using MailerSend
+        mailer = emails.NewMailer(MAILERSEND_API_KEY)
+        mailer.set_mail_from([MAILERSEND_FROM_EMAIL], {"name": "Fantasy Parliament"})
+        mailer.add_mail_to([email])
+        mailer.set_subject(subject)
+        mailer.set_text_content(body)
+        
+        response = mailer.send()
+        
+        if response.status_code in [200, 202]:
+            print(f"MAILERSEND: Email sent successfully to {email}")
+            return True
+        else:
+            print(f"MAILERSEND: Failed to send email to {email}: {response.status_code} - {response.text}")
+            return False
+            
+    except Exception as e:
+        print(f"MAILERSEND ERROR: {e}")
+        return False
+
+@app.post("/subscribe")
+@db_session
+async def subscribe(request: SubscribeRequest):
+    """Add a new subscriber."""
+    # Validate email
+    email = request.email.strip()
+    if not re.match(r"[^@]+@[^@]+\.[^@]+", email):
+        raise HTTPException(status_code=400, detail="Invalid email format")
+    
+    # Check if already subscribed
+    existing = Subscriber.get(email=email)
+    if existing:
+        raise HTTPException(status_code=400, detail="Email already subscribed")
+    
+    # Sanitize name (character limit + profanity)
+    sanitized_name = sanitize_name(request.name)
+    
+    # Validate MP IDs exist
+    if request.selected_mps:
+        existing_mps = MP.select(lambda m: m.id in request.selected_mps)
+        if existing_mps.count() != len(request.selected_mps):
+            raise HTTPException(status_code=400, detail="One or more selected MPs do not exist")
+    
+    # Create subscriber
+    try:
+        Subscriber(
+            name=sanitized_name,
+            email=email,
+            selected_mps=request.selected_mps,
+            created_at=datetime.utcnow()
+        )
+        print(f"SUBSCRIBER: Added {email} to subscriptions")
+        
+        return {"status": "success", "message": "Subscribed successfully"}
+    except Exception as e:
+        print(f"Subscribe error: {e}")
+        raise HTTPException(status_code=500, detail="Subscription failed")
+
+@app.delete("/unsubscribe")
+@db_session
+def unsubscribe(email: str):
+    """Remove a subscriber by email."""
+    subscriber = Subscriber.get(email=email)
+    if not subscriber:
+        raise HTTPException(status_code=404, detail="Email not found")
+    
+    subscriber.delete()
+    print(f"SUBSCRIBER: Unsubscribed {email}")
+    return {"status": "success", "message": "Unsubscribed successfully"}
+
+@app.get("/subscribers")
+@db_session
+def list_subscribers(api_key: str = Header(None)):
+    """Admin endpoint to list subscribers (email only)."""
+    if api_key != API_KEY:
+        raise HTTPException(status_code=403, detail="Invalid API Key")
+    
+    subscribers = Subscriber.select()
+    return {
+        "count": subscribers.count(),
+        "subscribers": [{"name": s.name, "email": s.email, "created_at": s.created_at.isoformat()} for s in subscribers]
+    }
+
+# ============================================
+# Cron Endpoint for Weekly Score Emails
+# ============================================
+
+@app.post("/cron/weekly-score-emails")
+@db_session
+async def trigger_weekly_emails(api_key: str = Header(None)):
+    """Trigger weekly score emails to all subscribers."""
+    if api_key != API_KEY:
+        raise HTTPException(status_code=403, detail="Invalid API Key")
+    
+    subscribers = Subscriber.select()
+    count = 0
+    failed = 0
+    
+    for sub in subscribers:
+        success = await send_score_email(sub.email, sub.name, sub.selected_mps)
+        if success:
+            count += 1
+        else:
+            failed += 1
+    
+    return {
+        "status": "completed",
+        "sent": count,
+        "failed": failed,
+        "total": subscribers.count()
+    }
+
+# Initialize scheduler for weekly emails
+scheduler = AsyncIOScheduler()
+
+def schedule_weekly_emails():
+    """Schedule weekly emails (runs on Render)."""
+    # Schedule to run every Sunday at 18:00
+    scheduler.add_job(
+        trigger_weekly_emails, 
+        'cron', 
+        day_of_week='sun', 
+        hour=18, 
+        minute=0,
+        id='weekly_emails'
+    )
+    print("SCHEDULER: Weekly email job scheduled for Sundays at 18:00")
 
 @app.post("/sync")
 async def trigger_sync(background_tasks: BackgroundTasks, api_key: str = Depends(verify_api_key)):

@@ -56,6 +56,13 @@ class Bill(db.Entity):
     date_introduced = Required(date)
     date_passed = Optional(date)
 
+class Subscriber(db.Entity):
+    _table_ = 'subscriber'
+    name = Required(str)
+    email = Required(str, unique=True)
+    selected_mps = Required(Json)  # JSON array of MP IDs
+    created_at = Required(datetime, default=datetime.utcnow)
+
 @db_session
 def run_migrations(dsn=None, **kwargs):
     """
@@ -133,6 +140,22 @@ def run_migrations(dsn=None, **kwargs):
                         print(f"Applied/Checked: {table}.ip_address")
                     except Exception as e:
                         print(f"Migration warning ({table}.ip_address): {e}")
+
+            # Migration 5: Subscriber table
+            if 'subscriber' not in tables and 'Subscriber' not in tables:
+                try:
+                    cur.execute('''
+                        CREATE TABLE "subscriber" (
+                            id SERIAL PRIMARY KEY,
+                            name TEXT NOT NULL,
+                            email TEXT UNIQUE NOT NULL,
+                            "selected_mps" JSONB NOT NULL,
+                            "created_at" TIMESTAMP NOT NULL DEFAULT NOW()
+                        )
+                    ''')
+                    print("Created table: subscriber")
+                except Exception as e:
+                    print(f"Migration warning (subscriber table): {e}")
                 
         conn.close()
         print("Direct Postgres migration successful")

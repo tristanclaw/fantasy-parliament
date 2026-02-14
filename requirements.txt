@@ -5,4 +5,7 @@ psycopg2-binary
 httpx
 python-dotenv
 pydantic
+better-profanity
+apscheduler
+mailersend
 
