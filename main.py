@@ -297,12 +297,29 @@ def get_leaderboard():
 
 @app.get("/api/leaderboard/special")
 @db_session
-@app.get("/api/leaderboard/special")
-@db_session
 def get_special_leaderboards():
     results = []
     
-    # Random Choice (Weekly) - simplest version
+    # Static special teams
+    for key, config in SPECIAL_TEAMS_CONFIG.items():
+        team_mps = []
+        total_score = 0
+        for slug in config["slugs"]:
+            # Find MP by slug in cached MPs
+            for mp in MP_CACHE.get("data", []):
+                if mp.get("slug") == slug:
+                    team_mps.append(mp)
+                    total_score += mp.get("score", 0)
+                    break
+        if team_mps:
+            results.append({
+                "id": key,
+                "name": config["name"],
+                "score": total_score,
+                "mps": team_mps
+            })
+    
+    # Random Choice (Weekly)
     all_mps = list(MP.select())
     if all_mps:
         today = date.today()
