@@ -353,6 +353,7 @@ async def run_sync():
     try:
         print(f"Starting MP sync (since {start_date_str})...")
         await sync_mps(client)
+        print("MP sync complete, now committees...")
         
         print("Syncing committees...")
         await sync_committees(client, semaphore)
@@ -384,6 +385,10 @@ async def run_sync():
         print("Calculating scores...")
         calculate_all_scores()
         print("Sync complete.")
+    except Exception as e:
+        print(f"ERROR in sync: {e}")
+        import traceback
+        traceback.print_exc()
     finally:
         await client.aclose()
 
