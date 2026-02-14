@@ -1,6 +1,7 @@
 from fastapi import FastAPI, BackgroundTasks, HTTPException, Header, Depends, Query, Request, APIRouter
-from fastapi.responses import JSONResponse
+from fastapi.responses import JSONResponse, FileResponse
 from fastapi.middleware.cors import CORSMiddleware
+from fastapi.staticfiles import StaticFiles
 from pony.orm import db_session, select, desc
 from models import MP, LeaderboardEntry, Bill, Speech, VoteAttendance, Registration, Subscriber, init_db, run_migrations, db
 from scraper import run_sync
@@ -19,6 +20,13 @@ from datetime import datetime as dt
 load_dotenv()
 
 app = FastAPI(title="Canadian Politics Fantasy League API")
+
+# Get the directory where main.py is located
+BASE_DIR = os.path.dirname(os.path.abspath(__file__))
+FRONTEND_DIST = os.path.join(BASE_DIR, "frontend", "dist")
+
+# Mount static files for the frontend
+app.mount("/assets", StaticFiles(directory=os.path.join(FRONTEND_DIST, "assets")), name="assets")
 
 # Global Cache for MPs
 MP_CACHE = {
@@ -699,6 +707,19 @@ async def trigger_sync(background_tasks: BackgroundTasks, api_key: str = Depends
 @app.get("/health")
 def health():
     return {"status": "ok"}
+
+# SPA fallback - serve index.html for all non-API routes
+@app.get("/{path:path}")
+async def serve_spa(path: str):
+    """Serve the SPA index.html for any route not matching API or static files"""
+    index_path = os.path.join(FRONTEND_DIST, "index.html")
+    return FileResponse(index_path)
+
+# Also serve root
+@app.get("/")
+async def serve_root():
+    """Serve the SPA index.html at root"""
+    return FileResponse(os.path.join(FRONTEND_DIST, "index.html"))
 
 # Admin endpoint to seed random scores for testing
 @app.post("/admin/seed-scores")
