@@ -188,16 +188,16 @@ async def sync_mps():
         
     print(f"Synced {total_synced} MPs ({total_created} new)")
 
-async def process_mp_data(mp_slug, yesterday_str):
-    # 1. Speeches
-    speech_data = await fetch_json(f"{BASE_URL}/debates/?politician={quote(mp_slug)}&date={yesterday_str}")
+async def process_mp_data(mp_slug, start_date_str):
+    # 1. Speeches - use date__gte for range
+    speech_data = await fetch_json(f"{BASE_URL}/debates/?politician={quote(mp_slug)}&date__gte={start_date_str}")
     if speech_data:
         with db_session:
             mp = MP.get(slug=mp_slug)
             if mp:
                 for obj in speech_data.get('objects', []):
                     if not Speech.exists(content_url=obj['url']):
-                        Speech(mp=mp, date=date.fromisoformat(yesterday_str), content_url=obj['url'])
+                        Speech(mp=mp, date=date.fromisoformat(obj['date']), content_url=obj['url'])
 
     # 2. Bills
     bill_data = await fetch_json(f"{BASE_URL}/bills/?sponsor={quote(mp_slug)}")
@@ -234,9 +234,10 @@ async def process_mp_data(mp_slug, yesterday_str):
                             # Backfill if missing
                             bill.date_passed = date.fromisoformat(yesterday_str)
 
-async def sync_votes(yesterday_str):
+async def sync_votes(start_date_str):
     # Use session 45-1 explicitly as requested
     votes_url = f"{BASE_URL}/votes/?session=45-1"
+    start_date = date.fromisoformat(start_date_str)
     
     while votes_url:
         votes_data = await fetch_json(votes_url)
@@ -250,15 +251,12 @@ async def sync_votes(yesterday_str):
             if not vote_date: continue
             
             v_date_obj = date.fromisoformat(vote_date)
-            # If we encounter a vote older than our window (with some buffer), and assuming desc sort, we could stop.
-            # But to be safe and thorough as requested, we just skip.
-            # Optimization: if we are WAY past (e.g. 14 days), break to avoid scraping years of history.
-            if v_date_obj < date.today() - timedelta(days=14):
-                 # Assuming sorted by date desc, we can stop here.
+            # Optimization: if we are WAY past (e.g. 14 days before start), break
+            if v_date_obj < start_date - timedelta(days=14):
                  votes_url = None
                  break
 
-            if v_date_obj < date.today() - timedelta(days=7):
+            if v_date_obj < start_date:
                 continue
     
             vote_url = v_data['url'] # e.g. /votes/45-1/66/
@@ -329,10 +327,11 @@ async def sync_committees():
     print("Committee sync complete.")
 
 async def run_sync():
-    yesterday = date.today() - timedelta(days=1)
-    yesterday_str = yesterday.isoformat()
+    # Fetch data for the last 7 days
+    start_date = date.today() - timedelta(days=7)
+    start_date_str = start_date.isoformat()
     
-    print("Starting MP sync...")
+    print(f"Starting MP sync (since {start_date_str})...")
     await sync_mps()
     
     print("Syncing committees...")
@@ -345,12 +344,12 @@ async def run_sync():
     print("Processing individual MP data...")
     # Process MPs
     for i, mp_slug in enumerate(mp_slugs):
-        await process_mp_data(mp_slug, yesterday_str)
+        await process_mp_data(mp_slug, start_date_str)
         if i % 10 == 0:
             await asyncio.sleep(0.1) 
     
     print("Syncing votes...")
-    await sync_votes(yesterday_str)
+    await sync_votes(start_date_str)
     
     print("Cleaning up old data...")
     cleanup_old_data()
