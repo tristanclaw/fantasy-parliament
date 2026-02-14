@@ -23,3 +23,4 @@ This is a Python-based data scraper and API for tracking MP performance based on
 ## Daily Sync
 To automate the daily sync, set up a cron job to call the `/sync` endpoint or run `scraper.py` directly.
  
+# Trigger Deploy
