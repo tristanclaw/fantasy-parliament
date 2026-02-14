@@ -10,7 +10,7 @@ const MPProfile = () => {
   useEffect(() => {
     const fetchMP = async () => {
       try {
-        const response = await fetch(`https://fantasy-parliament-api.onrender.com/mps/${id}`);
+        const response = await fetch(`https://fantasy-parliament-web.onrender.com/mps/${id}`);
         if (!response.ok) {
           throw new Error('Failed to fetch MP data');
         }

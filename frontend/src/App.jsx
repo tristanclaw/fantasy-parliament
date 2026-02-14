@@ -65,7 +65,7 @@ function MainApp() {
     }
 
     try {
-      const response = await fetch('https://fantasy-parliament-api.onrender.com/leaderboard', {
+      const response = await fetch('https://fantasy-parliament-web.onrender.com/leaderboard', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ username: username, score })

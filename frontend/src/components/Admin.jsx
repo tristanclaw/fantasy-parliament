@@ -15,7 +15,7 @@ function Admin() {
     setLoading(true);
     setStatus(`Running ${endpoint}...`);
     try {
-      const response = await fetch(`https://fantasy-parliament-api.onrender.com/admin/${endpoint}`, {
+      const response = await fetch(`https://fantasy-parliament-web.onrender.com/admin/${endpoint}`, {
         method: 'POST',
         headers: { 'x-api-key': key }
       });

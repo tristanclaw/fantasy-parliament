@@ -662,7 +662,8 @@ def list_subscribers(api_key: str = Header(None)):
 @db_session
 async def trigger_weekly_emails(api_key: str = Header(None)):
     """Trigger weekly score emails to all subscribers."""
-    if api_key != API_KEY:
+    # Skip API key check if called internally (scheduler passes None)
+    if api_key is not None and api_key != API_KEY:
         raise HTTPException(status_code=403, detail="Invalid API Key")
     
     subscribers = Subscriber.select()
@@ -707,13 +708,6 @@ async def trigger_sync(background_tasks: BackgroundTasks, api_key: str = Depends
 @app.get("/health")
 def health():
     return {"status": "ok"}
-
-# SPA fallback - serve index.html for all non-API routes
-@app.get("/{path:path}")
-async def serve_spa(path: str):
-    """Serve the SPA index.html for any route not matching API or static files"""
-    index_path = os.path.join(FRONTEND_DIST, "index.html")
-    return FileResponse(index_path)
 
 # Also serve root
 @app.get("/")

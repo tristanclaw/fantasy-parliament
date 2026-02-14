@@ -19,7 +19,7 @@ const Welcome = ({ onComplete }) => {
     setLoading(true);
     try {
         // Using the same API endpoint as DraftPool
-        const response = await fetch(`https://fantasy-parliament-api.onrender.com/mps/search?q=${encodeURIComponent(searchQuery)}`);
+        const response = await fetch(`https://fantasy-parliament-web.onrender.com/mps/search?q=${encodeURIComponent(searchQuery)}`);
         if (!response.ok) throw new Error("Search failed");
         const data = await response.json();
         setResults(data);

@@ -46,7 +46,7 @@ const MyTeam = ({ team, username, onRemove }) => {
             team_mp_ids: members.map(m => m.id)
         };
         
-        const apiUrl = import.meta.env.VITE_API_URL || 'https://fantasy-parliament-api.onrender.com';
+        const apiUrl = import.meta.env.VITE_API_URL || 'https://fantasy-parliament-web.onrender.com';
 
         try {
             const response = await fetch(`${apiUrl}/api/register`, {

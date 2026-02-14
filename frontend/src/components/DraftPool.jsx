@@ -11,8 +11,8 @@ const DraftPool = ({ onDraft }) => {
         setLoading(true);
         try {
             const url = query 
-                ? `https://fantasy-parliament-api.onrender.com/mps/search?q=${encodeURIComponent(query)}`
-                : `https://fantasy-parliament-api.onrender.com/mps/search`; 
+                ? `https://fantasy-parliament-web.onrender.com/mps/search?q=${encodeURIComponent(query)}`
+                : `https://fantasy-parliament-web.onrender.com/mps/search`; 
             const response = await fetch(url);
             if (!response.ok) {
                 throw new Error('Failed to fetch MPs');
