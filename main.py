@@ -8,13 +8,35 @@ import os
 from dotenv import load_dotenv
 from typing import Optional, List
 from pydantic import BaseModel
-from datetime import datetime
+from datetime import datetime, timedelta
 import uuid
 import re
 
 load_dotenv()
 
 app = FastAPI(title="Canadian Politics Fantasy League API")
+
+# Global Cache for MPs
+MP_CACHE = {
+    "data": [],
+    "last_updated": None
+}
+CACHE_DURATION = timedelta(minutes=15)
+
+def get_cached_mps():
+    now = datetime.now()
+    if MP_CACHE["data"] and MP_CACHE["last_updated"] and (now - MP_CACHE["last_updated"] < CACHE_DURATION):
+        return MP_CACHE["data"]
+    
+    print("CACHE: Refreshing MP cache from database...")
+    with db_session:
+        mps = MP.select().order_by(desc(MP.total_score))[:]
+        # Convert to dicts inside the session to detach from ORM
+        mp_dicts = [mp_to_dict(m) for m in mps]
+        MP_CACHE["data"] = mp_dicts
+        MP_CACHE["last_updated"] = now
+        print(f"CACHE: Loaded {len(mp_dicts)} MPs.")
+        return mp_dicts
 
 origins = ["*"]
 
@@ -172,12 +194,10 @@ def diag_db():
         }
 
 @app.get("/mps")
-@db_session
 def get_mps():
     print("DEBUG: Entering /mps endpoint")
     try:
-        mps = MP.select().order_by(desc(MP.total_score))
-        return [mp_to_dict(m) for m in mps]
+        return get_cached_mps()
     except Exception as e:
         import traceback
         print(f"ERROR in /mps: {e}")
@@ -185,32 +205,27 @@ def get_mps():
         raise HTTPException(status_code=500, detail=str(e))
 
 @app.get("/mps/search")
-@db_session
 def search_mps(q: Optional[str] = Query(None)):
     print(f"DEBUG: Entering /mps/search with q='{q}'")
     try:
+        # Use cached data to avoid DB hits on every search
+        all_mps = get_cached_mps()
+        
         if q:
             search_term = q.strip().lower()
             print(f"DEBUG: Searching for term: '{search_term}'")
-            # Chained .filter() acts as AND, which we don't want.
-            # Lambda with 'or' fails on Python 3.13 due to Pony ORM decompiler issue.
-            # Strategy: Fetch all and filter in Python. 
-            # (Note: For large datasets this is bad, but for 338 MPs it's fine)
-            all_mps = MP.select()[:]
+            
             results = [
                 m for m in all_mps 
-                if search_term in m.name.lower() or 
-                   search_term in m.party.lower() or 
-                   search_term in m.riding.lower()
+                if search_term in m['name'].lower() or 
+                   (m['party'] and search_term in m['party'].lower()) or 
+                   (m['constituency'] and search_term in m['constituency'].lower())
             ]
-            # Sort by score descending
-            results.sort(key=lambda x: x.total_score, reverse=True)
             print(f"DEBUG: Search found {len(results)} results")
-            return [mp_to_dict(m) for m in results]
+            return results
         
-        # If no query, return all ordered by score
-        results = MP.select().order_by(desc(MP.total_score))
-        return [mp_to_dict(m) for m in results]
+        # If no query, return all (already ordered by score in cache)
+        return all_mps
     except Exception as e:
         import traceback
         error_trace = traceback.format_exc()
