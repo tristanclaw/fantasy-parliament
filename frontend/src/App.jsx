@@ -3,6 +3,7 @@ import { HashRouter, Routes, Route, Link } from 'react-router-dom';
 import Scoreboard from './components/Scoreboard';
 import DraftPool from './components/DraftPool';
 import MyTeam from './components/MyTeam';
+import MPProfile from './components/MPProfile';
 import Welcome from './components/Welcome';
 import Rules from './components/Rules';
 import Admin from './components/Admin';
@@ -13,6 +14,7 @@ function MainApp() {
     const saved = localStorage.getItem('fp_team');
     return saved ? JSON.parse(saved) : { captain: null, members: [] };
   });
+  const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
 
   useEffect(() => {
     localStorage.setItem('fp_username', username);
@@ -91,14 +93,33 @@ function MainApp() {
             <div className="flex items-center">
               <Link to="/" className="text-xl font-black tracking-tighter uppercase">Fantasy <span className="text-red-200">Parliament</span></Link>
             </div>
+            
+            {/* Desktop Menu */}
             <div className="hidden md:block">
               <div className="ml-10 flex items-baseline space-x-4">
                 <Link to="/" className="bg-red-800 px-3 py-2 rounded-md text-sm font-medium">Dashboard</Link>
-                <a href="#" className="text-red-100 hover:bg-red-800 hover:text-white px-3 py-2 rounded-md text-sm font-medium transition">My Team</a>
+                <Link to="/my-team" className="text-red-100 hover:bg-red-800 hover:text-white px-3 py-2 rounded-md text-sm font-medium transition">My Team</Link>
                 <Link to="/rules" className="text-red-100 hover:bg-red-800 hover:text-white px-3 py-2 rounded-md text-sm font-medium transition">Rules</Link>
               </div>
             </div>
-            <div className="flex items-center space-x-2">
+
+            {/* Mobile menu button */}
+            <div className="md:hidden">
+              <button
+                onClick={() => setIsMobileMenuOpen(!isMobileMenuOpen)}
+                className="inline-flex items-center justify-center p-2 rounded-md text-red-100 hover:text-white hover:bg-red-800 focus:outline-none"
+              >
+                <svg className="h-6 w-6" stroke="currentColor" fill="none" viewBox="0 0 24 24">
+                  {isMobileMenuOpen ? (
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M6 18L18 6M6 6l12 12" />
+                  ) : (
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M4 6h16M4 12h16M4 18h16" />
+                  )}
+                </svg>
+              </button>
+            </div>
+
+            <div className="hidden md:flex items-center space-x-2">
                 <span className="text-red-200 text-sm font-medium">Welcome, {username}</span>
                 <div className="bg-red-800 p-2 rounded-full h-8 w-8 flex items-center justify-center font-bold text-xs">
                     {username ? username.substring(0,2).toUpperCase() : '??'}
@@ -106,6 +127,29 @@ function MainApp() {
             </div>
           </div>
         </div>
+
+        {/* Mobile Menu */}
+        {isMobileMenuOpen && (
+          <div className="md:hidden bg-red-800">
+            <div className="px-2 pt-2 pb-3 space-y-1 sm:px-3">
+              <Link to="/" className="block px-3 py-2 rounded-md text-base font-medium hover:bg-red-700">Dashboard</Link>
+              <Link to="/my-team" className="block px-3 py-2 rounded-md text-base font-medium hover:bg-red-700">My Team</Link>
+              <Link to="/rules" className="block px-3 py-2 rounded-md text-base font-medium hover:bg-red-700">Rules</Link>
+            </div>
+            <div className="pt-4 pb-2 border-t border-red-700">
+                <div className="flex items-center px-4">
+                    <div className="flex-shrink-0">
+                        <div className="h-8 w-8 rounded-full bg-red-600 flex items-center justify-center font-bold text-xs">
+                            {username ? username.substring(0,2).toUpperCase() : '??'}
+                        </div>
+                    </div>
+                    <div className="ml-3">
+                        <div className="text-base font-medium text-white">{username}</div>
+                    </div>
+                </div>
+            </div>
+          </div>
+        )}
       </nav>
 
       <main className="max-w-7xl mx-auto py-8 px-4 sm:px-6 lg:px-8 flex-grow">
@@ -154,11 +198,66 @@ function App() {
     <HashRouter>
       <Routes>
         <Route path="/" element={<MainApp />} />
+        <Route path="/my-team" element={<MyTeamViewWrapper />} />
+        <Route path="/mp/:id" element={<MPProfile />} />
         <Route path="/rules" element={<Rules />} />
         <Route path="/admin" element={<Admin />} />
       </Routes>
     </HashRouter>
   );
+}
+
+// Wrapper to reuse MyTeam component without props or with default props if needed
+// For now, MyTeam expects 'team', 'username', 'onRemove'.
+// The MainApp renders it with those props.
+// We need to lift state or just duplicate the logic.
+// Actually, let's just pass empty team or fetch from local storage in the wrapper.
+import { useNavigate } from 'react-router-dom';
+
+function MyTeamViewWrapper() {
+    const [username, setUsername] = useState(() => localStorage.getItem('fp_username') || '');
+    const [team, setTeam] = useState(() => {
+        const saved = localStorage.getItem('fp_team');
+        return saved ? JSON.parse(saved) : { captain: null, members: [] };
+    });
+    const navigate = useNavigate();
+
+    const handleRemove = (id) => {
+        if (team.captain?.id === id) {
+            if (confirm("Removing the captain will reset your team leader. Continue?")) {
+                setTeam(prev => ({ ...prev, captain: null }));
+            }
+        } else {
+            setTeam(prev => ({ ...prev, members: prev.members.filter(m => m.id !== id) }));
+        }
+    };
+    
+    useEffect(() => {
+        localStorage.setItem('fp_team', JSON.stringify(team));
+    }, [team]);
+
+    if (!username) {
+        // Redirect to home to set username
+        useEffect(() => {
+            navigate('/');
+        }, [navigate]);
+        return null;
+    }
+
+    return (
+        <div className="min-h-screen bg-gray-50 font-sans text-gray-900 flex flex-col">
+            <nav className="bg-red-700 text-white shadow-md">
+                <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 h-16 flex items-center">
+                     <Link to="/" className="text-xl font-black tracking-tighter uppercase">Fantasy Parliament</Link>
+                </div>
+            </nav>
+            <main className="max-w-7xl mx-auto py-8 px-4 sm:px-6 lg:px-8 flex-grow w-full">
+                <div className="bg-white rounded-xl shadow-lg p-6 border border-gray-100">
+                    <MyTeam team={team} username={username} onRemove={handleRemove} />
+                </div>
+            </main>
+        </div>
+    );
 }
 
 export default App;

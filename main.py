@@ -215,8 +215,18 @@ def mp_to_dict(mp):
         "constituency": mp.riding,
         "score": mp.total_score,
         "slug": mp.slug,
-        "image_url": mp.image_url
+        "image_url": mp.image_url,
+        "committees": mp.committees,
+        "score_breakdown": mp.score_breakdown
     }
+
+@app.get("/mps/{mp_id}")
+@db_session
+def get_mp(mp_id: int):
+    mp = MP.get(id=mp_id)
+    if not mp:
+        raise HTTPException(status_code=404, detail="MP not found")
+    return mp_to_dict(mp)
 
 @app.get("/diag/db")
 @db_session

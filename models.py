@@ -21,10 +21,12 @@ class MP(db.Entity):
     party = Optional(str)
     riding = Optional(str)
     image_url = Optional(str)
+    committees = Optional(Json) # List of dicts: [{"name": "Finance", "role": "Chair"}, {"name": "Health", "role": "Member"}]
     speeches = Set('Speech')
     votes = Set('VoteAttendance')
     sponsored_bills = Set('Bill', reverse='sponsor')
     total_score = Required(int, default=0)
+    score_breakdown = Optional(Json) # Stores points from speeches, votes, bills, committees
 
 class LeaderboardEntry(db.Entity):
     _table_ = 'leaderboardentry'

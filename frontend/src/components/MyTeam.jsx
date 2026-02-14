@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from 'react';
+import { Link } from 'react-router-dom';
 
 const MyTeam = ({ team, username, onRemove }) => {
     const { captain, members } = team;
@@ -88,7 +89,7 @@ const MyTeam = ({ team, username, onRemove }) => {
             <div className="mb-6">
                 <h3 className="text-xs font-bold text-gray-400 uppercase tracking-wide mb-2">Team Captain</h3>
                 {captain ? (
-                    <div className="border-2 border-yellow-400 p-4 rounded-lg bg-yellow-50 relative">
+                    <Link to={`/mp/${captain.id}`} className="block border-2 border-yellow-400 p-4 rounded-lg bg-yellow-50 relative hover:bg-yellow-100 transition">
                         <div className="flex justify-between items-start">
                             <div>
                                 <h3 className="font-bold text-gray-800 text-lg">{captain.name}</h3>
@@ -97,7 +98,7 @@ const MyTeam = ({ team, username, onRemove }) => {
                             <div className="text-xl font-black text-yellow-600">{captain.score} pts</div>
                         </div>
                         <span className="absolute -top-2 -right-2 bg-yellow-400 text-yellow-900 text-xs font-bold px-2 py-1 rounded shadow-sm">CAPTAIN</span>
-                    </div>
+                    </Link>
                 ) : (
                     <div className="border-2 border-dashed border-gray-300 p-4 rounded-lg bg-gray-50 text-center text-gray-400">
                         No Captain Selected
@@ -110,7 +111,7 @@ const MyTeam = ({ team, username, onRemove }) => {
                 <h3 className="text-xs font-bold text-gray-400 uppercase tracking-wide mb-2">Team Members ({members.length}/4)</h3>
                 <div className="grid grid-cols-1 gap-3">
                     {members.map((mp, index) => (
-                        <div key={mp.id || index} className="border border-gray-200 p-3 rounded-lg flex justify-between items-center">
+                        <Link to={`/mp/${mp.id}`} key={mp.id || index} className="border border-gray-200 p-3 rounded-lg flex justify-between items-center hover:bg-gray-50 transition">
                             <div>
                                 <h4 className="font-semibold text-gray-800">{mp.name}</h4>
                                 <p className="text-xs text-gray-500">{mp.party}</p>
@@ -118,13 +119,16 @@ const MyTeam = ({ team, username, onRemove }) => {
                             <div className="flex items-center space-x-3">
                                 <span className="font-bold text-gray-700">{mp.score} pts</span>
                                 <button 
-                                    onClick={() => onRemove(mp.id)}
+                                    onClick={(e) => {
+                                        e.preventDefault(); // Prevent navigation
+                                        onRemove(mp.id);
+                                    }}
                                     className="text-red-400 hover:text-red-600 text-sm font-medium"
                                 >
                                     Remove
                                 </button>
                             </div>
-                        </div>
+                        </Link>
                     ))}
                     {members.length === 0 && (
                         <p className="text-sm text-gray-500 italic">Draft MPs to fill your roster.</p>

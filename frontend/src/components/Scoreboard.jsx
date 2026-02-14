@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from 'react';
+import { Link } from 'react-router-dom';
 
 const Scoreboard = () => {
     const [topMPs, setTopMPs] = useState([]);
@@ -68,7 +69,7 @@ const Scoreboard = () => {
              error ? <div className="p-4 text-red-500">Error: {error}</div> : (
                 <div className="space-y-4 max-h-[600px] overflow-y-auto pr-2">
                     {view === 'mps' && topMPs.map((mp, index) => (
-                        <div key={mp.id || index} className="flex items-center justify-between p-3 bg-red-50 rounded-lg transition hover:bg-red-100">
+                        <Link to={`/mp/${mp.id}`} key={mp.id || index} className="flex items-center justify-between p-3 bg-red-50 rounded-lg transition hover:bg-red-100">
                             <div className="flex items-center space-x-4">
                                 <span className="font-bold text-red-600 w-6">#{index + 1}</span>
                                 <div>
@@ -80,7 +81,7 @@ const Scoreboard = () => {
                                 <span className="text-xl font-bold text-red-700">{mp.score}</span>
                                 <p className="text-xs text-red-400 uppercase tracking-wider font-semibold">Points</p>
                             </div>
-                        </div>
+                        </Link>
                     ))}
                     
                     {view === 'users' && leaderboard.map((entry, index) => (

@@ -76,31 +76,55 @@ def cleanup_old_data():
 
 @db_session
 def calculate_all_scores():
-    # Python 3.13: Use .select()
+    # Prestigious Committees
+    PRESTIGIOUS = {"Finance", "Health", "Foreign Affairs", "Public Accounts", "Transport and Infrastructure", "Justice and Human Rights", "Defence", "Indigenous Affairs", "Environment"}
+    
     mps = MP.select()[:]
     cutoff_date = date.today() - timedelta(days=7)
     
     print("Recalculating scores...")
     for mp in mps:
         score = 0
+        breakdown = {}
         
         # Speeches: 1 point (active in last 7 days)
-        # Python 3.13: Use .select() and .count()
-        score += mp.speeches.select(lambda s: s.date >= cutoff_date).count() * 1
+        speech_pts = mp.speeches.select(lambda s: s.date >= cutoff_date).count() * 1
+        score += speech_pts
+        breakdown['speeches'] = speech_pts
         
         # Votes: 2 points
-        score += mp.votes.select(lambda v: v.date >= cutoff_date).count() * 2
+        vote_pts = mp.votes.select(lambda v: v.date >= cutoff_date).count() * 2
+        score += vote_pts
+        breakdown['votes'] = vote_pts
         
         # Bills:
         # +10 if introduced in last 7 days
         # +50 if passed in last 7 days
+        bill_pts = 0
         for bill in mp.sponsored_bills:
             if bill.date_introduced >= cutoff_date:
-                score += 10
+                bill_pts += 10
             if bill.date_passed and bill.date_passed >= cutoff_date:
-                score += 50
+                bill_pts += 50
+        score += bill_pts
+        breakdown['bills'] = bill_pts
+        
+        # Committee Bonus
+        comm_pts = 0
+        if mp.committees:
+            for c in mp.committees:
+                name = c.get('name', '')
+                role = c.get('role', '')
+                if name in PRESTIGIOUS:
+                    base = 25 if role == 'Chair' else 10
+                    comm_pts += base
+        
+        score += comm_pts
+        breakdown['committees'] = comm_pts
+        breakdown['total'] = score
                 
         mp.total_score = score
+        mp.score_breakdown = breakdown
     print("Score recalculation complete.")
 
 async def sync_mps():
@@ -271,12 +295,48 @@ async def sync_votes(yesterday_str):
             else:
                 votes_url = None
 
+async def sync_committees():
+    print("Syncing committees...")
+    with db_session:
+        mps = list(MP.select())
+    
+    # Process in batches to be polite
+    for i, mp in enumerate(mps):
+        detail_url = f"{BASE_URL}/politicians/{mp.slug}/"
+        data = await fetch_json(detail_url)
+        
+        if data:
+            committees_data = data.get('committees', [])
+            # Structure: [{"name": "Finance", "position": "Chair"}, ...]
+            formatted = []
+            for c in committees_data:
+                # Handle different possible keys from API
+                name = c.get('name') or c.get('committee', {}).get('name')
+                role = c.get('position')
+                if name:
+                    formatted.append({"name": name, "role": role})
+            
+            if formatted:
+                with db_session:
+                    mp_obj = MP.get(id=mp.id)
+                    if mp_obj:
+                        mp_obj.committees = formatted
+                        print(f"Updated committees for {mp_obj.name}: {[c['name'] for c in formatted]}")
+        
+        if i % 20 == 0:
+            await asyncio.sleep(0.5)
+            
+    print("Committee sync complete.")
+
 async def run_sync():
     yesterday = date.today() - timedelta(days=1)
     yesterday_str = yesterday.isoformat()
     
     print("Starting MP sync...")
     await sync_mps()
+    
+    print("Syncing committees...")
+    await sync_committees()
     
     with db_session:
         # Python 3.13: Use .select()

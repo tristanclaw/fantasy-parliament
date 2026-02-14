@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from 'react';
+import { Link } from 'react-router-dom';
 
 const DraftPool = ({ onDraft }) => {
     const [mps, setMps] = useState([]);
@@ -69,19 +70,29 @@ const DraftPool = ({ onDraft }) => {
                     {mps.map((mp) => (
                         <div key={mp.id} className="border border-gray-100 p-4 rounded-lg hover:border-red-200 hover:shadow-sm transition group cursor-pointer flex gap-4 items-center">
                             {mp.image_url && (
-                                <img 
-                                    src={mp.image_url} 
-                                    alt={mp.name} 
-                                    className="w-16 h-16 rounded-full object-cover border-2 border-gray-100 bg-gray-50 flex-shrink-0" 
-                                    onError={(e) => {e.target.style.display = 'none'}}
-                                />
+                                <Link to={`/mp/${mp.id}`}>
+                                    <img 
+                                        src={mp.image_url} 
+                                        alt={mp.name} 
+                                        className="w-16 h-16 rounded-full object-cover border-2 border-gray-100 bg-gray-50 flex-shrink-0" 
+                                        onError={(e) => {e.target.style.display = 'none'}}
+                                    />
+                                </Link>
                             )}
                             <div className="flex-1">
-                                <h3 className="font-bold text-gray-800 group-hover:text-red-600 transition">{mp.name}</h3>
+                                <Link to={`/mp/${mp.id}`} className="font-bold text-gray-800 group-hover:text-red-600 transition">
+                                    {mp.name}
+                                </Link>
                                 <p className="text-sm text-gray-600">{mp.party}</p>
                                 <p className="text-xs text-gray-400">{mp.constituency}</p>
                             </div>
-                            <div className="flex-shrink-0">
+                            <div className="flex-shrink-0 flex flex-col gap-2">
+                                <Link 
+                                    to={`/mp/${mp.id}`}
+                                    className="text-xs text-gray-500 hover:text-gray-800 underline"
+                                >
+                                    View
+                                </Link>
                                 <button 
                                     onClick={() => onDraft(mp)}
                                     className="text-xs bg-red-50 text-red-600 px-2 py-1 rounded font-semibold hover:bg-red-600 hover:text-white transition"
