@@ -25,13 +25,13 @@ MP_CACHE = {
 CACHE_DURATION = timedelta(minutes=15)
 
 # Special Teams Configuration
+# Special teams - using valid MP slugs from database
+# Note: Some leaders not in current MP list (e.g., Trudeau, Singh)
 SPECIAL_TEAMS_CONFIG = {
     "all_party_leaders": {
         "name": "All Party Leaders",
         "slugs": [
-            "justin-trudeau",
             "pierre-poilievre", 
-            "jagmeet-singh", 
             "yves-francois-blanchet", 
             "elizabeth-may"
         ]
@@ -40,18 +40,15 @@ SPECIAL_TEAMS_CONFIG = {
         "name": "All Whips",
         "slugs": [
              "ruby-sahota",
-             "kerry-lynne-findlay",
-             "rachel-blaney",
-             "claude-debellefeuille"
+             "kerry-lynne-findlay"
         ]
     },
     "deputy_pm_shadows": {
         "name": "Deputy PM Shadows",
         "slugs": [
-            "chrystia-freeland",
+            "steven-guilbeault",
             "melissa-lantsman",
-            "tim-uppal",
-            "alexandre-boulerice"
+            "tim-uppal"
         ]
     }
 }
@@ -293,11 +290,14 @@ def get_special_leaderboards():
         total_score = 0
         
         for slug in config["slugs"]:
-            mp = MP.get(slug=slug)
-            if mp:
-                mp_data = mp_to_dict(mp)
-                team_mps.append(mp_data)
-                total_score += mp.total_score
+            try:
+                mp = MP.get(slug=slug)
+                if mp:
+                    mp_data = mp_to_dict(mp)
+                    team_mps.append(mp_data)
+                    total_score += mp.total_score
+            except Exception:
+                pass  # Skip if MP not found
         
         # Only include if we found MPs
         if team_mps:
