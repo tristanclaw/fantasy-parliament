@@ -255,6 +255,35 @@ def mp_to_dict(mp):
             "score_breakdown": getattr(mp, 'score_breakdown', None)
         }
 
+@app.get("/mps/search")
+def search_mps(q: Optional[str] = Query(None)):
+    print(f"DEBUG: Entering /mps/search with q='{q}'")
+    try:
+        # Use cached data to avoid DB hits on every search
+        all_mps = get_cached_mps()
+        
+        if q:
+            search_term = q.strip().lower()
+            print(f"DEBUG: Searching for term: '{search_term}'")
+            
+            results = [
+                m for m in all_mps 
+                if search_term in m['name'].lower() or 
+                   (m['party'] and search_term in m['party'].lower()) or 
+                   (m['constituency'] and search_term in m['constituency'].lower())
+            ]
+            print(f"DEBUG: Search found {len(results)} results")
+            return results
+        
+        # If no query, return all (already ordered by score in cache)
+        return all_mps
+    except Exception as e:
+        import traceback
+        error_trace = traceback.format_exc()
+        print(f"ERROR in /mps/search: {e}")
+        print(error_trace)
+        raise HTTPException(status_code=500, detail={"error": str(e), "traceback": error_trace})
+
 @app.get("/mps/{mp_id}")
 @db_session
 def get_mp(mp_id: int):
@@ -316,35 +345,6 @@ def get_mps():
         print(f"ERROR in /mps: {e}")
         traceback.print_exc()
         raise HTTPException(status_code=500, detail=str(e))
-
-@app.get("/mps/search")
-def search_mps(q: Optional[str] = Query(None)):
-    print(f"DEBUG: Entering /mps/search with q='{q}'")
-    try:
-        # Use cached data to avoid DB hits on every search
-        all_mps = get_cached_mps()
-        
-        if q:
-            search_term = q.strip().lower()
-            print(f"DEBUG: Searching for term: '{search_term}'")
-            
-            results = [
-                m for m in all_mps 
-                if search_term in m['name'].lower() or 
-                   (m['party'] and search_term in m['party'].lower()) or 
-                   (m['constituency'] and search_term in m['constituency'].lower())
-            ]
-            print(f"DEBUG: Search found {len(results)} results")
-            return results
-        
-        # If no query, return all (already ordered by score in cache)
-        return all_mps
-    except Exception as e:
-        import traceback
-        error_trace = traceback.format_exc()
-        print(f"ERROR in /mps/search: {e}")
-        print(error_trace)
-        raise HTTPException(status_code=500, detail={"error": str(e), "traceback": error_trace})
 
 @app.get("/scoreboard")
 @db_session
