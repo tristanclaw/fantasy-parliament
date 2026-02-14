@@ -295,7 +295,7 @@ def get_leaderboard():
     entries = LeaderboardEntry.select().order_by(desc(LeaderboardEntry.score))[:50]
     return [{"username": e.username, "score": e.score, "updated_at": e.updated_at.isoformat()} for e in entries]
 
-@app.get("/api/leaderboard/special")
+@app.get("/special")
 @db_session
 def get_special_leaderboards():
     results = []
@@ -310,6 +310,8 @@ def get_special_leaderboards():
                 team_mps.append(mp_to_dict(mp))
                 total_score += mp.total_score
         if team_mps:
+            # Sort MPs by score descending within the team
+            team_mps.sort(key=lambda x: x['score'], reverse=True)
             results.append({
                 "id": key,
                 "name": config["name"],
