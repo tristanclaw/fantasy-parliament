@@ -300,17 +300,15 @@ def get_leaderboard():
 def get_special_leaderboards():
     results = []
     
-    # Static special teams
+    # Static special teams - query DB directly
     for key, config in SPECIAL_TEAMS_CONFIG.items():
         team_mps = []
         total_score = 0
         for slug in config["slugs"]:
-            # Find MP by slug in cached MPs
-            for mp in MP_CACHE.get("data", []):
-                if mp.get("slug") == slug:
-                    team_mps.append(mp)
-                    total_score += mp.get("score", 0)
-                    break
+            mp = MP.get(slug=slug)
+            if mp:
+                team_mps.append(mp_to_dict(mp))
+                total_score += mp.total_score
         if team_mps:
             results.append({
                 "id": key,
