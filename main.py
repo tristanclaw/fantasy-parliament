@@ -68,7 +68,23 @@ def get_cached_mps():
         print(f"CACHE: Loaded {len(mp_dicts)} MPs.")
         return mp_dicts
 
-origins = ["*"]
+# Configure CORS - must specify exact origins when credentials are allowed
+# In production, set ALLOWED_ORIGINS env var (comma-separated)
+# For development, allow localhost
+env_origins = os.getenv("ALLOWED_ORIGINS")
+if env_origins:
+    origins = [o.strip() for o in env_origins.split(",")]
+else:
+    # Default to the known frontend production URL
+    origins = [
+        "https://fantasy-parliament.onrender.com",
+        "http://localhost:3000",
+        "http://localhost:5173" # Vite default
+    ]
+    # Fallback for dev if env not set - strictly speaking should not use * with credentials
+    # but for this specific error case we are fixing, we want to ensure frontend works.
+    # If we want strict security we would check if the request Origin is in this list.
+    # FastAPI CORSMiddleware checks this automatically if we pass a list.
 
 app.add_middleware(
     CORSMiddleware,
