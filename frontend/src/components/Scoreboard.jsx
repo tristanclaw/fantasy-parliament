@@ -20,7 +20,7 @@ const Scoreboard = () => {
                 const data = await response.json();
                 setLeaderboard(data);
             } else if (view === 'special') {
-                const response = await fetch('https://fantasy-parliament-api.onrender.com/api/leaderboard/special');
+                const response = await fetch('https://fantasy-parliament-api.onrender.com/special');
                 if (!response.ok) {
                     throw new Error('Failed to load special leaderboard');
                 }
