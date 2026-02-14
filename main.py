@@ -208,25 +208,55 @@ async def startup():
     print("STARTUP: Database initialized successfully")
     
 def mp_to_dict(mp):
-    return {
-        "id": mp.id,
-        "name": mp.name,
-        "party": mp.party,
-        "constituency": mp.riding,
-        "score": mp.total_score,
-        "slug": mp.slug,
-        "image_url": mp.image_url,
-        "committees": mp.committees,
-        "score_breakdown": mp.score_breakdown
-    }
+    try:
+        return {
+            "id": mp.id,
+            "name": mp.name,
+            "party": mp.party,
+            "constituency": mp.riding,
+            "score": mp.total_score,
+            "slug": mp.slug,
+            "image_url": mp.image_url,
+            "committees": mp.committees,
+            "score_breakdown": mp.score_breakdown
+        }
+    except Exception as e:
+        print(f"ERROR in mp_to_dict: {e}")
+        # Return basic fields only if extended fields fail
+        return {
+            "id": mp.id,
+            "name": mp.name,
+            "party": mp.party,
+            "constituency": mp.riding,
+            "score": getattr(mp, 'total_score', 0),
+            "slug": mp.slug,
+            "image_url": getattr(mp, 'image_url', None),
+            "committees": getattr(mp, 'committees', None),
+            "score_breakdown": getattr(mp, 'score_breakdown', None)
+        }
 
 @app.get("/mps/{mp_id}")
 @db_session
 def get_mp(mp_id: int):
-    mp = MP.get(id=mp_id)
-    if not mp:
-        raise HTTPException(status_code=404, detail="MP not found")
-    return mp_to_dict(mp)
+    print(f"DEBUG: get_mp called with mp_id={mp_id}, type={type(mp_id)}")
+    try:
+        # Use select().first() instead of get() to avoid potential Pony ORM edge cases
+        mp = MP.select(lambda m: m.id == mp_id).first()
+        print(f"DEBUG: MP query result: {mp}")
+        if not mp:
+            print(f"DEBUG: MP not found for id={mp_id}")
+            raise HTTPException(status_code=404, detail="MP not found")
+        
+        result = mp_to_dict(mp)
+        print(f"DEBUG: mp_to_dict result: {result}")
+        return result
+    except HTTPException:
+        raise
+    except Exception as e:
+        import traceback
+        print(f"ERROR in /mps/{{mp_id}}: {e}")
+        traceback.print_exc()
+        raise HTTPException(status_code=500, detail=str(e))
 
 @app.get("/diag/db")
 @db_session
