@@ -4,7 +4,7 @@ import Scoreboard from './components/Scoreboard';
 import DraftPool from './components/DraftPool';
 import MyTeam from './components/MyTeam';
 import Welcome from './components/Welcome';
-import Admin from './components/Admin';
+import Rules from './components/Rules';
 
 function MainApp() {
   const [username, setUsername] = useState(() => localStorage.getItem('fp_username') || '');
@@ -94,7 +94,7 @@ function MainApp() {
               <div className="ml-10 flex items-baseline space-x-4">
                 <Link to="/" className="bg-red-800 px-3 py-2 rounded-md text-sm font-medium">Dashboard</Link>
                 <a href="#" className="text-red-100 hover:bg-red-800 hover:text-white px-3 py-2 rounded-md text-sm font-medium transition">My Team</a>
-                <a href="#" className="text-red-100 hover:bg-red-800 hover:text-white px-3 py-2 rounded-md text-sm font-medium transition">Rules</a>
+                <Link to="/rules" className="text-red-100 hover:bg-red-800 hover:text-white px-3 py-2 rounded-md text-sm font-medium transition">Rules</Link>
               </div>
             </div>
             <div className="flex items-center space-x-2">
@@ -153,6 +153,7 @@ function App() {
     <HashRouter>
       <Routes>
         <Route path="/" element={<MainApp />} />
+        <Route path="/rules" element={<Rules />} />
         <Route path="/admin" element={<Admin />} />
       </Routes>
     </HashRouter>
