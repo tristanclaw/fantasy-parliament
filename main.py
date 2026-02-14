@@ -427,7 +427,7 @@ def health():
 # Admin endpoint to seed random scores for testing
 @app.post("/admin/seed-scores")
 @db_session
-def seed_scores():
+def seed_scores(api_key: str = Depends(verify_api_key)):
     """Seed random scores for all MPs (for testing)."""
     import random
     mps = MP.select()
