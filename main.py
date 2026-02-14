@@ -34,7 +34,8 @@ SPECIAL_TEAMS_CONFIG = {
             "mark-carney",
             "pierre-poilievre",
             "yves-francois-blanchet",
-            "elizabeth-may"
+            "elizabeth-may",
+            "jenny-kwan"
         ]
     },
     "all_whips": {
