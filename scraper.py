@@ -9,7 +9,7 @@ from dotenv import load_dotenv
 
 load_dotenv()
 
-BASE_URL = "https://openparliament.ca"
+BASE_URL = "https://api.openparliament.ca"
 
 PARTY_MAPPING = {
     "Conservative": "CPC",
@@ -39,12 +39,16 @@ def construct_image_url(name, party_name):
 
 async def fetch_json(url):
     async with httpx.AsyncClient() as client:
-        if '?' not in url and not url.endswith('/'):
+        if '?' not in url and not url.endswith('/') and '&' not in url:
             url += '/'
         # Handle query params that might already be in URL
         try:
             # Always append format=json
-            response = await client.get(url, params={"format": "json"}, headers={"Accept": "application/json"})
+            headers = {
+                "Accept": "application/json",
+                "User-Agent": "FantasyParliament/1.0 (contact@example.com)"
+            }
+            response = await client.get(url, params={"format": "json"}, headers=headers)
             if response.status_code == 404:
                 return None
             response.raise_for_status()
@@ -100,7 +104,7 @@ def calculate_all_scores():
     print("Score recalculation complete.")
 
 async def sync_mps():
-    url = f"{BASE_URL}/politicians/?limit=1000"
+    url = f"{BASE_URL}/politicians/?limit=1000&offset=0"
     total_synced = 0
     total_created = 0
     
@@ -142,14 +146,19 @@ async def sync_mps():
                 
                 mp.party = party_name
                 mp.riding = riding_name
-                # Update image URL to ensuring latest session format
-                mp.image_url = construct_image_url(name, party_name)
+
+                # Update image URL from API or fallback
+                api_image = mp_data.get('image')
+                if api_image:
+                    mp.image_url = f"https://api.openparliament.ca{api_image}"
+                else:
+                    mp.image_url = construct_image_url(name, party_name)
                 
                 total_synced += 1
             
         next_path = data.get('pagination', {}).get('next_url')
         if next_path:
-             url = f"https://openparliament.ca{next_path}" if next_path.startswith('/') else next_path
+             url = f"{BASE_URL}{next_path}"
         else:
              url = None
         
