@@ -8,9 +8,10 @@ import os
 from dotenv import load_dotenv
 from typing import Optional, List
 from pydantic import BaseModel
-from datetime import datetime, timedelta
+from datetime import datetime, timedelta, date
 import uuid
 import re
+import random
 
 load_dotenv()
 
@@ -22,6 +23,38 @@ MP_CACHE = {
     "last_updated": None
 }
 CACHE_DURATION = timedelta(minutes=15)
+
+# Special Teams Configuration
+SPECIAL_TEAMS_CONFIG = {
+    "all_party_leaders": {
+        "name": "All Party Leaders",
+        "slugs": [
+            "justin-trudeau",
+            "pierre-poilievre", 
+            "jagmeet-singh", 
+            "yves-francois-blanchet", 
+            "elizabeth-may"
+        ]
+    },
+    "all_whips": {
+        "name": "All Whips",
+        "slugs": [
+             "ruby-sahota",
+             "kerry-lynne-findlay",
+             "rachel-blaney",
+             "claude-debellefeuille"
+        ]
+    },
+    "deputy_pm_shadows": {
+        "name": "Deputy PM Shadows",
+        "slugs": [
+            "chrystia-freeland",
+            "melissa-lantsman",
+            "tim-uppal",
+            "alexandre-boulerice"
+        ]
+    }
+}
 
 def get_cached_mps():
     now = datetime.now()
@@ -248,6 +281,53 @@ class LeaderboardSubmission(BaseModel):
 def get_leaderboard():
     entries = LeaderboardEntry.select().order_by(desc(LeaderboardEntry.score))[:50]
     return [{"username": e.username, "score": e.score, "updated_at": e.updated_at.isoformat()} for e in entries]
+
+@app.get("/api/leaderboard/special")
+@db_session
+def get_special_leaderboards():
+    results = []
+    
+    # 1. Static Categories
+    for key, config in SPECIAL_TEAMS_CONFIG.items():
+        team_mps = []
+        total_score = 0
+        
+        for slug in config["slugs"]:
+            mp = MP.get(slug=slug)
+            if mp:
+                mp_data = mp_to_dict(mp)
+                team_mps.append(mp_data)
+                total_score += mp.total_score
+        
+        # Only include if we found MPs
+        if team_mps:
+            results.append({
+                "id": key,
+                "name": config["name"],
+                "score": total_score,
+                "mps": team_mps
+            })
+
+    # 2. Random Choice (Weekly)
+    all_mps = MP.select()[:]
+    if all_mps:
+        # Seed random with year and week number
+        today = date.today()
+        seed_val = f"{today.year}-{today.isocalendar()[1]}"
+        rng = random.Random(seed_val)
+        
+        # Select 4 random MPs (standard team size)
+        random_mps = rng.sample(all_mps, min(4, len(all_mps)))
+        random_team_score = sum(mp.total_score for mp in random_mps)
+        
+        results.append({
+            "id": "random_weekly",
+            "name": "Random Choice (Weekly)",
+            "score": random_team_score,
+            "mps": [mp_to_dict(mp) for mp in random_mps]
+        })
+    
+    return results
 
 @app.post("/leaderboard")
 @db_session

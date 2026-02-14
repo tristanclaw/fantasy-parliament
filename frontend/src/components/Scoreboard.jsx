@@ -3,7 +3,8 @@ import React, { useState, useEffect } from 'react';
 const Scoreboard = () => {
     const [topMPs, setTopMPs] = useState([]);
     const [leaderboard, setLeaderboard] = useState([]);
-    const [view, setView] = useState('mps'); // 'mps' or 'users'
+    const [specialTeams, setSpecialTeams] = useState([]);
+    const [view, setView] = useState('mps'); // 'mps', 'users', or 'special'
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState(null);
 
@@ -14,10 +15,14 @@ const Scoreboard = () => {
                 const response = await fetch('https://fantasy-parliament-api.onrender.com/scoreboard');
                 const data = await response.json();
                 setTopMPs(data);
-            } else {
+            } else if (view === 'users') {
                 const response = await fetch('https://fantasy-parliament-api.onrender.com/leaderboard');
                 const data = await response.json();
                 setLeaderboard(data);
+            } else if (view === 'special') {
+                const response = await fetch('https://fantasy-parliament-api.onrender.com/api/leaderboard/special');
+                const data = await response.json();
+                setSpecialTeams(data);
             }
             setLoading(false);
         } catch (err) {
@@ -47,13 +52,19 @@ const Scoreboard = () => {
                     >
                         Users
                     </button>
+                    <button 
+                        onClick={() => setView('special')}
+                        className={`px-3 py-1 text-xs font-bold rounded-md transition ${view === 'special' ? 'bg-white text-red-700 shadow-sm' : 'text-gray-500 hover:text-gray-700'}`}
+                    >
+                        Special
+                    </button>
                 </div>
             </div>
 
             {loading ? <div className="p-4 text-center text-gray-400">Loading...</div> : 
              error ? <div className="p-4 text-red-500">Error: {error}</div> : (
                 <div className="space-y-4 max-h-[600px] overflow-y-auto pr-2">
-                    {view === 'mps' ? topMPs.map((mp, index) => (
+                    {view === 'mps' && topMPs.map((mp, index) => (
                         <div key={mp.id || index} className="flex items-center justify-between p-3 bg-red-50 rounded-lg transition hover:bg-red-100">
                             <div className="flex items-center space-x-4">
                                 <span className="font-bold text-red-600 w-6">#{index + 1}</span>
@@ -67,7 +78,9 @@ const Scoreboard = () => {
                                 <p className="text-xs text-red-400 uppercase tracking-wider font-semibold">Points</p>
                             </div>
                         </div>
-                    )) : leaderboard.map((entry, index) => (
+                    ))}
+                    
+                    {view === 'users' && leaderboard.map((entry, index) => (
                         <div key={index} className="flex items-center justify-between p-3 bg-blue-50 rounded-lg transition hover:bg-blue-100">
                             <div className="flex items-center space-x-4">
                                 <span className="font-bold text-blue-600 w-6">#{index + 1}</span>
@@ -82,7 +95,36 @@ const Scoreboard = () => {
                             </div>
                         </div>
                     ))}
-                    {((view === 'mps' && topMPs.length === 0) || (view === 'users' && leaderboard.length === 0)) && (
+
+                    {view === 'special' && specialTeams.map((team, index) => (
+                        <div key={team.id} className="border border-gray-200 rounded-lg p-4 bg-purple-50 hover:bg-purple-100 transition">
+                            <div className="flex justify-between items-center mb-2">
+                                <h3 className="font-bold text-purple-900">{team.name}</h3>
+                                <div className="text-right">
+                                    <span className="text-xl font-bold text-purple-700">{team.score}</span>
+                                    <span className="text-xs text-purple-500 ml-1 uppercase">Points</span>
+                                </div>
+                            </div>
+                            <div className="flex -space-x-2 overflow-hidden">
+                                {team.mps.map((mp, i) => (
+                                    <div key={mp.id || i} className="relative inline-block h-8 w-8 rounded-full ring-2 ring-white bg-gray-300 flex items-center justify-center text-xs overflow-hidden" title={mp.name}>
+                                        {mp.image_url ? (
+                                            <img src={mp.image_url} alt={mp.name} className="h-full w-full object-cover" />
+                                        ) : (
+                                            <span>{mp.name.substring(0, 2)}</span>
+                                        )}
+                                    </div>
+                                ))}
+                            </div>
+                            <p className="text-xs text-gray-500 mt-2">
+                                {team.mps.length} Members
+                            </p>
+                        </div>
+                    ))}
+
+                    {((view === 'mps' && topMPs.length === 0) || 
+                      (view === 'users' && leaderboard.length === 0) ||
+                      (view === 'special' && specialTeams.length === 0)) && (
                         <p className="text-center text-gray-400 py-4">No rankings available.</p>
                     )}
                 </div>
