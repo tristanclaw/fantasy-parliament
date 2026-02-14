@@ -712,3 +712,24 @@ def seed_scores(api_key: str = Depends(verify_api_key)):
         mp.total_score = random.randint(0, 100)
         count += 1
     return {"status": "ok", "updated": count}
+
+# ============================================
+# SPA Routing - Serve React Frontend
+# ============================================
+from fastapi.responses import FileResponse
+import os
+
+@app.get("/{path:path}")
+async def serve_spa(path: str):
+    """Serve React SPA for all non-API routes."""
+    # Check if it's an API route that wasn't caught
+    if path.startswith("api/"):
+        raise HTTPException(status_code=404, detail="API endpoint not found")
+    
+    # Try to serve static file
+    static_path = os.path.join("frontend/dist", path)
+    if os.path.isfile(static_path):
+        return FileResponse(static_path)
+    
+    # Fallback to index.html for SPA routing
+    return FileResponse(os.path.join("frontend/dist", "index.html"))
