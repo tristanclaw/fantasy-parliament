@@ -31,16 +31,20 @@ SPECIAL_TEAMS_CONFIG = {
     "all_party_leaders": {
         "name": "All Party Leaders",
         "slugs": [
-            "pierre-poilievre", 
-            "yves-francois-blanchet", 
+            "mark-carney",
+            "pierre-poilievre",
+            "yves-francois-blanchet",
             "elizabeth-may"
         ]
     },
     "all_whips": {
         "name": "All Whips",
         "slugs": [
-             "ruby-sahota",
-             "kerry-lynne-findlay"
+            "ruby-sahota",
+            "john-nater",
+            "don-davies",
+            "claude-debellefeuille",
+            "elizabeth-may"
         ]
     },
     "deputy_pm_shadows": {
@@ -48,7 +52,9 @@ SPECIAL_TEAMS_CONFIG = {
         "slugs": [
             "steven-guilbeault",
             "melissa-lantsman",
-            "tim-uppal"
+            "don-davies",
+            "yves-perron",
+            "elizabeth-may"
         ]
     }
 }
