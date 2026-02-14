@@ -5,6 +5,7 @@ import DraftPool from './components/DraftPool';
 import MyTeam from './components/MyTeam';
 import Welcome from './components/Welcome';
 import Rules from './components/Rules';
+import Admin from './components/Admin';
 
 function MainApp() {
   const [username, setUsername] = useState(() => localStorage.getItem('fp_username') || '');
