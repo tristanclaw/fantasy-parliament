@@ -281,42 +281,17 @@ def get_leaderboard():
 
 @app.get("/api/leaderboard/special")
 @db_session
+@app.get("/api/leaderboard/special")
+@db_session
 def get_special_leaderboards():
     results = []
     
-    # 1. Static Categories
-    for key, config in SPECIAL_TEAMS_CONFIG.items():
-        team_mps = []
-        total_score = 0
-        
-        for slug in config["slugs"]:
-            try:
-                mp = MP.get(slug=slug)
-                if mp:
-                    mp_data = mp_to_dict(mp)
-                    team_mps.append(mp_data)
-                    total_score += mp.total_score
-            except Exception:
-                pass  # Skip if MP not found
-        
-        # Only include if we found MPs
-        if team_mps:
-            results.append({
-                "id": key,
-                "name": config["name"],
-                "score": total_score,
-                "mps": team_mps
-            })
-
-    # 2. Random Choice (Weekly)
-    all_mps = MP.select()[:]
+    # Random Choice (Weekly) - simplest version
+    all_mps = list(MP.select())
     if all_mps:
-        # Seed random with year and week number
         today = date.today()
         seed_val = f"{today.year}-{today.isocalendar()[1]}"
         rng = random.Random(seed_val)
-        
-        # Select 4 random MPs (standard team size)
         random_mps = rng.sample(all_mps, min(4, len(all_mps)))
         random_team_score = sum(mp.total_score for mp in random_mps)
         
