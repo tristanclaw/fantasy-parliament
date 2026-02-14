@@ -141,7 +141,25 @@ def run_migrations(dsn=None, **kwargs):
                     except Exception as e:
                         print(f"Migration warning ({table}.ip_address): {e}")
 
-            # Migration 5: Subscriber table
+            # Migration 5: MP.committees
+            for table in ['mp', 'MP']:
+                if table in tables:
+                    try:
+                        cur.execute(f'ALTER TABLE "{table}" ADD COLUMN IF NOT EXISTS "committees" JSONB')
+                        print(f"Applied/Checked: {table}.committees")
+                    except Exception as e:
+                        print(f"Migration warning ({table}.committees): {e}")
+
+            # Migration 6: MP.score_breakdown
+            for table in ['mp', 'MP']:
+                if table in tables:
+                    try:
+                        cur.execute(f'ALTER TABLE "{table}" ADD COLUMN IF NOT EXISTS "score_breakdown" JSONB')
+                        print(f"Applied/Checked: {table}.score_breakdown")
+                    except Exception as e:
+                        print(f"Migration warning ({table}.score_breakdown): {e}")
+
+            # Migration 7: Subscriber table
             if 'subscriber' not in tables and 'Subscriber' not in tables:
                 try:
                     cur.execute('''
