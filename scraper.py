@@ -217,7 +217,7 @@ async def process_mp_data(client, semaphore, mp_slug, start_date_str):
                     bill = Bill.get(number=b['number'])
                     
                     # Determine introduced date
-                    intro_date_str = b.get('introduced') or yesterday_str
+                    intro_date_str = b.get('introduced') or start_date_str
                     intro_date = date.fromisoformat(intro_date_str)
                     
                     if not bill:
@@ -233,9 +233,9 @@ async def process_mp_data(client, semaphore, mp_slug, start_date_str):
                     if 'Royal Assent' in status_text:
                         if not bill.passed:
                             bill.passed = True
-                            bill.date_passed = date.fromisoformat(yesterday_str)
+                            bill.date_passed = date.fromisoformat(start_date_str)
                         elif bill.passed and not bill.date_passed:
-                            bill.date_passed = date.fromisoformat(yesterday_str)
+                            bill.date_passed = date.fromisoformat(start_date_str)
     
     print(f"Processed MP: {mp_slug}")
 
