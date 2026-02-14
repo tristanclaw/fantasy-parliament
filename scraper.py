@@ -20,6 +20,9 @@ PARTY_MAPPING = {
     "Independent": "Ind"
 }
 
+# Semaphore to limit concurrent requests
+SEMAPHORE_LIMIT = 5
+
 def construct_image_url(name, party_name):
     parts = name.replace(".", "").split()
     if len(parts) >= 2:
@@ -37,40 +40,38 @@ def construct_image_url(name, party_name):
     # Updated for 45th Parliament
     return f"https://www.ourcommons.ca/Content/Parliamentarians/Images/OfficialMPPhotos/45/{last}{first}_{party_code}.jpg"
 
-async def fetch_json(url):
-    async with httpx.AsyncClient() as client:
-        if '?' not in url and not url.endswith('/') and '&' not in url:
-            url += '/'
-        # Handle query params that might already be in URL
-        try:
-            # Always append format=json
-            headers = {
-                "Accept": "application/json",
-                "User-Agent": "FantasyParliament/1.0 (contact@example.com)"
-            }
-            response = await client.get(url, params={"format": "json"}, headers=headers)
-            if response.status_code == 404:
-                return None
-            response.raise_for_status()
-            return response.json()
-        except Exception as e:
-            print(f"Error fetching {url}: {e}")
+async def fetch_json(client, url):
+    """Fetch JSON with semaphore-limited concurrency."""
+    if '?' not in url and not url.endswith('/') and '&' not in url:
+        url += '/'
+    try:
+        headers = {
+            "Accept": "application/json",
+            "User-Agent": "FantasyParliament/1.0 (contact@example.com)"
+        }
+        response = await client.get(url, params={"format": "json"}, headers=headers)
+        if response.status_code == 404:
             return None
+        response.raise_for_status()
+        return response.json()
+    except Exception as e:
+        print(f"Error fetching {url}: {e}")
+        return None
+
+async def fetch_with_semaphore(client, semaphore, url):
+    """Wrapper to fetch JSON with semaphore limiting."""
+    async with semaphore:
+        return await fetch_json(client, url)
 
 @db_session
 def cleanup_old_data():
     cutoff_date = date.today() - timedelta(days=7)
     print(f"Cleaning up data older than {cutoff_date}")
-    # Python 3.13: Use filter/delete instead of generator expression
     Speech.select(lambda s: s.date < cutoff_date).delete(bulk=True)
     VoteAttendance.select(lambda v: v.date < cutoff_date).delete(bulk=True)
     
-    # Iterate to avoid decompilation issues with complex logic in Python 3.12
-    # Select candidates for deletion (introduced > 7 days ago)
-    # Python 3.13: Use .select()
     bills_to_check = Bill.select(lambda b: b.date_introduced < cutoff_date)
     for b in bills_to_check:
-        # If it hasn't passed, or passed long ago, delete it
         if b.date_passed is None or b.date_passed < cutoff_date:
             b.delete()
 
@@ -127,7 +128,7 @@ def calculate_all_scores():
         mp.score_breakdown = breakdown
     print("Score recalculation complete.")
 
-async def sync_mps():
+async def sync_mps(client):
     url = f"{BASE_URL}/politicians/?limit=1000&offset=0"
     total_synced = 0
     total_created = 0
@@ -136,7 +137,7 @@ async def sync_mps():
     while url:
         print(f"Scraper: Fetching MPs from {url}")
         try:
-            data = await fetch_json(url)
+            data = await fetch_json(client, url)
         except Exception as e:
             print(f"Scraper: fetch_json error: {e}")
             break
@@ -188,9 +189,13 @@ async def sync_mps():
         
     print(f"Synced {total_synced} MPs ({total_created} new)")
 
-async def process_mp_data(mp_slug, start_date_str):
-    # 1. Speeches - use date__gte for range
-    speech_data = await fetch_json(f"{BASE_URL}/debates/?politician={quote(mp_slug)}&date__gte={start_date_str}")
+async def process_mp_data(client, semaphore, mp_slug, start_date_str):
+    """Process MP data: speeches and bills. Uses semaphore for rate limiting."""
+    # 1. Speeches
+    speech_data = await fetch_with_semaphore(
+        client, semaphore,
+        f"{BASE_URL}/debates/?politician={quote(mp_slug)}&date__gte={start_date_str}"
+    )
     if speech_data:
         with db_session:
             mp = MP.get(slug=mp_slug)
@@ -199,8 +204,11 @@ async def process_mp_data(mp_slug, start_date_str):
                     if not Speech.exists(content_url=obj['url']):
                         Speech(mp=mp, date=date.fromisoformat(obj['date']), content_url=obj['url'])
 
-    # 2. Bills
-    bill_data = await fetch_json(f"{BASE_URL}/bills/?sponsor={quote(mp_slug)}")
+    Bills
+    bill_data = await fetch_with_semaphore(
+        client, semaphore,
+        f"{BASE_URL}/bills/?sponsor={quote(mp_slug)}"
+    )
     if bill_data:
         with db_session:
             mp = MP.get(slug=mp_slug)
@@ -218,7 +226,6 @@ async def process_mp_data(mp_slug, start_date_str):
                                    sponsor=mp, 
                                    date_introduced=intro_date)
                     else:
-                        # Update introduced date if needed (e.g. data correction)
                         bill.date_introduced = intro_date
                     
                     # Check if status indicates Royal Assent
@@ -226,21 +233,20 @@ async def process_mp_data(mp_slug, start_date_str):
                     if 'Royal Assent' in status_text:
                         if not bill.passed:
                             bill.passed = True
-                            # If we just discovered it passed, and we assume it happened recently (yesterday or today),
-                            # set date_passed. Ideally API gives this date, but 'introduced' is the only top-level date.
-                            # We'll default to yesterday for scoring purposes if it's a new discovery.
                             bill.date_passed = date.fromisoformat(yesterday_str)
                         elif bill.passed and not bill.date_passed:
-                            # Backfill if missing
                             bill.date_passed = date.fromisoformat(yesterday_str)
+    
+    print(f"Processed MP: {mp_slug}")
 
-async def sync_votes(start_date_str):
-    # Use session 45-1 explicitly as requested
+async def sync_votes(client, start_date_str):
+    """Sync votes with semaphore limiting."""
     votes_url = f"{BASE_URL}/votes/?session=45-1"
     start_date = date.fromisoformat(start_date_str)
+    semaphore = asyncio.Semaphore(SEMAPHORE_LIMIT)
     
     while votes_url:
-        votes_data = await fetch_json(votes_url)
+        votes_data = await fetch_with_semaphore(client, semaphore, votes_url)
         if not votes_data: break
         
         objects = votes_data.get('objects', [])
@@ -251,7 +257,6 @@ async def sync_votes(start_date_str):
             if not vote_date: continue
             
             v_date_obj = date.fromisoformat(vote_date)
-            # Optimization: if we are WAY past (e.g. 14 days before start), break
             if v_date_obj < start_date - timedelta(days=14):
                  votes_url = None
                  break
@@ -259,12 +264,12 @@ async def sync_votes(start_date_str):
             if v_date_obj < start_date:
                 continue
     
-            vote_url = v_data['url'] # e.g. /votes/45-1/66/
+            vote_url = v_data['url']
             
             # Fetch ballots with pagination
             ballot_url = f"{BASE_URL}/votes/ballots/?vote={vote_url}"
             while ballot_url:
-                ballot_data = await fetch_json(ballot_url)
+                ballot_data = await fetch_with_semaphore(client, semaphore, ballot_url)
                 if not ballot_data: break
             
                 with db_session:
@@ -278,89 +283,112 @@ async def sync_votes(start_date_str):
                             if not VoteAttendance.exists(mp=mp, vote_url=vote_url):
                                 VoteAttendance(mp=mp, vote_url=vote_url, attended=True, date=v_date_obj)
                 
-                # Pagination for ballots
                 b_next = ballot_data.get('pagination', {}).get('next_url')
                 if b_next:
                     ballot_url = f"https://openparliament.ca{b_next}" if b_next.startswith('/') else b_next
                 else:
                     ballot_url = None
 
-        # Pagination for votes
-        if votes_url: # Only if we didn't break early
+        if votes_url:
             v_next = votes_data.get('pagination', {}).get('next_url')
             if v_next:
                 votes_url = f"https://openparliament.ca{v_next}" if v_next.startswith('/') else v_next
             else:
                 votes_url = None
 
-async def sync_committees():
+async def sync_single_committee(client, semaphore, mp):
+    """Sync committees for a single MP."""
+    detail_url = f"{BASE_URL}/politicians/{mp.slug}/"
+    data = await fetch_with_semaphore(client, semaphore, detail_url)
+    
+    if data:
+        committees_data = data.get('committees', [])
+        formatted = []
+        for c in committees_data:
+            name = c.get('name') or c.get('committee', {}).get('name')
+            role = c.get('position')
+            if name:
+                formatted.append({"name": name, "role": role})
+        
+        if formatted:
+            with db_session:
+                mp_obj = MP.get(id=mp.id)
+                if mp_obj:
+                    mp_obj.committees = formatted
+                    print(f"Updated committees for {mp_obj.name}: {[c['name'] for c in formatted]}")
+    
+    return mp.slug
+
+async def sync_committees(client, semaphore):
+    """Sync all committees using asyncio.gather with semaphore."""
     print("Syncing committees...")
     with db_session:
         mps = list(MP.select())
     
-    # Process in batches to be polite
-    for i, mp in enumerate(mps):
-        detail_url = f"{BASE_URL}/politicians/{mp.slug}/"
-        data = await fetch_json(detail_url)
-        
-        if data:
-            committees_data = data.get('committees', [])
-            # Structure: [{"name": "Finance", "position": "Chair"}, ...]
-            formatted = []
-            for c in committees_data:
-                # Handle different possible keys from API
-                name = c.get('name') or c.get('committee', {}).get('name')
-                role = c.get('position')
-                if name:
-                    formatted.append({"name": name, "role": role})
-            
-            if formatted:
-                with db_session:
-                    mp_obj = MP.get(id=mp.id)
-                    if mp_obj:
-                        mp_obj.committees = formatted
-                        print(f"Updated committees for {mp_obj.name}: {[c['name'] for c in formatted]}")
-        
-        if i % 20 == 0:
-            await asyncio.sleep(0.5)
-            
+    total = len(mps)
+    print(f"Processing {total} MPs for committees...")
+    
+    # Create tasks for all MPs
+    tasks = [sync_single_committee(client, semaphore, mp) for mp in mps]
+    
+    # Process with gather, semaphore limits concurrency
+    results = []
+    for i, coro in enumerate(asyncio.as_completed(tasks)):
+        result = await coro
+        results.append(result)
+        if (i + 1) % 20 == 0:
+            print(f"Committee sync progress: {i + 1}/{total}")
+    
     print("Committee sync complete.")
 
 async def run_sync():
+    # Create a single async client for the entire session
+    client = httpx.AsyncClient(timeout=30.0)
+    semaphore = asyncio.Semaphore(SEMAPHORE_LIMIT)
+    
     # Fetch data for the last 7 days
     start_date = date.today() - timedelta(days=7)
     start_date_str = start_date.isoformat()
     
-    print(f"Starting MP sync (since {start_date_str})...")
-    await sync_mps()
-    
-    print("Syncing committees...")
-    await sync_committees()
-    
-    with db_session:
-        # Python 3.13: Use .select()
-        mp_slugs = [mp.slug for mp in MP.select()]
-    
-    print("Processing individual MP data...")
-    # Process MPs
-    for i, mp_slug in enumerate(mp_slugs):
-        await process_mp_data(mp_slug, start_date_str)
-        if i % 10 == 0:
-            await asyncio.sleep(0.1) 
-    
-    print("Syncing votes...")
-    await sync_votes(start_date_str)
-    
-    print("Cleaning up old data...")
-    cleanup_old_data()
-    
-    print("Calculating scores...")
-    calculate_all_scores()
-    print("Sync complete.")
+    try:
+        print(f"Starting MP sync (since {start_date_str})...")
+        await sync_mps(client)
+        
+        print("Syncing committees...")
+        await sync_committees(client, semaphore)
+        
+        with db_session:
+            mp_slugs = [mp.slug for mp in MP.select()]
+        
+        total_mps = len(mp_slugs)
+        print(f"Processing individual MP data for {total_mps} MPs...")
+        
+        # Use asyncio.gather with semaphore for MP data processing
+        tasks = [
+            process_mp_data(client, semaphore, mp_slug, start_date_str) 
+            for mp_slug in mp_slugs
+        ]
+        
+        # Process in batches to show progress
+        for i in range(0, len(tasks), 20):
+            batch = tasks[i:i+20]
+            await asyncio.gather(*batch)
+            print(f"MP data progress: {min(i+20, total_mps)}/{total_mps}")
+        
+        print("Syncing votes...")
+        await sync_votes(client, start_date_str)
+        
+        print("Cleaning up old data...")
+        cleanup_old_data()
+        
+        print("Calculating scores...")
+        calculate_all_scores()
+        print("Sync complete.")
+    finally:
+        await client.aclose()
 
 if __name__ == "__main__":
     from models import db
-    # init_db is optimized for Postgres; using direct bind for SQLite to avoid arg conflicts
     db.bind(provider='sqlite', filename='db.sqlite', create_db=True)
     db.generate_mapping(create_tables=True)
     asyncio.run(run_sync())
