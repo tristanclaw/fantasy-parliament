@@ -700,10 +700,25 @@ def schedule_weekly_emails():
     )
     print("SCHEDULER: Weekly email job scheduled for Sundays at 18:00")
 
-@app.post("/sync")
-async def trigger_sync(background_tasks: BackgroundTasks, api_key: str = Depends(verify_api_key)):
-    background_tasks.add_task(run_sync)
-    return {"message": "Sync started in background"}
+@app.post("/admin/sync-now")
+async def sync_now(api_key: str = Depends(verify_api_key)):
+    """Run sync synchronously and return result immediately."""
+    import io
+    import sys
+    
+    old_stdout = sys.stdout
+    sys.stdout = mystdout = io.StringIO()
+    
+    try:
+        await run_sync()
+        output = mystdout.getvalue()
+        return {"status": "success", "logs": output}
+    except Exception as e:
+        import traceback
+        output = mystdout.getvalue() + "\n" + traceback.format_exc()
+        return {"status": "error", "logs": output}
+    finally:
+        sys.stdout = old_stdout
 
 @app.get("/health")
 def health():
