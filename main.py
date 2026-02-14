@@ -423,3 +423,16 @@ async def trigger_sync(background_tasks: BackgroundTasks, api_key: str = Depends
 @app.get("/health")
 def health():
     return {"status": "ok"}
+
+# Admin endpoint to seed random scores for testing
+@app.post("/admin/seed-scores")
+@db_session
+def seed_scores():
+    """Seed random scores for all MPs (for testing)."""
+    import random
+    mps = MP.select()
+    count = 0
+    for mp in mps:
+        mp.total_score = random.randint(0, 100)
+        count += 1
+    return {"status": "ok", "updated": count}
