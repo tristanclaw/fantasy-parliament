@@ -239,16 +239,16 @@ def save_mp_details_sync(mp_slug, speech_data, bill_data, start_date_str):
 
 async def process_mp_data(client, semaphore, mp_slug, start_date_str):
     """Process MP data: speeches and bills. Uses semaphore for rate limiting."""
-    # 1. Speeches
+    # 1. Speeches - Use /speeches/ endpoint instead of /debates/
     speech_data = await fetch_with_semaphore(
         client, semaphore,
-        f"{BASE_URL}/debates/?politician={quote(mp_slug)}&date__gte={start_date_str}"
+        f"{BASE_URL}/speeches/?politician={quote(mp_slug)}&date__gte={start_date_str}"
     )
     
     # 2. Bills
     bill_data = await fetch_with_semaphore(
         client, semaphore,
-        f"{BASE_URL}/bills/?sponsor={quote(mp_slug)}"
+        f"{BASE_URL}/bills/?sponsor_politician={quote(mp_slug)}"
     )
 
     if speech_data or bill_data:
@@ -307,14 +307,14 @@ async def sync_votes(client, start_date_str):
                 
                 b_next = ballot_data.get('pagination', {}).get('next_url')
                 if b_next:
-                    ballot_url = f"https://openparliament.ca{b_next}" if b_next.startswith('/') else b_next
+                    ballot_url = f"{BASE_URL}{b_next}" if b_next.startswith('/') else b_next
                 else:
                     ballot_url = None
 
         if votes_url:
             v_next = votes_data.get('pagination', {}).get('next_url')
             if v_next:
-                votes_url = f"https://openparliament.ca{v_next}" if v_next.startswith('/') else v_next
+                votes_url = f"{BASE_URL}{v_next}" if v_next.startswith('/') else v_next
             else:
                 votes_url = None
 
