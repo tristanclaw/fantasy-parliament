@@ -209,7 +209,10 @@ def save_mp_details_sync(mp_slug, speech_data, bill_data, start_date_str):
         if speech_data:
             for obj in speech_data.get('objects', []):
                 if not Speech.exists(content_url=obj['url']):
-                    Speech(mp=mp, date=date.fromisoformat(obj['date']), content_url=obj['url'])
+                    # API returns 'time' field, not 'date'
+                    time_str = obj.get('time', '').split()[0] if obj.get('time') else None
+                    if time_str:
+                        Speech(mp=mp, date=date.fromisoformat(time_str), content_url=obj['url'])
 
         # 2. Bills
         if bill_data:
