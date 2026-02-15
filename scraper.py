@@ -251,13 +251,12 @@ async def run_sync():
         # Sync MPs roster
         await sync_mps(client)
         
-        # Sync today's activity
+        # Sync past 7 days for initial data backfill
         today = date.today()
-        await sync_daily_activity(client, today)
-        
-        # Sync yesterday's activity (to catch late updates)
-        yesterday = today - timedelta(days=1)
-        await sync_daily_activity(client, yesterday)
+        for days_ago in range(7):
+            target_date = today - timedelta(days=days_ago)
+            print(f"Syncing {target_date}...")
+            await sync_daily_activity(client, target_date)
 
     except Exception as e:
         print(f"CRITICAL ERROR in run_sync: {e}")
