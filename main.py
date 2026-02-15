@@ -728,7 +728,6 @@ async def sync_now(api_key: str = Depends(verify_api_key)):
 @app.post("/admin/test-sync")
 async def test_sync(api_key: str = Depends(verify_api_key)):
     """Test sync with just one MP"""
-    from scraper import process_mp_data, fetch_with_semaphore, save_mp_details_sync
     import httpx
     
     client = httpx.AsyncClient(timeout=30.0)
@@ -740,24 +739,32 @@ async def test_sync(api_key: str = Depends(verify_api_key)):
     # Test with Pierre Poilievre
     mp_slug = "pierre-poilievre"
     
-    print(f"TEST: Fetching speeches for {mp_slug}")
-    speech_data = await fetch_with_semaphore(
-        client, semaphore,
-        f"https://api.openparliament.ca/speeches/?politician={quote(mp_slug)}&date__gte={start_date_str}"
-    )
-    
-    print(f"TEST: Fetching bills for {mp_slug}")
-    bill_data = await fetch_with_semaphore(
-        client, semaphore,
-        f"https://api.openparliament.ca/bills/?sponsor_politician={quote(mp_slug)}"
-    )
-    
-    print(f"TEST: Speech count: {len(speech_data.get('objects', [])) if speech_data else 0}")
-    print(f"TEST: Bill count: {len(bill_data.get('objects', [])) if bill_data else 0}")
-    
-    await client.aclose()
-    
-    return {"status": "ok", "speech_count": len(speech_data.get('objects', [])) if speech_data else 0, "bill_count": len(bill_data.get('objects', [])) if bill_data else 0}
+    try:
+        print(f"TEST: Fetching speeches for {mp_slug}")
+        speech_resp = await client.get(
+            f"https://api.openparliament.ca/speeches/?politician={quote(mp_slug)}&date__gte={start_date_str}",
+            headers={"Accept": "application/json"}
+        )
+        speech_data = speech_resp.json()
+        
+        print(f"TEST: Fetching bills for {mp_slug}")
+        bill_resp = await client.get(
+            f"https://api.openparliament.ca/bills/?sponsor_politician={quote(mp_slug)}",
+            headers={"Accept": "application/json"}
+        )
+        bill_data = bill_resp.json()
+        
+        speech_count = len(speech_data.get('objects', [])) if speech_data else 0
+        bill_count = len(bill_data.get('objects', [])) if bill_data else 0
+        
+        print(f"TEST: Speech count: {speech_count}")
+        print(f"TEST: Bill count: {bill_count}")
+        
+        return {"status": "ok", "speech_count": speech_count, "bill_count": bill_count}
+    except Exception as e:
+        return {"status": "error", "message": str(e)}
+    finally:
+        await client.aclose()
 
 @app.get("/health")
 def health():
