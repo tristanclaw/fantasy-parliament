@@ -725,6 +725,40 @@ async def sync_now(api_key: str = Depends(verify_api_key)):
     finally:
         sys.stdout = old_stdout
 
+@app.post("/admin/test-sync")
+async def test_sync(api_key: str = Depends(verify_api_key)):
+    """Test sync with just one MP"""
+    from scraper import process_mp_data, fetch_with_semaphore, save_mp_details_sync
+    import httpx
+    
+    client = httpx.AsyncClient(timeout=30.0)
+    semaphore = asyncio.Semaphore(5)
+    
+    start_date = date.today() - timedelta(days=7)
+    start_date_str = start_date.isoformat()
+    
+    # Test with Pierre Poilievre
+    mp_slug = "pierre-poilievre"
+    
+    print(f"TEST: Fetching speeches for {mp_slug}")
+    speech_data = await fetch_with_semaphore(
+        client, semaphore,
+        f"https://api.openparliament.ca/speeches/?politician={quote(mp_slug)}&date__gte={start_date_str}"
+    )
+    
+    print(f"TEST: Fetching bills for {mp_slug}")
+    bill_data = await fetch_with_semaphore(
+        client, semaphore,
+        f"https://api.openparliament.ca/bills/?sponsor_politician={quote(mp_slug)}"
+    )
+    
+    print(f"TEST: Speech count: {len(speech_data.get('objects', [])) if speech_data else 0}")
+    print(f"TEST: Bill count: {len(bill_data.get('objects', [])) if bill_data else 0}")
+    
+    await client.aclose()
+    
+    return {"status": "ok", "speech_count": len(speech_data.get('objects', [])) if speech_data else 0, "bill_count": len(bill_data.get('objects', [])) if bill_data else 0}
+
 @app.get("/health")
 def health():
     return {"status": "ok"}
