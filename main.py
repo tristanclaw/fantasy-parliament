@@ -158,7 +158,7 @@ async def manual_migrate(api_key: str = Depends(verify_api_key)):
     else:
         raise HTTPException(status_code=500, detail=msg)
 
-@admin_router.post("/sync")
+@admin_router.get("/ls")\ndef admin_ls(api_key: str = Depends(verify_api_key)):\n    import subprocess\n    try:\n        res = subprocess.check_output(["ls", "-R"], stderr=subprocess.STDOUT).decode()\n        return {"ls": res}\n    except Exception as e:\n        return {"error": str(e)}\n\n@admin_router.post("/sync")
 async def manual_sync(background_tasks: BackgroundTasks, api_key: str = Depends(verify_api_key)):
     print("ADMIN: Triggering manual sync...")
     background_tasks.add_task(run_sync_with_logging)
