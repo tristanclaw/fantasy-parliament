@@ -890,3 +890,22 @@ async def recalculate_scores(api_key: str = Depends(verify_api_key)):
         commit()
     
     return {"updated": updated}
+
+@app.post("/admin/populate-breakdowns")
+async def populate_breakdowns(api_key: str = Depends(verify_api_key)):
+    """Populate score_breakdown for all MPs from daily_scores"""
+    from pony.orm import db_session, commit, select
+    
+    updated = 0
+    with db_session():
+        mps = select(mp for mp in MP)[:]
+        for mp in mps:
+            breakdown = {"speeches": 0, "votes": 0, "bills": 0}
+            for ds in mp.daily_scores:
+                breakdown["speeches"] += ds.points_today
+            
+            mp.score_breakdown = breakdown
+            updated += 1
+        commit()
+    
+    return {"updated": updated}
