@@ -214,13 +214,17 @@ def save_mp_details_sync(mp_slug, speech_data, bill_data, start_date_str):
                 for obj in speech_data.get('objects', []):
                     if not Speech.exists(content_url=obj['url']):
                         # API returns 'time' field, not 'date'
-                        time_str = obj.get('time', '').split()[0] if obj.get('time') else None
-                        if time_str:
+                        time_val = obj.get('time')
+                        if time_val:
                             try:
-                                Speech(mp=mp, date=date.fromisoformat(time_str), content_url=obj['url'])
-                                speeches_added += 1
+                                # Handle various date formats
+                                time_str = str(time_val).split()[0] if time_val else None
+                                if time_str and '-' in time_str:
+                                    speech_date = date.fromisoformat(time_str.split('T')[0])
+                                    Speech(mp=mp, date=speech_date, content_url=obj['url'])
+                                    speeches_added += 1
                             except Exception as e:
-                                print(f"Error saving speech for {mp_slug}: {e}")
+                                print(f"Error saving speech for {mp_slug}: {e} (time_val={time_val})")
 
             # 2. Bills
             bills_added = 0
