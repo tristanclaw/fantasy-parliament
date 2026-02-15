@@ -201,44 +201,62 @@ async def sync_mps(client):
 
 def save_mp_details_sync(mp_slug, speech_data, bill_data, start_date_str):
     """Sync helper to save speeches and bills."""
-    with db_session:
-        mp = MP.get(slug=mp_slug)
-        if not mp: return
+    try:
+        with db_session:
+            mp = MP.get(slug=mp_slug)
+            if not mp: 
+                print(f"Scraper: MP not found for slug {mp_slug}")
+                return
 
-        # 1. Speeches
-        if speech_data:
-            for obj in speech_data.get('objects', []):
-                if not Speech.exists(content_url=obj['url']):
-                    # API returns 'time' field, not 'date'
-                    time_str = obj.get('time', '').split()[0] if obj.get('time') else None
-                    if time_str:
-                        Speech(mp=mp, date=date.fromisoformat(time_str), content_url=obj['url'])
+            # 1. Speeches
+            speeches_added = 0
+            if speech_data:
+                for obj in speech_data.get('objects', []):
+                    if not Speech.exists(content_url=obj['url']):
+                        # API returns 'time' field, not 'date'
+                        time_str = obj.get('time', '').split()[0] if obj.get('time') else None
+                        if time_str:
+                            try:
+                                Speech(mp=mp, date=date.fromisoformat(time_str), content_url=obj['url'])
+                                speeches_added += 1
+                            except Exception as e:
+                                print(f"Error saving speech for {mp_slug}: {e}")
 
-        # 2. Bills
-        if bill_data:
-            for b in bill_data.get('objects', []):
-                bill = Bill.get(number=b['number'])
-                
-                # Determine introduced date
-                intro_date_str = b.get('introduced') or start_date_str
-                intro_date = date.fromisoformat(intro_date_str)
-                
-                if not bill:
-                    bill = Bill(number=b['number'], 
-                               title=b['name']['en'], 
-                               sponsor=mp, 
-                               date_introduced=intro_date)
-                else:
-                    bill.date_introduced = intro_date
-                
-                # Check if status indicates Royal Assent
-                status_text = str(b.get('status', {}).get('en', ''))
-                if 'Royal Assent' in status_text:
-                    if not bill.passed:
-                        bill.passed = True
-                        bill.date_passed = date.fromisoformat(start_date_str)
-                    elif bill.passed and not bill.date_passed:
-                        bill.date_passed = date.fromisoformat(start_date_str)
+            # 2. Bills
+            bills_added = 0
+            if bill_data:
+                for b in bill_data.get('objects', []):
+                    try:
+                        bill = Bill.get(number=b['number'])
+                        
+                        # Determine introduced date
+                        intro_date_str = b.get('introduced') or start_date_str
+                        intro_date = date.fromisoformat(intro_date_str)
+                        
+                        if not bill:
+                            bill = Bill(number=b['number'], 
+                                       title=b['name']['en'], 
+                                       sponsor=mp, 
+                                       date_introduced=intro_date)
+                            bills_added += 1
+                        else:
+                            bill.date_introduced = intro_date
+                        
+                        # Check if status indicates Royal Assent
+                        status_text = str(b.get('status', {}).get('en', ''))
+                        if 'Royal Assent' in status_text:
+                            if not bill.passed:
+                                bill.passed = True
+                                bill.date_passed = date.fromisoformat(start_date_str)
+                            elif bill.passed and not bill.date_passed:
+                                bill.date_passed = date.fromisoformat(start_date_str)
+                    except Exception as e:
+                        print(f"Error saving bill for {mp_slug}: {e}")
+            
+            if speeches_added > 0 or bills_added > 0:
+                print(f"Scraper: Saved {speeches_added} speeches and {bills_added} bills for {mp_slug}")
+    except Exception as e:
+        print(f"CRITICAL error in save_mp_details_sync for {mp_slug}: {e}")
 
 async def process_mp_data(client, semaphore, mp_slug, start_date_str):
     """Process MP data: speeches and bills. Uses semaphore for rate limiting."""
@@ -395,17 +413,16 @@ async def run_sync():
         total_mps = len(mp_slugs)
         print(f"Processing individual MP data for {total_mps} MPs...")
         
-        # Use asyncio.gather with semaphore for MP data processing
-        tasks = [
-            process_mp_data(client, semaphore, mp_slug, start_date_str) 
-            for mp_slug in mp_slugs
-        ]
-        
         # Process in batches to show progress
-        for i in range(0, len(tasks), 20):
-            batch = tasks[i:i+20]
-            await asyncio.gather(*batch)
-            print(f"MP data progress: {min(i+20, total_mps)}/{total_mps}")
+        batch_size = 5
+        for i in range(0, total_mps, batch_size):
+            batch_slugs = mp_slugs[i:i+batch_size]
+            batch_tasks = [
+                process_mp_data(client, semaphore, mp_slug, start_date_str) 
+                for mp_slug in batch_slugs
+            ]
+            await asyncio.gather(*batch_tasks)
+            print(f"MP data progress: {min(i+batch_size, total_mps)}/{total_mps}")
         
         print("Syncing votes...")
         await sync_votes(client, start_date_str)
