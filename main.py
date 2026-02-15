@@ -6,6 +6,7 @@ from pony.orm import db_session, select, desc
 from models import MP, LeaderboardEntry, Bill, Speech, VoteAttendance, Registration, Subscriber, init_db, run_migrations, db
 from scraper import run_sync
 import os
+import asyncio
 from dotenv import load_dotenv
 from typing import Optional, List
 from pydantic import BaseModel
@@ -16,6 +17,7 @@ import random
 from better_profanity import profanity
 from apscheduler.schedulers.asyncio import AsyncIOScheduler
 from datetime import datetime as dt
+from urllib.parse import quote
 
 load_dotenv()
 
