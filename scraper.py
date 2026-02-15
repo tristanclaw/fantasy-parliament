@@ -170,7 +170,7 @@ async def sync_daily_activity(client, target_date):
 
     # 1. Speeches (1 pt)
     print("Fetching speeches...")
-    speech_url = f"{BASE_URL}/speeches/?time__startswith={date_str}&limit=500"
+    speech_url = f"{BASE_URL}/speeches/?date={date_str}&limit=500"
     while speech_url:
         data = await fetch_json(client, speech_url)
         if not data: break
