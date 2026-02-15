@@ -128,6 +128,43 @@ def calculate_all_scores():
         mp.score_breakdown = breakdown
     print("Score recalculation complete.")
 
+def save_mps_sync(objects):
+    """Sync helper to save MP data."""
+    total_created = 0
+    total_synced = 0
+    with db_session:
+        for mp_data in objects:
+            party_info = mp_data.get('current_party')
+            if not party_info:
+                print(f"Scraper: Skipping MP {mp_data.get('name')} (no party info)")
+                continue
+                
+            party_name = party_info.get('short_name', {}).get('en')
+            
+            riding_info = mp_data.get('current_riding')
+            riding_name = riding_info.get('name', {}).get('en') if riding_info else None
+            
+            slug = mp_data['url'].strip('/').split('/')[-1]
+            name = mp_data['name']
+            
+            mp = MP.get(slug=slug)
+            if not mp:
+                mp = MP(name=name, slug=slug)
+                total_created += 1
+            
+            mp.party = party_name
+            mp.riding = riding_name
+
+            # Update image URL from API or fallback
+            api_image = mp_data.get('image')
+            if api_image:
+                mp.image_url = f"https://api.openparliament.ca{api_image}"
+            else:
+                mp.image_url = construct_image_url(name, party_name)
+            
+            total_synced += 1
+    return total_synced, total_created
+
 async def sync_mps(client):
     url = f"{BASE_URL}/politicians/?limit=1000&offset=0"
     total_synced = 0
@@ -149,37 +186,10 @@ async def sync_mps(client):
         objects = data.get('objects', [])
         print(f"Scraper: Found {len(objects)} objects in page")
         
-        with db_session:
-            for mp_data in objects:
-                party_info = mp_data.get('current_party')
-                if not party_info:
-                    print(f"Scraper: Skipping MP {mp_data.get('name')} (no party info)")
-                    continue
-                    
-                party_name = party_info.get('short_name', {}).get('en')
-                
-                riding_info = mp_data.get('current_riding')
-                riding_name = riding_info.get('name', {}).get('en') if riding_info else None
-                
-                slug = mp_data['url'].strip('/').split('/')[-1]
-                name = mp_data['name']
-                
-                mp = MP.get(slug=slug)
-                if not mp:
-                    mp = MP(name=name, slug=slug)
-                    total_created += 1
-                
-                mp.party = party_name
-                mp.riding = riding_name
-
-                # Update image URL from API or fallback
-                api_image = mp_data.get('image')
-                if api_image:
-                    mp.image_url = f"https://api.openparliament.ca{api_image}"
-                else:
-                    mp.image_url = construct_image_url(name, party_name)
-                
-                total_synced += 1
+        # Offload DB write to thread
+        synced, created = await asyncio.to_thread(save_mps_sync, objects)
+        total_synced += synced
+        total_created += created
             
         next_path = data.get('pagination', {}).get('next_url')
         if next_path:
@@ -189,6 +199,44 @@ async def sync_mps(client):
         
     print(f"Synced {total_synced} MPs ({total_created} new)")
 
+def save_mp_details_sync(mp_slug, speech_data, bill_data, start_date_str):
+    """Sync helper to save speeches and bills."""
+    with db_session:
+        mp = MP.get(slug=mp_slug)
+        if not mp: return
+
+        # 1. Speeches
+        if speech_data:
+            for obj in speech_data.get('objects', []):
+                if not Speech.exists(content_url=obj['url']):
+                    Speech(mp=mp, date=date.fromisoformat(obj['date']), content_url=obj['url'])
+
+        # 2. Bills
+        if bill_data:
+            for b in bill_data.get('objects', []):
+                bill = Bill.get(number=b['number'])
+                
+                # Determine introduced date
+                intro_date_str = b.get('introduced') or start_date_str
+                intro_date = date.fromisoformat(intro_date_str)
+                
+                if not bill:
+                    bill = Bill(number=b['number'], 
+                               title=b['name']['en'], 
+                               sponsor=mp, 
+                               date_introduced=intro_date)
+                else:
+                    bill.date_introduced = intro_date
+                
+                # Check if status indicates Royal Assent
+                status_text = str(b.get('status', {}).get('en', ''))
+                if 'Royal Assent' in status_text:
+                    if not bill.passed:
+                        bill.passed = True
+                        bill.date_passed = date.fromisoformat(start_date_str)
+                    elif bill.passed and not bill.date_passed:
+                        bill.date_passed = date.fromisoformat(start_date_str)
+
 async def process_mp_data(client, semaphore, mp_slug, start_date_str):
     """Process MP data: speeches and bills. Uses semaphore for rate limiting."""
     # 1. Speeches
@@ -196,48 +244,30 @@ async def process_mp_data(client, semaphore, mp_slug, start_date_str):
         client, semaphore,
         f"{BASE_URL}/debates/?politician={quote(mp_slug)}&date__gte={start_date_str}"
     )
-    if speech_data:
-        with db_session:
-            mp = MP.get(slug=mp_slug)
-            if mp:
-                for obj in speech_data.get('objects', []):
-                    if not Speech.exists(content_url=obj['url']):
-                        Speech(mp=mp, date=date.fromisoformat(obj['date']), content_url=obj['url'])
-
-    Bills
+    
+    # 2. Bills
     bill_data = await fetch_with_semaphore(
         client, semaphore,
         f"{BASE_URL}/bills/?sponsor={quote(mp_slug)}"
     )
-    if bill_data:
-        with db_session:
-            mp = MP.get(slug=mp_slug)
-            if mp:
-                for b in bill_data.get('objects', []):
-                    bill = Bill.get(number=b['number'])
-                    
-                    # Determine introduced date
-                    intro_date_str = b.get('introduced') or start_date_str
-                    intro_date = date.fromisoformat(intro_date_str)
-                    
-                    if not bill:
-                        bill = Bill(number=b['number'], 
-                                   title=b['name']['en'], 
-                                   sponsor=mp, 
-                                   date_introduced=intro_date)
-                    else:
-                        bill.date_introduced = intro_date
-                    
-                    # Check if status indicates Royal Assent
-                    status_text = str(b.get('status', {}).get('en', ''))
-                    if 'Royal Assent' in status_text:
-                        if not bill.passed:
-                            bill.passed = True
-                            bill.date_passed = date.fromisoformat(start_date_str)
-                        elif bill.passed and not bill.date_passed:
-                            bill.date_passed = date.fromisoformat(start_date_str)
+
+    if speech_data or bill_data:
+        await asyncio.to_thread(save_mp_details_sync, mp_slug, speech_data, bill_data, start_date_str)
     
     print(f"Processed MP: {mp_slug}")
+
+def save_ballots_sync(ballot_data, vote_url, vote_date_obj):
+    """Sync helper to save ballots."""
+    with db_session:
+        for ballot in ballot_data.get('objects', []):
+            p_url = ballot.get('politician_url')
+            if not p_url: continue
+            
+            slug = p_url.strip('/').split('/')[-1]
+            mp = MP.get(slug=slug)
+            if mp:
+                if not VoteAttendance.exists(mp=mp, vote_url=vote_url):
+                    VoteAttendance(mp=mp, vote_url=vote_url, attended=True, date=vote_date_obj)
 
 async def sync_votes(client, start_date_str):
     """Sync votes with semaphore limiting."""
@@ -272,16 +302,8 @@ async def sync_votes(client, start_date_str):
                 ballot_data = await fetch_with_semaphore(client, semaphore, ballot_url)
                 if not ballot_data: break
             
-                with db_session:
-                    for ballot in ballot_data.get('objects', []):
-                        p_url = ballot.get('politician_url')
-                        if not p_url: continue
-                        
-                        slug = p_url.strip('/').split('/')[-1]
-                        mp = MP.get(slug=slug)
-                        if mp:
-                            if not VoteAttendance.exists(mp=mp, vote_url=vote_url):
-                                VoteAttendance(mp=mp, vote_url=vote_url, attended=True, date=v_date_obj)
+                # Offload DB write
+                await asyncio.to_thread(save_ballots_sync, ballot_data, vote_url, v_date_obj)
                 
                 b_next = ballot_data.get('pagination', {}).get('next_url')
                 if b_next:
@@ -296,26 +318,30 @@ async def sync_votes(client, start_date_str):
             else:
                 votes_url = None
 
+def save_committee_sync(mp_id, data):
+    """Sync helper to save committee data."""
+    committees_data = data.get('committees', [])
+    formatted = []
+    for c in committees_data:
+        name = c.get('name') or c.get('committee', {}).get('name')
+        role = c.get('position')
+        if name:
+            formatted.append({"name": name, "role": role})
+    
+    if formatted:
+        with db_session:
+            mp_obj = MP.get(id=mp_id)
+            if mp_obj:
+                mp_obj.committees = formatted
+                print(f"Updated committees for {mp_obj.name}: {[c['name'] for c in formatted]}")
+
 async def sync_single_committee(client, semaphore, mp):
     """Sync committees for a single MP."""
     detail_url = f"{BASE_URL}/politicians/{mp.slug}/"
     data = await fetch_with_semaphore(client, semaphore, detail_url)
     
     if data:
-        committees_data = data.get('committees', [])
-        formatted = []
-        for c in committees_data:
-            name = c.get('name') or c.get('committee', {}).get('name')
-            role = c.get('position')
-            if name:
-                formatted.append({"name": name, "role": role})
-        
-        if formatted:
-            with db_session:
-                mp_obj = MP.get(id=mp.id)
-                if mp_obj:
-                    mp_obj.committees = formatted
-                    print(f"Updated committees for {mp_obj.name}: {[c['name'] for c in formatted]}")
+        await asyncio.to_thread(save_committee_sync, mp.id, data)
     
     return mp.slug
 
@@ -323,21 +349,20 @@ async def sync_committees(client, semaphore):
     """Sync all committees using asyncio.gather with semaphore."""
     print("Syncing committees...")
     with db_session:
+        # Get IDs and slugs only to avoid passing full ORM objects if possible, 
+        # but existing code uses mp object. We'll pass minimal data.
         mps = list(MP.select())
     
     total = len(mps)
     print(f"Processing {total} MPs for committees...")
     
-    # Create tasks for all MPs
-    tasks = [sync_single_committee(client, semaphore, mp) for mp in mps]
-    
-    # Process with gather, semaphore limits concurrency
-    results = []
-    for i, coro in enumerate(asyncio.as_completed(tasks)):
-        result = await coro
-        results.append(result)
-        if (i + 1) % 20 == 0:
-            print(f"Committee sync progress: {i + 1}/{total}")
+    # Process in batches to avoid creating too many tasks at once
+    batch_size = 20
+    for i in range(0, total, batch_size):
+        batch_mps = mps[i:i+batch_size]
+        tasks = [sync_single_committee(client, semaphore, mp) for mp in batch_mps]
+        await asyncio.gather(*tasks)
+        print(f"Committee sync progress: {min(i+batch_size, total)}/{total}")
     
     print("Committee sync complete.")
 
@@ -380,10 +405,10 @@ async def run_sync():
         await sync_votes(client, start_date_str)
         
         print("Cleaning up old data...")
-        cleanup_old_data()
+        await asyncio.to_thread(cleanup_old_data)
         
         print("Calculating scores...")
-        calculate_all_scores()
+        await asyncio.to_thread(calculate_all_scores)
         print("Sync complete.")
     except Exception as e:
         print(f"ERROR in sync: {e}")
