@@ -192,10 +192,10 @@ async def sync_mps(client):
         total_created += created
             
         next_path = data.get('pagination', {}).get('next_url')
-        if next_path:
-             url = f"{BASE_URL}{next_path}"
+        if next_path and next_path != url:
+            url = f"{BASE_URL}{next_path}"
         else:
-             url = None
+            url = None
         
     print(f"Synced {total_synced} MPs ({total_created} new)")
 
