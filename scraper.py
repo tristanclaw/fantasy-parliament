@@ -111,10 +111,11 @@ async def sync_mps(client):
         
     print(f"Synced {total_synced} MPs ({total_created} new)")
 
-def update_scores_sync(target_date, mp_points):
+def update_scores_sync(target_date, mp_points, mp_breakdown):
     """
-    Update DailyScore and total_score for MPs in mp_points.
+    Update DailyScore, total_score, and score_breakdown for MPs.
     mp_points: dict { slug: points }
+    mp_breakdown: dict { slug: {speeches: n, votes: n, bills: n} }
     """
     updated_count = 0
     with db_session:
@@ -138,13 +139,18 @@ def update_scores_sync(target_date, mp_points):
                 score_record.points_today = pts
             updated_count += 1
             
-        # Recalculate total_score for updated MPs
-        # To avoid N+1 queries, we could fetch all DailyScores for these MPs, but iterating is safer for now
+        # Recalculate total_score and score_breakdown for updated MPs
         for slug in mp_points.keys():
             mp = MP.get(slug=slug)
             if mp:
+                # Total score from all daily scores
                 total = sum(ds.points_today for ds in mp.daily_scores)
                 mp.total_score = total
+                
+                # Calculate cumulative breakdown from all DailyScore records
+                # For now, use the provided breakdown for today as a simple approach
+                breakdown = mp_breakdown.get(slug, {"speeches": 0, "votes": 0, "bills": 0})
+                mp.score_breakdown = breakdown
 
     return updated_count
 
@@ -153,11 +159,14 @@ async def sync_daily_activity(client, target_date):
     print(f"Syncing activity for {date_str}...")
     
     mp_points = {} 
+    mp_breakdown = {}  # Track counts separately
 
-    def add_points(slug, pts):
+    def add_points(slug, pts, category):
         if slug not in mp_points:
             mp_points[slug] = 0
+            mp_breakdown[slug] = {"speeches": 0, "votes": 0, "bills": 0}
         mp_points[slug] += pts
+        mp_breakdown[slug][category] = mp_breakdown[slug].get(category, 0) + 1
 
     # 1. Speeches (1 pt)
     print("Fetching speeches...")
@@ -170,7 +179,7 @@ async def sync_daily_activity(client, target_date):
             p_url = speech.get('politician_url')
             if p_url:
                 slug = p_url.strip('/').split('/')[-1]
-                add_points(slug, 1)
+                add_points(slug, 1, 'speeches')
         
         next_path = data.get('pagination', {}).get('next_url')
         speech_url = f"{BASE_URL}{next_path}" if next_path else None
@@ -197,7 +206,7 @@ async def sync_daily_activity(client, target_date):
                     p_url = ballot.get('politician_url')
                     if p_url:
                         slug = p_url.strip('/').split('/')[-1]
-                        add_points(slug, 1) # Attendance point
+                        add_points(slug, 1, 'votes') # Attendance point
 
                 b_next = b_data.get('pagination', {}).get('next_url')
                 ballot_url = f"{BASE_URL}{b_next}" if b_next else None
@@ -225,14 +234,14 @@ async def sync_daily_activity(client, target_date):
                      sponsor_url = bill.get('sponsor_politician_url')
                      if sponsor_url:
                          slug = sponsor_url.strip('/').split('/')[-1]
-                         add_points(slug, 2)
+                         add_points(slug, 2, 'bills')
                          print(f"Awarded 2 points to {slug} for bill {bill.get('number')}")
 
         # Only check first page of recent bills
         break
 
     print(f"Saving scores for {len(mp_points)} MPs...")
-    updated = await asyncio.to_thread(update_scores_sync, target_date, mp_points)
+    updated = await asyncio.to_thread(update_scores_sync, target_date, mp_points, mp_breakdown)
     print(f"Updated {updated} records.")
 
 async def run_sync():
