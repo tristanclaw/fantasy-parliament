@@ -171,7 +171,9 @@ async def sync_mps(client):
     total_created = 0
     
     print(f"Scraper: Starting MP sync from {url}")
-    while url:
+    seen_urls = set()
+    while url and url not in seen_urls:
+        seen_urls.add(url)
         print(f"Scraper: Fetching MPs from {url}")
         try:
             data = await fetch_json(client, url)
@@ -185,6 +187,8 @@ async def sync_mps(client):
         
         objects = data.get('objects', [])
         print(f"Scraper: Found {len(objects)} objects in page")
+        if not objects:
+            break
         
         # Offload DB write to thread
         synced, created = await asyncio.to_thread(save_mps_sync, objects)
@@ -192,8 +196,8 @@ async def sync_mps(client):
         total_created += created
             
         next_path = data.get('pagination', {}).get('next_url')
-        if next_path and next_path != url:
-            url = f"{BASE_URL}{next_path}"
+        if next_path:
+            url = f"{BASE_URL}{next_path}" if next_path.startswith('/') else next_path
         else:
             url = None
         
@@ -303,7 +307,9 @@ async def sync_votes(client, start_date_str):
     start_date = date.fromisoformat(start_date_str)
     semaphore = asyncio.Semaphore(SEMAPHORE_LIMIT)
     
-    while votes_url:
+    seen_urls = set()
+    while votes_url and votes_url not in seen_urls:
+        seen_urls.add(votes_url)
         votes_data = await fetch_with_semaphore(client, semaphore, votes_url)
         if not votes_data: break
         
@@ -326,7 +332,9 @@ async def sync_votes(client, start_date_str):
             
             # Fetch ballots with pagination
             ballot_url = f"{BASE_URL}/votes/ballots/?vote={vote_url}"
-            while ballot_url:
+            ballot_seen_urls = set()
+            while ballot_url and ballot_url not in ballot_seen_urls:
+                ballot_seen_urls.add(ballot_url)
                 ballot_data = await fetch_with_semaphore(client, semaphore, ballot_url)
                 if not ballot_data: break
             
