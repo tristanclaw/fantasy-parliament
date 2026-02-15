@@ -22,11 +22,21 @@ class MP(db.Entity):
     riding = Optional(str)
     image_url = Optional(str)
     committees = Optional(Json) # List of dicts: [{"name": "Finance", "role": "Chair"}, {"name": "Health", "role": "Member"}]
-    speeches = Set('Speech')
-    votes = Set('VoteAttendance')
-    sponsored_bills = Set('Bill', reverse='sponsor')
+    # speeches = Set('Speech')
+    # votes = Set('VoteAttendance')
+    # sponsored_bills = Set('Bill', reverse='sponsor')
+    daily_scores = Set('DailyScore')
     total_score = Required(int, default=0)
     score_breakdown = Optional(Json) # Stores points from speeches, votes, bills, committees
+
+class DailyScore(db.Entity):
+    _table_ = 'dailyscore'
+    mp = Required(MP)
+    mp_name = Required(str)
+    party = Optional(str)
+    riding = Optional(str)
+    points_today = Required(int)
+    date = Required(date)
 
 class LeaderboardEntry(db.Entity):
     _table_ = 'leaderboardentry'
@@ -34,27 +44,27 @@ class LeaderboardEntry(db.Entity):
     score = Required(int)
     updated_at = Required(datetime)
 
-class Speech(db.Entity):
-    _table_ = 'speech'
-    mp = Required(MP)
-    date = Required(date)
-    content_url = Required(str)
+# class Speech(db.Entity):
+#     _table_ = 'speech'
+#     mp = Required(MP)
+#     date = Required(date)
+#     content_url = Required(str)
 
-class VoteAttendance(db.Entity):
-    _table_ = 'voteattendance'
-    mp = Required(MP)
-    vote_url = Required(str)
-    attended = Required(bool)
-    date = Required(date)
+# class VoteAttendance(db.Entity):
+#     _table_ = 'voteattendance'
+#     mp = Required(MP)
+#     vote_url = Required(str)
+#     attended = Required(bool)
+#     date = Required(date)
 
-class Bill(db.Entity):
-    _table_ = 'bill'
-    number = Required(str)
-    title = Required(str)
-    sponsor = Required(MP)
-    passed = Required(bool, default=False)
-    date_introduced = Required(date)
-    date_passed = Optional(date)
+# class Bill(db.Entity):
+#     _table_ = 'bill'
+#     number = Required(str)
+#     title = Required(str)
+#     sponsor = Required(MP)
+#     passed = Required(bool, default=False)
+#     date_introduced = Required(date)
+#     date_passed = Optional(date)
 
 class Subscriber(db.Entity):
     _table_ = 'subscriber'
@@ -123,14 +133,14 @@ def run_migrations(dsn=None, **kwargs):
                     except Exception as e:
                         print(f"Migration warning ({table}.image_url): {e}")
 
-            # Migration 3: Bill.date_passed
-            for table in ['bill', 'Bill']:
-                if table in tables:
-                    try:
-                        cur.execute(f'ALTER TABLE "{table}" ADD COLUMN IF NOT EXISTS "date_passed" DATE')
-                        print(f"Applied/Checked: {table}.date_passed")
-                    except Exception as e:
-                        print(f"Migration warning ({table}.date_passed): {e}")
+            # Migration 3: Bill.date_passed - REMOVED (Table deprecated)
+            # for table in ['bill', 'Bill']:
+            #     if table in tables:
+            #         try:
+            #             cur.execute(f'ALTER TABLE "{table}" ADD COLUMN IF NOT EXISTS "date_passed" DATE')
+            #             print(f"Applied/Checked: {table}.date_passed")
+            #         except Exception as e:
+            #             print(f"Migration warning ({table}.date_passed): {e}")
 
             # Migration 4: Registration.ip_address
             for table in ['registration', 'Registration']:

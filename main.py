@@ -3,7 +3,7 @@ from fastapi.responses import JSONResponse, FileResponse
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.staticfiles import StaticFiles
 from pony.orm import db_session, select, desc
-from models import MP, LeaderboardEntry, Bill, Speech, VoteAttendance, Registration, Subscriber, init_db, run_migrations, db
+from models import MP, LeaderboardEntry, Registration, Subscriber, DailyScore, init_db, run_migrations, db
 from scraper import run_sync
 import os
 import asyncio
@@ -239,6 +239,7 @@ async def startup():
     if os.getenv("RENDER"):
         try:
             schedule_weekly_emails()
+            schedule_daily_sync()
             scheduler.start()
             print("SCHEDULER: Started")
         except Exception as e:
@@ -330,13 +331,11 @@ def diag_db():
     try:
         mp_count = MP.select().count()
         lb_count = LeaderboardEntry.select().count()
-        bill_count = Bill.select().count()
-        speech_count = Speech.select().count()
-        vote_count = VoteAttendance.select().count()
+        ds_count = DailyScore.select().count()
         
-        last_speeches = [
-            {"mp": s.mp.name, "date": str(s.date), "url": s.content_url} 
-            for s in Speech.select().order_by(desc(Speech.date))[:5]
+        last_scores = [
+            {"mp": s.mp_name, "date": str(s.date), "points": s.points_today} 
+            for s in DailyScore.select().order_by(desc(DailyScore.date))[:5]
         ]
         
         return {
@@ -344,11 +343,9 @@ def diag_db():
             "counts": {
                 "mp": mp_count,
                 "leaderboard": lb_count,
-                "bill": bill_count,
-                "speech": speech_count,
-                "vote": vote_count
+                "daily_scores": ds_count
             },
-            "last_speeches": last_speeches,
+            "last_scores": last_scores,
             "database": str(db.provider_name)
         }
     except Exception as e:
@@ -723,6 +720,17 @@ def schedule_weekly_emails():
         id='weekly_emails'
     )
     print("SCHEDULER: Weekly email job scheduled for Sundays at 18:00")
+
+def schedule_daily_sync():
+    """Schedule daily sync job."""
+    scheduler.add_job(
+        run_sync_with_logging, 
+        'cron', 
+        hour=3, 
+        minute=0,
+        id='daily_sync'
+    )
+    print("SCHEDULER: Daily sync job scheduled for 03:00")
 
 @app.post("/admin/sync-now")
 async def sync_now(api_key: str = Depends(verify_api_key)):
