@@ -836,3 +836,40 @@ async def serve_spa(path: str):
     
     # Fallback to index.html for SPA routing
     return FileResponse(os.path.join("frontend/dist", "index.html"))
+
+@app.post("/admin/bulk-import-scores")
+async def bulk_import_scores(scores: List[dict], api_key: str = Depends(verify_api_key)):
+    """Bulk import daily scores"""
+    from pony.orm import db_session, commit
+    from datetime import datetime
+    
+    imported = 0
+    with db_session():
+        for s in scores:
+            mp = MP.get(slug=s.get('mp_slug'))
+            if not mp:
+                continue
+            
+            score_date = datetime.strptime(s['date'], '%Y-%m-%d').date()
+            
+            existing = DailyScore.get(mp=mp, date=score_date)
+            if not existing:
+                DailyScore(
+                    mp=mp,
+                    mp_name=s.get('mp_name', mp.name),
+                    party=s.get('party', mp.party),
+                    riding=s.get('riding', mp.riding),
+                    points_today=s.get('points', 0),
+                    date=score_date
+                )
+            else:
+                existing.points_today = s.get('points', 0)
+            
+            # Recalculate total
+            total = sum(ds.points_today for ds in mp.daily_scores)
+            mp.total_score = total
+            
+            imported += 1
+        commit()
+    
+    return {"imported": imported}
