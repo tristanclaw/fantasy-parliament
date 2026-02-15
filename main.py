@@ -162,10 +162,8 @@ async def manual_sync(background_tasks: BackgroundTasks, api_key: str = Depends(
     background_tasks.add_task(run_sync_with_logging)
     return {"message": "Sync started in background via Admin"}
 
-@app.get("/admin/logs")
-def get_admin_logs(api_key: str = Header(None)):
-    if api_key != API_KEY:
-        raise HTTPException(status_code=403, detail="Invalid API Key")
+@admin_router.get("/logs")
+def get_admin_logs(api_key: str = Depends(verify_api_key)):
     if os.path.exists("sync.log"):
         with open("sync.log", "r") as f:
             return {"logs": f.read()}

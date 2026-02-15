@@ -242,22 +242,25 @@ def save_mp_details_sync(mp_slug, speech_data, bill_data, start_date_str):
 
 async def process_mp_data(client, semaphore, mp_slug, start_date_str):
     """Process MP data: speeches and bills. Uses semaphore for rate limiting."""
-    # 1. Speeches - Use /speeches/ endpoint instead of /debates/
-    speech_data = await fetch_with_semaphore(
-        client, semaphore,
-        f"{BASE_URL}/speeches/?politician={quote(mp_slug)}&date__gte={start_date_str}"
-    )
-    
-    # 2. Bills
-    bill_data = await fetch_with_semaphore(
-        client, semaphore,
-        f"{BASE_URL}/bills/?sponsor_politician={quote(mp_slug)}"
-    )
+    try:
+        # 1. Speeches - Use /speeches/ endpoint instead of /debates/
+        speech_data = await fetch_with_semaphore(
+            client, semaphore,
+            f"{BASE_URL}/speeches/?politician={quote(mp_slug)}&date__gte={start_date_str}"
+        )
+        
+        # 2. Bills
+        bill_data = await fetch_with_semaphore(
+            client, semaphore,
+            f"{BASE_URL}/bills/?sponsor_politician={quote(mp_slug)}"
+        )
 
-    if speech_data or bill_data:
-        await asyncio.to_thread(save_mp_details_sync, mp_slug, speech_data, bill_data, start_date_str)
-    
-    print(f"Processed MP: {mp_slug}")
+        if speech_data or bill_data:
+            await asyncio.to_thread(save_mp_details_sync, mp_slug, speech_data, bill_data, start_date_str)
+        
+        print(f"Processed MP: {mp_slug}")
+    except Exception as e:
+        print(f"Error processing MP {mp_slug}: {e}")
 
 def save_ballots_sync(ballot_data, vote_url, vote_date_obj):
     """Sync helper to save ballots."""
