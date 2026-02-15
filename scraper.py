@@ -21,7 +21,7 @@ PARTY_MAPPING = {
 }
 
 # Semaphore to limit concurrent requests
-SEMAPHORE_LIMIT = 5
+SEMAPHORE_LIMIT = 2
 
 def construct_image_url(name, party_name):
     parts = name.replace(".", "").split()

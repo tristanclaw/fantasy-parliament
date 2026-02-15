@@ -173,10 +173,28 @@ def get_admin_logs(api_key: str = Depends(verify_api_key)):
 
 async def run_sync_with_logging():
     import sys
-    from io import StringIO
     
+    # helper to write to both stdout and file
+    class DualWriter:
+        def __init__(self, filename):
+            self.file = open(filename, "a", buffering=1) # line buffered
+            self.stdout = sys.stdout
+        
+        def write(self, message):
+            self.stdout.write(message)
+            self.file.write(message)
+            
+        def flush(self):
+            self.stdout.flush()
+            self.file.flush()
+            
+        def close(self):
+            self.file.close()
+
+    # Backup original stdout
     old_stdout = sys.stdout
-    sys.stdout = mystdout = StringIO()
+    writer = DualWriter("sync.log")
+    sys.stdout = writer
     
     try:
         print(f"BACKGROUND: Starting sync at {datetime.now()}...")
@@ -188,8 +206,7 @@ async def run_sync_with_logging():
         traceback.print_exc()
     finally:
         sys.stdout = old_stdout
-        with open("sync.log", "w") as f:
-            f.write(mystdout.getvalue())
+        writer.close()
 
 app.include_router(admin_router)
 
