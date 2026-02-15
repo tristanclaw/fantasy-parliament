@@ -314,6 +314,12 @@ def diag_db():
         bill_count = Bill.select().count()
         speech_count = Speech.select().count()
         vote_count = VoteAttendance.select().count()
+        
+        last_speeches = [
+            {"mp": s.mp.name, "date": str(s.date), "url": s.content_url} 
+            for s in Speech.select().order_by(desc(Speech.date))[:5]
+        ]
+        
         return {
             "status": "connected",
             "counts": {
@@ -323,6 +329,7 @@ def diag_db():
                 "speech": speech_count,
                 "vote": vote_count
             },
+            "last_speeches": last_speeches,
             "database": str(db.provider_name)
         }
     except Exception as e:
