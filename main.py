@@ -873,3 +873,20 @@ async def bulk_import_scores(scores: List[dict], api_key: str = Depends(verify_a
         commit()
     
     return {"imported": imported}
+
+@app.post("/admin/recalculate-scores")
+async def recalculate_scores(api_key: str = Depends(verify_api_key)):
+    """Recalculate all MP total scores from daily_scores"""
+    from pony.orm import db_session, commit, select
+    
+    updated = 0
+    with db_session():
+        mps = select(mp for mp in MP)[:]
+        for mp in mps:
+            # Calculate total from all daily_scores
+            total = sum(ds.points_today for ds in mp.daily_scores)
+            mp.total_score = total
+            updated += 1
+        commit()
+    
+    return {"updated": updated}
