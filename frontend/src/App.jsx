@@ -41,6 +41,21 @@ function MainApp() {
       if (response.ok) {
         setUsername(name);
         setTeam({ captain, members: [] });
+        
+        // Auto-subscribe to weekly emails
+        try {
+          await fetch('https://fantasy-parliament-web.onrender.com/subscribe', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+              name: name,
+              email: email,
+              selected_mps: [captain.id]
+            })
+          });
+        } catch (subErr) {
+          console.error("Subscription error:", subErr);
+        }
       } else {
         const err = await response.json();
         alert("Registration failed: " + (err.detail || "Unknown error"));
