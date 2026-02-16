@@ -41,38 +41,42 @@ const Rules = () => {
             <section className="mb-8">
               <h2 className="text-2xl font-bold text-gray-900 mb-4">1. How to Play</h2>
               <ul className="list-disc pl-5 space-y-2 text-gray-700">
-                <li><strong>Draft Your Team:</strong> You must select 1 <strong>Captain</strong> and 4 <strong>Team Members</strong> (5 MPs total).</li>
-                <li><strong>Locked Rosters:</strong> Once you join the season, your team is locked. You cannot trade or change MPs during the season.</li>
-                <li><strong>Scoring:</strong> Your score is determined by the real-world performance of your MPs in Parliament (attendance, votes, etc.).</li>
+                <li><strong>The Core Five:</strong> You draft a team of <strong>5 MPs</strong> total (1 Captain + 4 Members).</li>
+                <li><strong>Locked Rosters:</strong> Once you join the season, your team is locked for the duration of the current session.</li>
+                <li><strong>Scoring:</strong> Your score is determined by the real-world performance of your MPs in the House of Commons.</li>
               </ul>
             </section>
 
             <section className="mb-8">
-              <h2 className="text-2xl font-bold text-gray-900 mb-4">2. Joining the Season</h2>
-              <ol className="list-decimal pl-5 space-y-2 text-gray-700">
-                <li>Click the <strong>"Join the Season"</strong> button on the home page.</li>
-                <li>Enter your <strong>Display Name</strong>, optional Team Name, and Email.</li>
-                <li>Browse the Draft Pool and select your MPs. Remember, your Captain earns bonus points!</li>
-              </ol>
-            </section>
-
-            <section className="mb-8">
-              <h2 className="text-2xl font-bold text-gray-900 mb-4">3. Scoring System</h2>
-              <p className="text-gray-700 mb-2">MPs earn points based on their activity in the House of Commons:</p>
-              <ul className="list-disc pl-5 space-y-2 text-gray-700">
-                <li><strong>Speeches:</strong> Earn points for every speech or intervention in the House.</li>
-                <li><strong>Votes:</strong> Earn points for participating in official votes.</li>
-                <li><strong>Sponsorships:</strong> Earn points for sponsoring or supporting bills.</li>
-              </ul>
-              <p className="text-gray-700 mt-4">
-                <strong>Weekly vs. Season Scoring:</strong> Data is synchronized daily from OpenParliament.ca. The league tracks performance on a rolling 7-day window.
+              <h2 className="text-2xl font-bold text-gray-900 mb-4">2. Scoring System</h2>
+              <p className="text-gray-700 mb-2">MPs earn points for showing up and speaking out:</p>
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mt-4">
+                <div className="bg-red-50 p-4 rounded-lg border border-red-100">
+                  <p className="font-bold text-red-800">Speeches: +1 pt</p>
+                  <p className="text-sm text-red-600">Every intervention in the House.</p>
+                </div>
+                <div className="bg-red-50 p-4 rounded-lg border border-red-100">
+                  <p className="font-bold text-red-800">Votes: +2 pts</p>
+                  <p className="text-sm text-red-600">Participation in official votes.</p>
+                </div>
+                <div className="bg-red-50 p-4 rounded-lg border border-red-100">
+                  <p className="font-bold text-red-800">Bill Sponsored: +10 pts</p>
+                  <p className="text-sm text-red-600">Introducing or sponsoring a bill.</p>
+                </div>
+                <div className="bg-red-50 p-4 rounded-lg border border-red-100">
+                  <p className="font-bold text-red-800">The Grand Slam: +50 pts</p>
+                  <p className="text-sm text-red-600">Bill receives Royal Assent.</p>
+                </div>
+              </div>
+              <p className="text-gray-700 mt-6">
+                <strong>The 7-Day Rolling Window:</strong> Your total score is a "snapshot" of your team's activity over the last 7 days. If an MP stops speaking or voting, their older points "expire" from your total. To stay at the top, you need a team that is consistently active in the House! Data syncs daily from OpenParliament.ca.
               </p>
             </section>
 
             <section className="mb-8">
-              <h2 className="text-2xl font-bold text-gray-900 mb-4">4. Leaderboard</h2>
+              <h2 className="text-2xl font-bold text-gray-900 mb-4">3. Leaderboards & Benchmarks</h2>
               <p className="text-gray-700">
-                Submit your team's total score to the global anonymous leaderboard to compete against other "Political Junkies" across Canada. Rankings are updated in real-time as scores are submitted.
+                Compete on the global leaderboard against other users, or measure yourself against <strong>Special Teams</strong> like the "Party Leaders" squad. If your local MPs outscore the opposition leaders, you're winning the civic game.
               </p>
             </section>
 

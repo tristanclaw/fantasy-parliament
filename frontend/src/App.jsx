@@ -18,6 +18,12 @@ function MainApp() {
     return saved ? JSON.parse(saved) : { captain: null, members: [] };
   });
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
+  const [darkMode, setDarkMode] = useState(() => localStorage.getItem('fp_darkMode') !== 'false');
+
+  useEffect(() => {
+    localStorage.setItem('fp_darkMode', darkMode);
+    document.documentElement.classList.toggle('dark', darkMode);
+  }, [darkMode]);
 
   useEffect(() => {
     localStorage.setItem('fp_username', username);
@@ -124,7 +130,7 @@ function MainApp() {
   }
 
   return (
-    <div className="min-h-screen bg-gray-50 font-sans text-gray-900 flex flex-col">
+    <div className={`min-h-screen font-sans flex flex-col ${darkMode ? 'bg-gray-900 text-white' : 'bg-gray-50 text-gray-900'}`}>
       <nav className="bg-red-700 text-white shadow-md">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="flex items-center justify-between h-16">
@@ -163,6 +169,21 @@ function MainApp() {
             </div>
 
             <div className="hidden md:flex items-center space-x-2">
+                <button
+                  onClick={() => setDarkMode(!darkMode)}
+                  className="p-2 rounded-md text-red-100 hover:text-white hover:bg-red-800 transition"
+                  title={darkMode ? "Switch to light mode" : "Switch to dark mode"}
+                >
+                  {darkMode ? (
+                    <svg className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 3v1m0 16v1m9-9h-1M4 12H3m15.364 6.364l-.707-.707M6.343 6.343l-.707-.707m12.728 0l-.707.707M6.343 17.657l-.707.707M16 12a4 4 0 11-8 0 4 4 0 018 0z" />
+                    </svg>
+                  ) : (
+                    <svg className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M20.354 15.354A9 9 0 018.646 3.646 9.003 9.003 0 0012 21a9.003 9.003 0 008.354-5.646z" />
+                    </svg>
+                  )}
+                </button>
                 <span className="text-red-200 text-sm font-medium">Welcome, {username}</span>
                 <div className="bg-red-800 p-2 rounded-full h-8 w-8 flex items-center justify-center font-bold text-xs">
                     {username ? username.substring(0,2).toUpperCase() : '??'}
@@ -308,7 +329,22 @@ function MyTeamViewWrapper() {
                             </div>
                         </div>
                         <div className="flex items-center space-x-2">
-                            <span className="text-red-200 text-sm font-medium">Welcome, {username}</span>
+                            <button
+                  onClick={() => setDarkMode(!darkMode)}
+                  className="p-2 rounded-md text-red-100 hover:text-white hover:bg-red-800 transition"
+                  title={darkMode ? "Switch to light mode" : "Switch to dark mode"}
+                >
+                  {darkMode ? (
+                    <svg className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 3v1m0 16v1m9-9h-1M4 12H3m15.364 6.364l-.707-.707M6.343 6.343l-.707-.707m12.728 0l-.707.707M6.343 17.657l-.707.707M16 12a4 4 0 11-8 0 4 4 0 018 0z" />
+                    </svg>
+                  ) : (
+                    <svg className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M20.354 15.354A9 9 0 018.646 3.646 9.003 9.003 0 0012 21a9.003 9.003 0 008.354-5.646z" />
+                    </svg>
+                  )}
+                </button>
+                <span className="text-red-200 text-sm font-medium">Welcome, {username}</span>
                             <div className="bg-red-800 p-2 rounded-full h-8 w-8 flex items-center justify-center font-bold text-xs">
                                 {username ? username.substring(0,2).toUpperCase() : '??'}
                             </div>

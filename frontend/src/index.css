@@ -1,1 +1,54 @@
 @import "tailwindcss";
+
+@custom-variant dark (&:where(.dark, .dark *));
+
+/* Default: Dark mode with red/white theme */
+:root {
+  --bg-primary: #0f0f0f;
+  --bg-secondary: #1a1a1a;
+  --bg-card: #242424;
+  --text-primary: #ffffff;
+  --text-secondary: #a0a0a0;
+  --accent-red: #dc2626;
+  --accent-red-light: #ef4444;
+  --border-color: #333333;
+}
+
+/* Light mode (optional) */
+:root.light {
+  --bg-primary: #ffffff;
+  --bg-secondary: #f5f5f5;
+  --bg-card: #ffffff;
+  --text-primary: #111111;
+  --text-secondary: #666666;
+  --accent-red: #dc2626;
+  --accent-red-light: #ef4444;
+  --border-color: #e5e5e5;
+}
+
+/* Apply theme */
+body {
+  background-color: var(--bg-primary);
+  color: var(--text-primary);
+}
+
+/* Dark mode utility classes */
+.dark {
+  --bg-primary: #0f0f0f;
+  --bg-secondary: #1a1a1a;
+  --bg-card: #242424;
+  --text-primary: #ffffff;
+  --text-secondary: #a0a0a0;
+  --border-color: #333333;
+}
+
+/* Override Tailwind colors for dark theme */
+.bg-gray-50 { background-color: var(--bg-primary); }
+.bg-gray-100 { background-color: var(--bg-secondary); }
+.bg-gray-200 { background-color: var(--bg-card); }
+.text-gray-900 { color: var(--text-primary); }
+.text-gray-700 { color: var(--text-primary); }
+.text-gray-600 { color: var(--text-secondary); }
+.text-gray-500 { color: var(--text-secondary); }
+.border-gray-100 { border-color: var(--border-color); }
+.border-gray-200 { border-color: var(--border-color); }
