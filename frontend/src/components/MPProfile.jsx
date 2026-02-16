@@ -4,18 +4,27 @@ import { useParams, Link } from 'react-router-dom';
 const MPProfile = () => {
   const { id } = useParams();
   const [mp, setMp] = useState(null);
+  const [scoreHistory, setScoreHistory] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
 
   useEffect(() => {
-    const fetchMP = async () => {
+    const fetchData = async () => {
       try {
-        const response = await fetch(`https://fantasy-parliament-web.onrender.com/mps/${id}`);
-        if (!response.ok) {
+        // Fetch MP details
+        const mpResponse = await fetch(`https://fantasy-parliament-web.onrender.com/mps/${id}`);
+        if (!mpResponse.ok) {
           throw new Error('Failed to fetch MP data');
         }
-        const data = await response.json();
-        setMp(data);
+        const mpData = await mpResponse.json();
+        setMp(mpData);
+        
+        // Fetch score history
+        const historyResponse = await fetch(`https://fantasy-parliament-web.onrender.com/mps/${id}/scores`);
+        if (historyResponse.ok) {
+          const historyData = await historyResponse.json();
+          setScoreHistory(historyData.scores || []);
+        }
       } catch (err) {
         setError(err.message);
       } finally {
@@ -23,7 +32,7 @@ const MPProfile = () => {
       }
     };
 
-    fetchMP();
+    fetchData();
   }, [id]);
 
   if (loading) return <div className="p-8 text-center">Loading profile...</div>;
@@ -31,6 +40,9 @@ const MPProfile = () => {
   if (!mp) return null;
 
   const breakdown = mp.score_breakdown || {};
+  
+  // Calculate max points for chart scaling
+  const maxPoints = Math.max(...scoreHistory.map(s => s.points), 1);
   
   return (
     <div className="min-h-screen bg-gray-50 font-sans text-gray-900">
@@ -111,6 +123,28 @@ const MPProfile = () => {
                     )}
                 </div>
             </div>
+            
+            {/* Score History Chart */}
+            {scoreHistory.length > 0 && (
+                <div className="p-6 bg-gray-50 border-t">
+                    <h3 className="text-lg font-bold mb-4 text-gray-700">Score History</h3>
+                    <div className="flex items-end justify-between gap-1 h-32">
+                        {scoreHistory.slice(-14).map((score, idx) => (
+                            <div key={idx} className="flex-1 flex flex-col items-center">
+                                <div 
+                                    className="w-full bg-red-500 rounded-t transition hover:bg-red-600"
+                                    style={{ height: `${(score.points / maxPoints) * 100}%`, minHeight: score.points > 0 ? '4px' : '0' }}
+                                    title={`${score.date}: ${score.points} pts`}
+                                ></div>
+                                <span className="text-[8px] text-gray-400 mt-1 transform -rotate-45 origin-left whitespace-nowrap">
+                                    {score.date.slice(5)}
+                                </span>
+                            </div>
+                        ))}
+                    </div>
+                    <p className="text-xs text-gray-400 mt-2 text-center">Last 14 scoring days</p>
+                </div>
+            )}
             
             {/* Score Breakdown Visual */}
             <div className="p-6 bg-gray-50 border-t">

@@ -1,23 +1,33 @@
 import React, { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
 
+const PARTIES = ['All', 'Liberal', 'Conservative', 'NDP', 'Bloc', 'Green'];
+
 const DraftPool = ({ onDraft }) => {
     const [mps, setMps] = useState([]);
     const [search, setSearch] = useState('');
     const [loading, setLoading] = useState(false);
     const [error, setError] = useState(null);
+    const [activeParty, setActiveParty] = useState('All');
 
-    const fetchMPs = async (query = '') => {
+    const fetchMPs = async (query = '', party = 'All') => {
         setLoading(true);
         try {
-            const url = query 
-                ? `https://fantasy-parliament-web.onrender.com/mps/search?q=${encodeURIComponent(query)}`
-                : `https://fantasy-parliament-web.onrender.com/mps/search`; 
+            let url = `https://fantasy-parliament-web.onrender.com/mps/search`;
+            if (query) {
+                url += `?q=${encodeURIComponent(query)}`;
+            }
             const response = await fetch(url);
             if (!response.ok) {
                 throw new Error('Failed to fetch MPs');
             }
-            const data = await response.json();
+            let data = await response.json();
+            
+            // Filter by party client-side (API doesn't support party filtering yet)
+            if (party && party !== 'All') {
+                data = data.filter(mp => mp.party === party);
+            }
+            
             setMps(data);
             setLoading(false);
         } catch (err) {
@@ -27,7 +37,7 @@ const DraftPool = ({ onDraft }) => {
     };
 
     useEffect(() => {
-        fetchMPs();
+        fetchMPs(search, activeParty);
     }, []);
 
     const handleSearchChange = (e) => {
@@ -36,12 +46,37 @@ const DraftPool = ({ onDraft }) => {
 
     const handleSearchSubmit = (e) => {
         e.preventDefault();
-        fetchMPs(search);
+        fetchMPs(search, activeParty);
+    };
+
+    const handlePartyFilter = (party) => {
+        setActiveParty(party);
+        fetchMPs(search, party);
     };
 
     return (
         <div className="bg-white rounded-xl shadow-lg p-6 border border-gray-100 h-full">
             <h2 className="text-2xl font-bold mb-6 text-red-700 border-b pb-2">Draft Pool</h2>
+            
+            {/* Party Filter */}
+            <div className="mb-4">
+                <p className="text-sm text-gray-500 mb-2">Filter by party:</p>
+                <div className="flex flex-wrap gap-2">
+                    {PARTIES.map(party => (
+                        <button
+                            key={party}
+                            onClick={() => handlePartyFilter(party)}
+                            className={`px-3 py-1 rounded-full text-sm font-medium transition ${
+                                activeParty === party 
+                                    ? 'bg-red-600 text-white' 
+                                    : 'bg-gray-100 text-gray-600 hover:bg-gray-200'
+                            }`}
+                        >
+                            {party}
+                        </button>
+                    ))}
+                </div>
+            </div>
             
             <form onSubmit={handleSearchSubmit} className="mb-6">
                 <div className="relative">
