@@ -25,9 +25,29 @@ function MainApp() {
     localStorage.setItem('fp_team', JSON.stringify(team));
   }, [team]);
 
-  const handleOnboardingComplete = (name, captain) => {
-    setUsername(name);
-    setTeam({ captain, members: [] });
+  const handleOnboardingComplete = async (name, email, captain) => {
+    try {
+      const response = await fetch('https://fantasy-parliament-web.onrender.com/api/register', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          display_name: name,
+          email: email,
+          captain_mp_id: captain.id,
+          team_mp_ids: [captain.id]
+        })
+      });
+      if (response.ok) {
+        setUsername(name);
+        setTeam({ captain, members: [] });
+      } else {
+        const err = await response.json();
+        alert("Registration failed: " + (err.detail || "Unknown error"));
+      }
+    } catch (e) {
+      console.error(e);
+      alert("Error registering. Try again.");
+    }
   };
 
   const handleDraft = (mp) => {

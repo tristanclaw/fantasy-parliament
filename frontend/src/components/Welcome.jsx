@@ -3,6 +3,7 @@ import React, { useState } from 'react';
 const Welcome = ({ onComplete }) => {
   const [step, setStep] = useState(1);
   const [displayName, setDisplayName] = useState('');
+  const [email, setEmail] = useState('');
   const [searchQuery, setSearchQuery] = useState('');
   const [results, setResults] = useState([]);
   const [loading, setLoading] = useState(false);
@@ -10,7 +11,7 @@ const Welcome = ({ onComplete }) => {
 
   const handleNameSubmit = (e) => {
     e.preventDefault();
-    if (displayName.trim()) setStep(2);
+    if (displayName.trim() && email.trim()) setStep(2);
   };
 
   const searchRidings = async (e) => {
@@ -18,7 +19,6 @@ const Welcome = ({ onComplete }) => {
     if (!searchQuery.trim()) return;
     setLoading(true);
     try {
-        // Using the same API endpoint as DraftPool
         const response = await fetch(`https://fantasy-parliament-web.onrender.com/mps/search?q=${encodeURIComponent(searchQuery)}`);
         if (!response.ok) throw new Error("Search failed");
         const data = await response.json();
@@ -31,8 +31,8 @@ const Welcome = ({ onComplete }) => {
   };
 
   const confirmCaptain = () => {
-    if (displayName && selectedMp) {
-        onComplete(displayName, selectedMp);
+    if (displayName && email && selectedMp) {
+        onComplete(displayName, email, selectedMp);
     }
   };
 
@@ -45,7 +45,6 @@ const Welcome = ({ onComplete }) => {
         </div>
 
         <div className="p-8">
-            {/* Progress Indicator */}
             <div className="flex justify-center gap-2 mb-6">
                 <div className={`h-2 w-12 rounded-full ${step >= 1 ? 'bg-red-600' : 'bg-gray-200'}`}></div>
                 <div className={`h-2 w-12 rounded-full ${step >= 2 ? 'bg-red-600' : 'bg-gray-200'}`}></div>
@@ -54,22 +53,33 @@ const Welcome = ({ onComplete }) => {
             {step === 1 && (
                 <div className="animate-fade-in-up">
                     <h2 className="text-xl font-bold text-gray-900 mb-2">Welcome!</h2>
-                    <p className="text-gray-500 text-sm mb-6">Let's get you set up. First, what should we call you on the leaderboard?</p>
-                    <form onSubmit={handleNameSubmit} className="space-y-6">
+                    <p className="text-gray-500 text-sm mb-6">Let's get you set up. We need your name and email to track your score.</p>
+                    <form onSubmit={handleNameSubmit} className="space-y-4">
                         <div>
-                            <label className="block text-sm font-bold text-gray-700 mb-2">Display Name</label>
+                            <label className="block text-sm font-bold text-gray-700 mb-1">Display Name</label>
                             <input
                                 type="text"
                                 required
-                                className="w-full px-4 py-3 rounded-lg border border-gray-300 focus:ring-2 focus:ring-red-500 focus:border-red-500 outline-none transition bg-gray-50 focus:bg-white"
+                                className="w-full px-4 py-2 rounded-lg border border-gray-300 focus:ring-2 focus:ring-red-500 outline-none transition bg-gray-50"
                                 placeholder="e.g. PoliticalJunkie99"
                                 value={displayName}
                                 onChange={(e) => setDisplayName(e.target.value)}
                             />
                         </div>
+                        <div>
+                            <label className="block text-sm font-bold text-gray-700 mb-1">Email Address</label>
+                            <input
+                                type="email"
+                                required
+                                className="w-full px-4 py-2 rounded-lg border border-gray-300 focus:ring-2 focus:ring-red-500 outline-none transition bg-gray-50"
+                                placeholder="you@example.com"
+                                value={email}
+                                onChange={(e) => setEmail(e.target.value)}
+                            />
+                        </div>
                         <button
                             type="submit"
-                            className="w-full bg-red-600 text-white font-bold py-3 rounded-lg hover:bg-red-700 transition shadow-md hover:shadow-lg transform active:scale-95 duration-150"
+                            className="w-full bg-red-600 text-white font-bold py-3 rounded-lg hover:bg-red-700 transition shadow-md"
                         >
                             Continue
                         </button>
@@ -89,7 +99,7 @@ const Welcome = ({ onComplete }) => {
                                 <form onSubmit={searchRidings} className="flex gap-2">
                                     <input
                                         type="text"
-                                        className="flex-1 px-4 py-3 rounded-lg border border-gray-300 focus:ring-2 focus:ring-red-500 outline-none bg-gray-50 focus:bg-white transition"
+                                        className="flex-1 px-4 py-3 rounded-lg border border-gray-300 focus:ring-2 focus:ring-red-500 outline-none bg-gray-50 transition"
                                         placeholder="e.g. Halifax, Pierre..."
                                         value={searchQuery}
                                         onChange={(e) => setSearchQuery(e.target.value)}
@@ -130,12 +140,6 @@ const Welcome = ({ onComplete }) => {
                                         </div>
                                     </button>
                                 ))}
-                                {results.length === 0 && searchQuery && !loading && (
-                                    <p className="text-sm text-gray-400 text-center py-4 italic">No MPs found. Try a different spelling.</p>
-                                )}
-                                {results.length === 0 && !searchQuery && (
-                                    <p className="text-sm text-gray-400 text-center py-4">Enter your riding name above.</p>
-                                )}
                             </div>
                         </>
                     ) : (
