@@ -203,7 +203,7 @@ function MainApp() {
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
           <div className="lg:col-span-2">
             <MyTeam team={team} username={username} onRemove={handleRemove} />
-            <DraftPool onDraft={handleDraft} />
+            <DraftPool team={team} onDraft={handleDraft} />
           </div>
           <div className="lg:col-span-1">
             <Scoreboard />

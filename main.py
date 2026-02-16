@@ -413,6 +413,37 @@ def get_leaderboard():
     entries = LeaderboardEntry.select().order_by(desc(LeaderboardEntry.score))[:50]
     return [{"username": e.username, "score": e.score, "updated_at": e.updated_at.isoformat()} for e in entries]
 
+@app.get("/leaderboard/party")
+@db_session
+def get_party_leaderboard():
+    """Rank parties by their top 5 MPs' combined scores"""
+    parties = {}
+    
+    # Get all MPs
+    mps = MP.select()
+    for mp in mps:
+        party = mp.party or "Independent"
+        if party not in parties:
+            parties[party] = []
+        parties[party].append({"name": mp.name, "score": mp.total_score, "id": mp.id})
+    
+    # Calculate top 5 for each party
+    results = []
+    for party, mp_list in parties.items():
+        mp_list.sort(key=lambda x: x["score"], reverse=True)
+        top_5 = mp_list[:5]
+        total_score = sum(m["score"] for m in top_5)
+        results.append({
+            "party": party,
+            "score": total_score,
+            "mp_count": len(mp_list),
+            "top_5": top_5
+        })
+    
+    # Sort by total score
+    results.sort(key=lambda x: x["score"], reverse=True)
+    return results
+
 @app.get("/special")
 @db_session
 def get_special_leaderboards():
