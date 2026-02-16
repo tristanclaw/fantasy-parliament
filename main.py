@@ -533,23 +533,26 @@ def register_user(registration: RegistrationRequest, request: Request):
         }
 
     # 1. Gameplay Validation
-    # Exactly 4 team members
-    if len(registration.team_mp_ids) != 4:
-        raise HTTPException(status_code=400, detail="Team must have exactly 4 MPs")
+    # At least 1 team member (captain required)
+    if len(registration.team_mp_ids) < 1:
+        raise HTTPException(status_code=400, detail="Team must have at least 1 MP")
+    
+    if len(registration.team_mp_ids) > 5:
+        raise HTTPException(status_code=400, detail="Team can have at most 5 MPs (1 captain + 4 members)")
     
     # No duplicate MPs
-    if len(set(registration.team_mp_ids)) != 4:
+    if len(set(registration.team_mp_ids)) != len(registration.team_mp_ids):
          raise HTTPException(status_code=400, detail="Duplicate MPs in team")
 
     # All MP IDs exist
     # Note: PonyORM select with 'in' list works fine for integers
     existing_mps = MP.select(lambda m: m.id in registration.team_mp_ids)
-    if existing_mps.count() != 4:
+    if existing_mps.count() != len(registration.team_mp_ids):
          raise HTTPException(status_code=400, detail="One or more selected MPs do not exist")
          
-    # Captain must be part of the team (enforces "Exactly 4 team members")
+    # Captain must be part of the team 
     if registration.captain_mp_id not in registration.team_mp_ids:
-        raise HTTPException(status_code=400, detail="Captain must be part of the 4-member team")
+        raise HTTPException(status_code=400, detail="Captain must be part of your team")
 
     # Captain exists
     if not MP.get(id=registration.captain_mp_id):
