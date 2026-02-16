@@ -251,8 +251,26 @@ function MyTeamViewWrapper() {
     return (
         <div className="min-h-screen bg-gray-50 font-sans text-gray-900 flex flex-col">
             <nav className="bg-red-700 text-white shadow-md">
-                <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 h-16 flex items-center">
-                     <Link to="/" className="text-xl font-black tracking-tighter uppercase">Fantasy Parliament</Link>
+                <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+                    <div className="flex items-center justify-between h-16">
+                        <div className="flex items-center">
+                            <Link to="/" className="text-xl font-black tracking-tighter uppercase">Fantasy <span className="text-red-200">Parliament</span></Link>
+                        </div>
+                        <div className="hidden md:block">
+                            <div className="ml-10 flex items-baseline space-x-4">
+                                <Link to="/" className="text-red-100 hover:bg-red-800 hover:text-white px-3 py-2 rounded-md text-sm font-medium transition">Dashboard</Link>
+                                <Link to="/my-team" className="bg-red-800 px-3 py-2 rounded-md text-sm font-medium">My Team</Link>
+                                <Link to="/rules" className="text-red-100 hover:bg-red-800 hover:text-white px-3 py-2 rounded-md text-sm font-medium transition">Rules</Link>
+                                <Link to="/schedule" className="text-red-100 hover:bg-red-800 hover:text-white px-3 py-2 rounded-md text-sm font-medium transition">Schedule</Link>
+                            </div>
+                        </div>
+                        <div className="flex items-center space-x-2">
+                            <span className="text-red-200 text-sm font-medium">Welcome, {username}</span>
+                            <div className="bg-red-800 p-2 rounded-full h-8 w-8 flex items-center justify-center font-bold text-xs">
+                                {username ? username.substring(0,2).toUpperCase() : '??'}
+                            </div>
+                        </div>
+                    </div>
                 </div>
             </nav>
             <main className="max-w-7xl mx-auto py-8 px-4 sm:px-6 lg:px-8 flex-grow w-full">
@@ -260,6 +278,9 @@ function MyTeamViewWrapper() {
                     <MyTeam team={team} username={username} onRemove={handleRemove} />
                 </div>
             </main>
+            <footer className="mt-auto py-8 text-center text-gray-400 text-sm">
+                &copy; 2026 Fantasy Parliament League. Data powered by OpenParliament.
+            </footer>
         </div>
     );
 }
