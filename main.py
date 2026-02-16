@@ -5,6 +5,7 @@ from fastapi.staticfiles import StaticFiles
 from pony.orm import db_session, select, desc
 from models import MP, LeaderboardEntry, Registration, Subscriber, DailyScore, init_db, run_migrations, db
 from scraper import run_sync, run_sync_mps_only
+from committee_tiers import calculate_committee_score, COMMITTEE_TIERS, get_committee_tier
 import os
 import asyncio
 from dotenv import load_dotenv
@@ -277,7 +278,9 @@ def mp_to_dict(mp):
             "slug": mp.slug,
             "image_url": mp.image_url,
             "committees": mp.committees,
-            "score_breakdown": mp.score_breakdown
+            "score_breakdown": mp.score_breakdown,
+            "committee_score": calculate_committee_score(mp.committees) if mp.committees else {"total": 0, "breakdown": {}},
+            "committee_tiers": {c.get("name"): get_committee_tier(c.get("name", "")) for c in (mp.committees or [])}
         }
     except Exception as e:
         print(f"ERROR in mp_to_dict: {e}")
@@ -414,6 +417,19 @@ def get_leaderboard():
     return [{"username": e.username, "score": e.score, "updated_at": e.updated_at.isoformat()} for e in entries]
 
 @app.get("/leaderboard/party")
+
+@app.get("/committees")
+def get_committee_tiers_info():
+    """Return committee tier information and scoring rules"""
+    return {
+        "tiers": COMMITTEE_TIERS,
+        "base_points": COMMITTEE_BASE_POINTS,
+        "role_multipliers": {
+            "Chair": 1.5,
+            "Vice-Chair": 1.25,
+            "Member": 1.0
+        }
+    }
 @db_session
 def get_party_leaderboard():
     """Rank parties by their top 5 MPs' combined scores"""
