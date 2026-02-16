@@ -1,12 +1,20 @@
 import React, { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
 
+// Mock Parliament events - in production, fetch from OpenParliament.ca API
+const PARLIAMENT_EVENTS = [
+  { date: '2026-02-16', type: 'sitting', title: 'House of Commons sits', description: 'Question Period expected' },
+  { date: '2026-02-17', type: 'sitting', title: 'House of Commons sits', description: 'Budget presentation possible' },
+  { date: '2026-02-18', type: 'sitting', title: 'House of Commons sits', description: 'Committee meetings' },
+  { date: '2026-02-19', type: 'sitting', title: 'House of Commons sits', description: 'Votes expected' },
+  { date: '2026-02-20', type: 'sitting', title: 'House of Commons sits', description: 'Last sitting day before break' },
+  { date: '2026-02-21', type: 'break', title: 'No Sitting', description: 'Weekend' },
+  { date: '2026-02-23', type: 'break', title: 'No Sitting', description: 'Family Day (Ontario) / Reading Week' },
+];
+
 function getParliamentSchedule() {
   const schedule = [];
   const today = new Date();
-  
-  // Canadian Parliament typically sits Mon-Fri
-  // We'll calculate the next 8 weeks of sitting days
   
   for (let i = 0; i < 56; i++) {
     const date = new Date(today);
@@ -17,7 +25,6 @@ function getParliamentSchedule() {
     
     // Parliament sits Monday-Friday (1-5)
     if (dayOfWeek >= 1 && dayOfWeek <= 5) {
-      // Check if it's a Saturday processing day (add the Saturday AFTER this sitting day)
       const saturday = new Date(date);
       saturday.setDate(date.getDate() + (6 - dayOfWeek));
       
@@ -33,7 +40,6 @@ function getParliamentSchedule() {
     }
   }
   
-  // Unique processing dates only
   const uniqueSaturdays = [];
   const seen = new Set();
   for (const item of schedule) {
@@ -70,6 +76,7 @@ function Schedule() {
                 <Link to="/my-team" className="text-red-100 hover:bg-red-800 hover:text-white px-3 py-2 rounded-md text-sm font-medium transition">My Team</Link>
                 <Link to="/rules" className="text-red-100 hover:bg-red-800 hover:text-white px-3 py-2 rounded-md text-sm font-medium transition">Rules</Link>
                 <Link to="/schedule" className="bg-red-800 px-3 py-2 rounded-md text-sm font-medium">Schedule</Link>
+                <Link to="/compare" className="text-red-100 hover:bg-red-800 hover:text-white px-3 py-2 rounded-md text-sm font-medium transition">Compare</Link>
               </div>
             </div>
             <div className="flex items-center space-x-2">
@@ -98,9 +105,38 @@ function Schedule() {
           </div>
         )}
         
+        {/* Parliament Activity Section */}
+        <div className="bg-white shadow rounded-lg overflow-hidden border border-gray-100 mb-8">
+          <div className="px-4 py-5 sm:px-6 bg-blue-50 border-b">
+            <h2 className="text-lg font-medium text-gray-900">📅 This Week in Parliament</h2>
+            <p className="text-sm text-gray-500 mt-1">Expected activity (based on standard sitting schedule)</p>
+          </div>
+          <ul className="divide-y divide-gray-200">
+            {PARLIAMENT_EVENTS.map((event, idx) => (
+              <li key={idx} className="px-4 py-4 sm:px-6 hover:bg-gray-50">
+                <div className="flex items-start">
+                  <div className={`flex-shrink-0 w-3 h-3 rounded-full mt-2 mr-3 ${event.type === 'sitting' ? 'bg-green-500' : 'bg-gray-300'}`}></div>
+                  <div className="flex-1">
+                    <p className="text-sm font-medium text-gray-900">{event.title}</p>
+                    <p className="text-sm text-gray-500">{event.description}</p>
+                  </div>
+                  <div className="text-right">
+                    <p className="text-sm font-semibold text-gray-700">{new Date(event.date + 'T00:00:00').toLocaleDateString('en-CA', { month: 'short', day: 'numeric' })}</p>
+                  </div>
+                </div>
+              </li>
+            ))}
+          </ul>
+          <div className="bg-gray-50 px-4 py-3 text-xs text-gray-500 text-center">
+            * Actual schedule may vary. Check <a href="https://www.ourcommons.ca" target="_blank" rel="noopener" className="text-blue-600 hover:underline">ourcommons.ca</a> for real-time schedule.
+          </div>
+        </div>
+        
+        {/* Processing Dates */}
         <div className="bg-white shadow rounded-lg overflow-hidden border border-gray-100">
           <div className="px-4 py-5 sm:px-6 bg-gray-50 border-b">
-            <h2 className="text-lg font-medium text-gray-900">Upcoming Processing Dates</h2>
+            <h2 className="text-lg font-medium text-gray-900">📊 Score Processing Dates</h2>
+            <p className="text-sm text-gray-500 mt-1">Saturdays when Fantasy Parliament scores update</p>
           </div>
           <ul className="divide-y divide-gray-200">
             {schedule.slice(0, 12).map((item, idx) => (
