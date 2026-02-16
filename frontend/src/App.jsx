@@ -8,6 +8,7 @@ import Welcome from './components/Welcome';
 import Rules from './components/Rules';
 import Schedule from './components/Schedule';
 import Compare from './components/Compare';
+import ConnectionStatus from './components/ConnectionStatus';
 import Admin from './components/Admin';
 
 function MainApp() {
@@ -129,6 +130,9 @@ function MainApp() {
           <div className="flex items-center justify-between h-16">
             <div className="flex items-center">
               <Link to="/" className="text-xl font-black tracking-tighter uppercase">Fantasy <span className="text-red-200">Parliament</span></Link>
+              <div className="ml-4">
+                <ConnectionStatus />
+              </div>
             </div>
             
             {/* Desktop Menu */}

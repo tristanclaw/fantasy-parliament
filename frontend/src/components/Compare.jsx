@@ -63,24 +63,48 @@ const Compare = () => {
     return () => clearTimeout(debounce);
   }, [search2]);
 
-  const StatBar = ({ label, val1, val2, color1 = "bg-red-500", color2 = "bg-blue-500" }) => {
+  const StatBar = ({ label, val1, val2, mp1Name, mp2Name, color1 = "#ef4444", color2 = "#3b82f6" }) => {
     const max = Math.max(val1, val2, 1);
+    const percent1 = (val1 / max) * 100;
+    const percent2 = (val2 / max) * 100;
+    const winner = val1 > val2 ? 1 : val2 > val1 ? 2 : 0;
+    
     return (
-      <div className="mb-4">
-        <div className="flex justify-between text-sm mb-1">
-          <span className="text-gray-600">{label}</span>
-        </div>
-        <div className="flex items-center gap-2">
-          <div className="flex-1 bg-gray-100 rounded-full h-4 overflow-hidden flex">
-            <div className={`${color1} h-4`} style={{ width: `${(val1 / max) * 100}%` }}></div>
+      <div className="mb-6">
+        <div className="text-sm font-semibold text-gray-700 mb-2">{label}</div>
+        
+        {/* MP1 Bar */}
+        <div className="mb-2">
+          <div className="flex justify-between text-xs mb-1">
+            <span className="font-medium" style={{ color: color1 }}>{mp1Name}</span>
+            <span className="font-bold">{val1}</span>
           </div>
-          <span className="text-xs font-bold w-8 text-right">{val1}</span>
-        </div>
-        <div className="flex items-center gap-2 mt-1">
-          <div className="flex-1 bg-gray-100 rounded-full h-4 overflow-hidden flex">
-            <div className={`${color2} h-4`} style={{ width: `${(val2 / max) * 100}%` }}></div>
+          <div className="w-full bg-gray-200 rounded-full h-6 overflow-hidden relative">
+            <div 
+              className="h-6 rounded-full flex items-center justify-end pr-2 text-white text-xs font-bold transition-all duration-500"
+              style={{ width: `${percent1}%`, backgroundColor: color1 }}
+            >
+              {percent1 > 15 && val1}
+            </div>
+            {winner === 1 && <span className="absolute right-1 top-1/2 -translate-y-1/2 text-xs">👑</span>}
           </div>
-          <span className="text-xs font-bold w-8 text-right">{val2}</span>
+        </div>
+        
+        {/* MP2 Bar */}
+        <div>
+          <div className="flex justify-between text-xs mb-1">
+            <span className="font-medium" style={{ color: color2 }}>{mp2Name}</span>
+            <span className="font-bold">{val2}</span>
+          </div>
+          <div className="w-full bg-gray-200 rounded-full h-6 overflow-hidden relative">
+            <div 
+              className="h-6 rounded-full flex items-center justify-end pr-2 text-white text-xs font-bold transition-all duration-500"
+              style={{ width: `${percent2}%`, backgroundColor: color2 }}
+            >
+              {percent2 > 15 && val2}
+            </div>
+            {winner === 2 && <span className="absolute right-1 top-1/2 -translate-y-1/2 text-xs">👑</span>}
+          </div>
         </div>
       </div>
     );
@@ -184,13 +208,13 @@ const Compare = () => {
             <div className="p-6">
               <h4 className="font-bold text-xl mb-4 text-center">Score Comparison</h4>
               
-              <StatBar label="Total Score" val1={mp1.score} val2={mp2.score} />
+              <StatBar label="Total Score" val1={mp1.score} val2={mp2.score} mp1Name={mp1.name} mp2Name={mp2.name} color1="#ef4444" color2="#3b82f6" />
               
               {mp1.score_breakdown && mp2.score_breakdown && (
                 <>
-                  <StatBar label="Speeches" val1={mp1.score_breakdown.speeches || 0} val2={mp2.score_breakdown.speeches || 0} color1="bg-red-400" color2="bg-blue-400" />
-                  <StatBar label="Votes" val1={mp1.score_breakdown.votes || 0} val2={mp2.score_breakdown.votes || 0} color1="bg-red-300" color2="bg-blue-300" />
-                  <StatBar label="Bills" val1={mp1.score_breakdown.bills || 0} val2={mp2.score_breakdown.bills || 0} color1="bg-red-200" color2="bg-blue-200" />
+                  <StatBar label="Speeches" val1={mp1.score_breakdown.speeches || 0} val2={mp2.score_breakdown.speeches || 0} mp1Name={mp1.name} mp2Name={mp2.name} color1="#f87171" color2="#60a5fa" />
+                  <StatBar label="Votes" val1={mp1.score_breakdown.votes || 0} val2={mp2.score_breakdown.votes || 0} mp1Name={mp1.name} mp2Name={mp2.name} color1="#fca5a5" color2="#93c5fd" />
+                  <StatBar label="Bills" val1={mp1.score_breakdown.bills || 0} val2={mp2.score_breakdown.bills || 0} mp1Name={mp1.name} mp2Name={mp2.name} color1="#fecaca" color2="#bfdbfe" />
                 </>
               )}
             </div>
