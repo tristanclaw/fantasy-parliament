@@ -353,7 +353,18 @@ def diag_db():
         mp_count = MP.select().count()
         lb_count = LeaderboardEntry.select().count()
         ds_count = DailyScore.select().count()
+        reg_count = Registration.select().count()
         
+        # Check registration columns
+        from models import db
+        cols = []
+        try:
+            if db.provider_name == 'postgres':
+                result = db.select("SELECT column_name, is_nullable FROM information_schema.columns WHERE table_name = 'registration'")
+                cols = [{"column": r[0], "nullable": r[1]} for r in result]
+        except:
+            pass
+
         last_scores = [
             {"mp": s.mp_name, "date": str(s.date), "points": s.points_today} 
             for s in DailyScore.select().order_by(desc(DailyScore.date))[:5]
@@ -364,8 +375,10 @@ def diag_db():
             "counts": {
                 "mp": mp_count,
                 "leaderboard": lb_count,
-                "daily_scores": ds_count
+                "daily_scores": ds_count,
+                "registrations": reg_count
             },
+            "registration_schema": cols,
             "last_scores": last_scores,
             "database": str(db.provider_name)
         }
