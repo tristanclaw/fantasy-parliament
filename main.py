@@ -580,11 +580,11 @@ def register_user(registration: RegistrationRequest, request: Request):
         Registration(
             user_id=new_user_id,
             display_name=display_name,
-            team_name=team_name,
+            team_name=team_name or "",
             email=email,
             captain_mp_id=registration.captain_mp_id,
             team_mp_ids=registration.team_mp_ids,
-            ip_address=client_ip,
+            ip_address=client_ip or "",
             registered_at=datetime.utcnow()
         )
         # Placeholder for mailing list integration
