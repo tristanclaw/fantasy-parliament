@@ -3,7 +3,10 @@ import { Link } from 'react-router-dom';
 
 const PARTIES = ['All', 'Liberal', 'Conservative', 'NDP', 'Bloc', 'Green'];
 
-const DraftPool = ({ onDraft }) => {
+const DraftPool = ({ team, onDraft }) => {
+    // Check if team has a captain - if so, default to filtering by their party (handicap mode)
+    const captainParty = team?.captain?.party;
+    const [partyLock, setPartyLock] = useState(captainParty ? true : false);
     const [mps, setMps] = useState([]);
     const [search, setSearch] = useState('');
     const [loading, setLoading] = useState(false);
@@ -24,8 +27,10 @@ const DraftPool = ({ onDraft }) => {
             let data = await response.json();
             
             // Filter by party client-side (API doesn't support party filtering yet)
-            if (party && party !== 'All') {
-                data = data.filter(mp => mp.party === party);
+            // If party lock is enabled (captain selected), force their party
+            const filterParty = partyLock && captainParty ? captainParty : (party && party !== 'All' ? party : null);
+            if (filterParty) {
+                data = data.filter(mp => mp.party === filterParty);
             }
             
             setMps(data);
@@ -50,8 +55,20 @@ const DraftPool = ({ onDraft }) => {
     };
 
     const handlePartyFilter = (party) => {
+        if (partyLock && captainParty) return; // Can't change party if locked to captain
         setActiveParty(party);
         fetchMPs(search, party);
+    };
+    
+    const togglePartyLock = () => {
+        setPartyLock(!partyLock);
+        if (!partyLock && captainParty) {
+            // Enabling lock - filter to captain's party
+            fetchMPs(search, captainParty);
+        } else {
+            // Disabling lock - show all
+            fetchMPs(search, 'All');
+        }
     };
 
     return (
@@ -66,15 +83,29 @@ const DraftPool = ({ onDraft }) => {
                         <button
                             key={party}
                             onClick={() => handlePartyFilter(party)}
+                            disabled={partyLock && captainParty}
                             className={`px-3 py-1 rounded-full text-sm font-medium transition ${
                                 activeParty === party 
                                     ? 'bg-red-600 text-white' 
                                     : 'bg-gray-100 text-gray-600 hover:bg-gray-200'
-                            }`}
+                            } ${partyLock && captainParty ? 'opacity-50 cursor-not-allowed' : ''}`}
                         >
                             {party}
                         </button>
                     ))}
+                    {captainParty && (
+                        <button
+                            onClick={togglePartyLock}
+                            className={`px-3 py-1 rounded-full text-sm font-medium transition ${
+                                partyLock 
+                                    ? 'bg-yellow-500 text-white' 
+                                    : 'bg-gray-200 text-gray-700 hover:bg-gray-300'
+                            }`}
+                            title={partyLock ? "Unlock: Allow any party" : "Lock: Only captain's party"}
+                        >
+                            {partyLock ? '🔒 ' + captainParty : '🔓'}
+                        </button>
+                    )}
                 </div>
             </div>
             

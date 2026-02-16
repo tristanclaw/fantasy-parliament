@@ -5,7 +5,8 @@ const Scoreboard = () => {
     const [topMPs, setTopMPs] = useState([]);
     const [leaderboard, setLeaderboard] = useState([]);
     const [specialTeams, setSpecialTeams] = useState([]);
-    const [view, setView] = useState('mps'); // 'mps', 'users', or 'special'
+    const [partyRankings, setPartyRankings] = useState([]);
+    const [view, setView] = useState('mps'); // 'mps', 'users', 'party', or 'special'
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState(null);
 
@@ -20,6 +21,10 @@ const Scoreboard = () => {
                 const response = await fetch('https://fantasy-parliament-web.onrender.com/leaderboard');
                 const data = await response.json();
                 setLeaderboard(data);
+            } else if (view === 'party') {
+                const response = await fetch('https://fantasy-parliament-web.onrender.com/leaderboard/party');
+                const data = await response.json();
+                setPartyRankings(data);
             } else if (view === 'special') {
                 const response = await fetch('https://fantasy-parliament-web.onrender.com/special');
                 if (!response.ok) {
@@ -55,6 +60,12 @@ const Scoreboard = () => {
                         className={`px-3 py-1 text-xs font-bold rounded-md transition ${view === 'users' ? 'bg-white text-red-700 shadow-sm' : 'text-gray-500 hover:text-gray-700'}`}
                     >
                         Users
+                    </button>
+                    <button 
+                        onClick={() => setView('party')}
+                        className={`px-3 py-1 text-xs font-bold rounded-md transition ${view === 'party' ? 'bg-white text-red-700 shadow-sm' : 'text-gray-500 hover:text-gray-700'}`}
+                    >
+                        Parties
                     </button>
                     <button 
                         onClick={() => setView('special')}
@@ -126,8 +137,33 @@ const Scoreboard = () => {
                         </div>
                     ))}
 
+                    {view === 'party' && partyRankings.map((party, index) => (
+                        <div key={party.party} className="border border-gray-200 rounded-lg p-4 bg-green-50 hover:bg-green-100 transition">
+                            <div className="flex justify-between items-center mb-2">
+                                <div className="flex items-center space-x-3">
+                                    <span className="font-bold text-green-600 text-lg">#{index + 1}</span>
+                                    <h3 className="font-bold text-green-900">{party.party}</h3>
+                                    <span className="text-xs bg-green-200 text-green-800 px-2 py-0.5 rounded-full">{party.mp_count} MPs</span>
+                                </div>
+                                <div className="text-right">
+                                    <span className="text-xl font-bold text-green-700">{party.score}</span>
+                                    <span className="text-xs text-green-500 ml-1 uppercase">Top 5</span>
+                                </div>
+                            </div>
+                            <div className="space-y-1">
+                                {party.top_5.map((mp, i) => (
+                                    <div key={mp.id || i} className="flex justify-between text-sm">
+                                        <span className="text-gray-600">{i + 1}. {mp.name}</span>
+                                        <span className="font-semibold text-gray-700">{mp.score}</span>
+                                    </div>
+                                ))}
+                            </div>
+                        </div>
+                    ))}
+
                     {((view === 'mps' && topMPs.length === 0) || 
                       (view === 'users' && leaderboard.length === 0) ||
+                      (view === 'party' && partyRankings.length === 0) ||
                       (view === 'special' && specialTeams.length === 0)) && (
                         <p className="text-center text-gray-400 py-4">No rankings available.</p>
                     )}
