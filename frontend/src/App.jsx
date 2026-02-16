@@ -7,6 +7,7 @@ import MPProfile from './components/MPProfile';
 import Welcome from './components/Welcome';
 import Rules from './components/Rules';
 import Schedule from './components/Schedule';
+import Compare from './components/Compare';
 import Admin from './components/Admin';
 
 function MainApp() {
@@ -122,6 +123,7 @@ function MainApp() {
                 <Link to="/my-team" className="text-red-100 hover:bg-red-800 hover:text-white px-3 py-2 rounded-md text-sm font-medium transition">My Team</Link>
                 <Link to="/rules" className="text-red-100 hover:bg-red-800 hover:text-white px-3 py-2 rounded-md text-sm font-medium transition">Rules</Link>
                 <Link to="/schedule" className="text-red-100 hover:bg-red-800 hover:text-white px-3 py-2 rounded-md text-sm font-medium transition">Schedule</Link>
+                <Link to="/compare" className="text-red-100 hover:bg-red-800 hover:text-white px-3 py-2 rounded-md text-sm font-medium transition">Compare</Link>
               </div>
             </div>
 
@@ -225,6 +227,7 @@ function App() {
         <Route path="/mp/:id" element={<MPProfile />} />
         <Route path="/rules" element={<Rules />} />
         <Route path="/schedule" element={<Schedule />} />
+        <Route path="/compare" element={<Compare />} />
         <Route path="/admin" element={<Admin />} />
       </Routes>
     </HashRouter>
@@ -282,6 +285,7 @@ function MyTeamViewWrapper() {
                                 <Link to="/my-team" className="bg-red-800 px-3 py-2 rounded-md text-sm font-medium">My Team</Link>
                                 <Link to="/rules" className="text-red-100 hover:bg-red-800 hover:text-white px-3 py-2 rounded-md text-sm font-medium transition">Rules</Link>
                                 <Link to="/schedule" className="text-red-100 hover:bg-red-800 hover:text-white px-3 py-2 rounded-md text-sm font-medium transition">Schedule</Link>
+                <Link to="/compare" className="text-red-100 hover:bg-red-800 hover:text-white px-3 py-2 rounded-md text-sm font-medium transition">Compare</Link>
                             </div>
                         </div>
                         <div className="flex items-center space-x-2">
