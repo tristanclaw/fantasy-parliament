@@ -4,7 +4,7 @@ from fastapi.middleware.cors import CORSMiddleware
 from fastapi.staticfiles import StaticFiles
 from pony.orm import db_session, select, desc
 from models import MP, LeaderboardEntry, Registration, Subscriber, DailyScore, init_db, run_migrations, db
-from scraper import run_sync
+from scraper import run_sync, run_sync_mps_only
 import os
 import asyncio
 from dotenv import load_dotenv
@@ -14,6 +14,7 @@ from datetime import datetime, timedelta, date
 import uuid
 import re
 import random
+import secrets
 from better_profanity import profanity
 from apscheduler.schedulers.asyncio import AsyncIOScheduler
 from datetime import datetime as dt
@@ -164,6 +165,25 @@ async def manual_sync(background_tasks: BackgroundTasks, api_key: str = Depends(
     background_tasks.add_task(run_sync_with_logging)
     return {"message": "Sync started in background via Admin"}
 
+@admin_router.post("/sync-mps")
+async def manual_sync_mps(background_tasks: BackgroundTasks, api_key: str = Depends(verify_api_key)):
+    print("ADMIN: Triggering manual MP roster sync...")
+    # We can use the same logging wrapper but call a different function, 
+    # but for simplicity let's just create a quick wrapper or reuse logic if possible.
+    # Since run_sync_with_logging is hardcoded to run_sync(), let's define a new task or just call it directly if it's fast.
+    # Given it fetches 500 records, it might take a few seconds. Background is safer.
+    
+    async def _sync_mps_task():
+        try:
+            print("BACKGROUND: Starting MP roster sync...")
+            await run_sync_mps_only()
+            print("BACKGROUND: MP roster sync finished.")
+        except Exception as e:
+            print(f"BACKGROUND ERROR: {e}")
+
+    background_tasks.add_task(_sync_mps_task)
+    return {"message": "MP Roster sync started in background"}
+
 @admin_router.get("/logs")
 def get_admin_logs(api_key: str = Depends(verify_api_key)):
     if os.path.exists("sync.log"):
@@ -240,6 +260,7 @@ async def startup():
         try:
             schedule_weekly_emails()
             schedule_daily_sync()
+            schedule_leaderboard_updates()
             scheduler.start()
             print("SCHEDULER: Started")
         except Exception as e:
@@ -373,10 +394,6 @@ def get_scoreboard():
     mps = MP.select().order_by(desc(MP.total_score))[:10]
     return [mp_to_dict(m) for m in mps]
 
-class LeaderboardSubmission(BaseModel):
-    username: str
-    score: int
-
 @app.get("/leaderboard")
 @db_session
 def get_leaderboard():
@@ -425,16 +442,48 @@ def get_special_leaderboards():
     
     return results
 
-@app.post("/leaderboard")
-@db_session
-def update_leaderboard(submission: LeaderboardSubmission):
-    entry = LeaderboardEntry.get(username=submission.username)
-    if entry:
-        entry.score = submission.score
-        entry.updated_at = datetime.now()
-    else:
-        LeaderboardEntry(username=submission.username, score=submission.score, updated_at=datetime.now())
-    return {"status": "success"}
+def calculate_leaderboard_background():
+    """Background task to calculate user scores from their team MPs."""
+    print("LEADERBOARD: Starting background calculation...")
+    try:
+        with db_session:
+            # Fetch all registrations (users)
+            registrations = Registration.select()
+            
+            # Cache MP scores to avoid repeated queries
+            mp_scores = {mp.id: mp.total_score for mp in MP.select()}
+            
+            updated_count = 0
+            for reg in registrations:
+                total_score = 0
+                for mp_id in reg.team_mp_ids:
+                    # mp_id might be string in JSON, ensure int
+                    mp_score = mp_scores.get(int(mp_id), 0)
+                    total_score += mp_score
+                
+                # Update or create LeaderboardEntry
+                # Use display_name as username
+                entry = LeaderboardEntry.get(username=reg.display_name)
+                if entry:
+                    if entry.score != total_score:
+                        entry.score = total_score
+                        entry.updated_at = datetime.now()
+                        updated_count += 1
+                else:
+                    LeaderboardEntry(username=reg.display_name, score=total_score, updated_at=datetime.now())
+                    updated_count += 1
+            
+            print(f"LEADERBOARD: Updated {updated_count} entries.")
+    except Exception as e:
+        print(f"LEADERBOARD ERROR: {e}")
+        import traceback
+        traceback.print_exc()
+
+@app.post("/admin/recalc-leaderboard")
+async def trigger_leaderboard_recalc(background_tasks: BackgroundTasks, api_key: str = Depends(verify_api_key)):
+    """Manually trigger leaderboard recalculation."""
+    background_tasks.add_task(calculate_leaderboard_background)
+    return {"status": "success", "message": "Leaderboard recalculation started in background"}
 
 class RegistrationRequest(BaseModel):
     user_id: Optional[str] = None
@@ -448,7 +497,13 @@ class RegistrationRequest(BaseModel):
 @db_session
 def register_user(registration: RegistrationRequest, request: Request):
     # Rate Limiting
-    client_ip = request.client.host if request.client else "unknown"
+    # Use X-Forwarded-For header for real IP behind proxy (e.g. Render)
+    forwarded = request.headers.get("X-Forwarded-For")
+    if forwarded:
+        client_ip = forwarded.split(",")[0].strip()
+    else:
+        client_ip = request.client.host if request.client else "unknown"
+
     if Registration.select(lambda r: r.ip_address == client_ip).count() >= 3:
         raise HTTPException(status_code=429, detail="Too many registrations from this IP address")
 
@@ -466,8 +521,16 @@ def register_user(registration: RegistrationRequest, request: Request):
     if not re.match(r"[^@]+@[^@]+\.[^@]+", email):
         raise HTTPException(status_code=400, detail="Invalid email format")
     
+    # Check if already registered (Silent Fail / Generic Message)
     if Registration.get(email=email):
-         raise HTTPException(status_code=400, detail="Email already registered")
+         # Return success to prevent email enumeration
+         # In a real app, we might send an email saying "You tried to register but already have an account"
+         print(f"REGISTRATION ATTEMPT: Email {email} already exists. Returning success.")
+         return {
+            "status": "success", 
+            "message": "If this email is valid, you will receive a confirmation.",
+            "user_id": "existing" # Frontend should handle this gracefully
+        }
 
     # 1. Gameplay Validation
     # Exactly 4 team members
@@ -621,10 +684,11 @@ async def subscribe(request: SubscribeRequest):
     if not re.match(r"[^@]+@[^@]+\.[^@]+", email):
         raise HTTPException(status_code=400, detail="Invalid email format")
     
-    # Check if already subscribed
+    # Check if already subscribed (Generic response)
     existing = Subscriber.get(email=email)
     if existing:
-        raise HTTPException(status_code=400, detail="Email already subscribed")
+        # Return success to prevent enumeration
+        return {"status": "success", "message": "If this email is valid, you'll receive a confirmation"}
     
     # Sanitize name (character limit + profanity)
     sanitized_name = sanitize_name(request.name)
@@ -635,15 +699,22 @@ async def subscribe(request: SubscribeRequest):
         if existing_mps.count() != len(request.selected_mps):
             raise HTTPException(status_code=400, detail="One or more selected MPs do not exist")
     
+    # Generate secure unsubscribe token
+    token = secrets.token_urlsafe(32)
+
     # Create subscriber
     try:
         Subscriber(
             name=sanitized_name,
             email=email,
             selected_mps=request.selected_mps,
+            unsubscribe_token=token,
             created_at=datetime.utcnow()
         )
         print(f"SUBSCRIBER: Added {email} to subscriptions")
+        
+        # In a real app, we would send a confirmation email here with the unsubscribe link:
+        # link = f"https://.../unsubscribe?token={token}"
         
         return {"status": "success", "message": "Subscribed successfully"}
     except Exception as e:
@@ -652,14 +723,16 @@ async def subscribe(request: SubscribeRequest):
 
 @app.delete("/unsubscribe")
 @db_session
-def unsubscribe(email: str):
-    """Remove a subscriber by email."""
-    subscriber = Subscriber.get(email=email)
+def unsubscribe(token: str):
+    """Remove a subscriber by secure token."""
+    subscriber = Subscriber.get(unsubscribe_token=token)
     if not subscriber:
-        raise HTTPException(status_code=404, detail="Email not found")
+        # Return 404 or generic success - 404 is fine for invalid token
+        raise HTTPException(status_code=404, detail="Invalid or expired token")
     
+    email = subscriber.email
     subscriber.delete()
-    print(f"SUBSCRIBER: Unsubscribed {email}")
+    print(f"SUBSCRIBER: Unsubscribed {email} via token")
     return {"status": "success", "message": "Unsubscribed successfully"}
 
 @app.get("/subscribers")
@@ -731,6 +804,16 @@ def schedule_daily_sync():
         id='daily_sync'
     )
     print("SCHEDULER: Daily sync job scheduled for 03:00")
+
+def schedule_leaderboard_updates():
+    """Schedule leaderboard calculation every hour."""
+    scheduler.add_job(
+        calculate_leaderboard_background,
+        'interval',
+        minutes=60,
+        id='leaderboard_calc'
+    )
+    print("SCHEDULER: Leaderboard calculation scheduled every 60 minutes")
 
 @app.post("/admin/sync-now")
 async def sync_now(api_key: str = Depends(verify_api_key)):

@@ -21,6 +21,7 @@ class MP(db.Entity):
     party = Optional(str)
     riding = Optional(str)
     image_url = Optional(str)
+    active = Required(bool, default=True)
     committees = Optional(Json) # List of dicts: [{"name": "Finance", "role": "Chair"}, {"name": "Health", "role": "Member"}]
     # speeches = Set('Speech')
     # votes = Set('VoteAttendance')
@@ -71,6 +72,7 @@ class Subscriber(db.Entity):
     name = Required(str)
     email = Required(str, unique=True)
     selected_mps = Required(Json)  # JSON array of MP IDs
+    unsubscribe_token = Required(str, unique=True)
     created_at = Required(datetime, default=datetime.utcnow)
 
 @db_session
@@ -169,6 +171,15 @@ def run_migrations(dsn=None, **kwargs):
                     except Exception as e:
                         print(f"Migration warning ({table}.score_breakdown): {e}")
 
+            # Migration 9: MP.active
+            for table in ['mp', 'MP']:
+                if table in tables:
+                    try:
+                        cur.execute(f'ALTER TABLE "{table}" ADD COLUMN IF NOT EXISTS "active" BOOLEAN NOT NULL DEFAULT TRUE')
+                        print(f"Applied/Checked: {table}.active")
+                    except Exception as e:
+                        print(f"Migration warning ({table}.active): {e}")
+
             # Migration 7: Subscriber table
             if 'subscriber' not in tables and 'Subscriber' not in tables:
                 try:
@@ -178,12 +189,32 @@ def run_migrations(dsn=None, **kwargs):
                             name TEXT NOT NULL,
                             email TEXT UNIQUE NOT NULL,
                             "selected_mps" JSONB NOT NULL,
+                            "unsubscribe_token" TEXT UNIQUE NOT NULL,
                             "created_at" TIMESTAMP NOT NULL DEFAULT NOW()
                         )
                     ''')
                     print("Created table: subscriber")
                 except Exception as e:
                     print(f"Migration warning (subscriber table): {e}")
+            else:
+                 # Migration 8: Subscriber.unsubscribe_token
+                for table in ['subscriber', 'Subscriber']:
+                    if table in tables:
+                        try:
+                            # Add column as nullable first
+                            cur.execute(f'ALTER TABLE "{table}" ADD COLUMN IF NOT EXISTS "unsubscribe_token" TEXT')
+                            # Populate with random tokens for existing rows
+                            cur.execute(f'''
+                                UPDATE "{table}" 
+                                SET "unsubscribe_token" = md5(random()::text || clock_timestamp()::text) 
+                                WHERE "unsubscribe_token" IS NULL
+                            ''')
+                            # Make not null and unique
+                            cur.execute(f'ALTER TABLE "{table}" ALTER COLUMN "unsubscribe_token" SET NOT NULL')
+                            cur.execute(f'ALTER TABLE "{table}" ADD CONSTRAINT "{table}_unsubscribe_token_key" UNIQUE ("unsubscribe_token")')
+                            print(f"Applied/Checked: {table}.unsubscribe_token")
+                        except Exception as e:
+                            print(f"Migration warning ({table}.unsubscribe_token): {e}")
                 
         conn.close()
         print("Direct Postgres migration successful")

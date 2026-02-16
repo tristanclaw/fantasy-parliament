@@ -57,6 +57,7 @@ async def fetch_json(client, url):
 def save_mps_sync(objects):
     total_created = 0
     total_synced = 0
+    page_slugs = set()
     with db_session:
         for mp_data in objects:
             party_info = mp_data.get('current_party')
@@ -68,6 +69,7 @@ def save_mps_sync(objects):
             riding_name = riding_info.get('name', {}).get('en') if riding_info else None
             
             slug = mp_data['url'].strip('/').split('/')[-1]
+            page_slugs.add(slug)
             name = mp_data['name']
             
             mp = MP.get(slug=slug)
@@ -77,6 +79,7 @@ def save_mps_sync(objects):
             
             mp.party = party_name
             mp.riding = riding_name
+            mp.active = True # Ensure active if found
 
             api_image = mp_data.get('image')
             if api_image:
@@ -85,12 +88,25 @@ def save_mps_sync(objects):
                 mp.image_url = construct_image_url(name, party_name)
             
             total_synced += 1
-    return total_synced, total_created
+    return total_synced, total_created, page_slugs
+
+def mark_inactive_mps(seen_slugs):
+    with db_session:
+        # Find MPs that are currently active but not in seen_slugs
+        # Note: In Pony, we iterate and check
+        count = 0
+        for mp in MP.select(lambda m: m.active == True):
+            if mp.slug not in seen_slugs:
+                mp.active = False
+                count += 1
+                print(f"MP Sync: Marked {mp.name} ({mp.slug}) as inactive")
+    return count
 
 async def sync_mps(client):
     url = f"{BASE_URL}/politicians/?limit=500"
     total_synced = 0
     total_created = 0
+    all_seen_slugs = set()
     
     print(f"Scraper: Starting MP sync...")
     seen_urls = set()
@@ -102,14 +118,19 @@ async def sync_mps(client):
         objects = data.get('objects', [])
         if not objects: break
         
-        synced, created = await asyncio.to_thread(save_mps_sync, objects)
+        synced, created, page_slugs = await asyncio.to_thread(save_mps_sync, objects)
         total_synced += synced
         total_created += created
+        all_seen_slugs.update(page_slugs)
             
         next_path = data.get('pagination', {}).get('next_url')
         url = f"{BASE_URL}{next_path}" if next_path else None
         
     print(f"Synced {total_synced} MPs ({total_created} new)")
+    
+    # Mark inactive
+    inactive_count = await asyncio.to_thread(mark_inactive_mps, all_seen_slugs)
+    print(f"Marked {inactive_count} MPs as inactive")
 
 def update_scores_sync(target_date, mp_points, mp_breakdown):
     """
@@ -264,6 +285,18 @@ async def run_sync():
         traceback.print_exc()
     finally:
         await client.aclose()
+
+async def run_sync_mps_only():
+    client = httpx.AsyncClient(timeout=60.0)
+    try:
+        await sync_mps(client)
+    except Exception as e:
+        print(f"CRITICAL ERROR in run_sync_mps_only: {e}")
+        import traceback
+        traceback.print_exc()
+    finally:
+        await client.aclose()
+
 
 if __name__ == "__main__":
     # Local dev testing
