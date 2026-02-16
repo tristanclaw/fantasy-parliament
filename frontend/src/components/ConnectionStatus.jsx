@@ -10,14 +10,18 @@ const ConnectionStatus = () => {
     const checkStatus = async () => {
       setStatus('connecting');
       try {
-        const response = await fetch(`${API_URL}/mps`, { 
-          method: 'HEAD',
-          signal: AbortSignal.timeout(5000)
+        // Use GET instead of HEAD - more reliable
+        const response = await fetch(`${API_URL}/health`, { 
+          signal: AbortSignal.timeout(10000)
         });
         if (response.ok) {
           setStatus('online');
         } else {
-          setStatus('offline');
+          // Fallback to /mps if /health doesn't exist
+          const fallback = await fetch(`${API_URL}/mps`, { 
+            signal: AbortSignal.timeout(10000)
+          });
+          setStatus(fallback.ok ? 'online' : 'offline');
         }
       } catch (e) {
         setStatus('offline');
