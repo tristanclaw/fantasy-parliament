@@ -149,9 +149,20 @@ def run_migrations(dsn=None, **kwargs):
                 if table in tables:
                     try:
                         cur.execute(f'ALTER TABLE "{table}" ADD COLUMN IF NOT EXISTS "ip_address" TEXT')
+                        # Ensure it's nullable
+                        cur.execute(f'ALTER TABLE "{table}" ALTER COLUMN "ip_address" DROP NOT NULL')
                         print(f"Applied/Checked: {table}.ip_address")
                     except Exception as e:
                         print(f"Migration warning ({table}.ip_address): {e}")
+
+            # Migration 10: Registration nullability
+            for table in ['registration', 'Registration']:
+                if table in tables:
+                    try:
+                        cur.execute(f'ALTER TABLE "{table}" ALTER COLUMN "team_name" DROP NOT NULL')
+                        print(f"Applied/Checked: {table}.team_name nullable")
+                    except Exception as e:
+                        print(f"Migration warning ({table}.team_name nullability): {e}")
 
             # Migration 5: MP.committees
             for table in ['mp', 'MP']:
