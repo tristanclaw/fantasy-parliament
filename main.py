@@ -583,8 +583,10 @@ def register_user(registration: RegistrationRequest, request: Request):
             "user_id": new_user_id 
         }
     except Exception as e:
-        print(f"Registration error: {e}")
-        raise HTTPException(status_code=500, detail="Registration failed")
+        import traceback
+        error_details = traceback.format_exc()
+        print(f"Registration error: {e}\n{error_details}")
+        raise HTTPException(status_code=500, detail=f"Registration failed: {str(e)}")
 
 # ============================================
 # Email Subscription API
