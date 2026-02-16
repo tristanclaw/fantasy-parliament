@@ -905,6 +905,32 @@ def seed_scores(api_key: str = Depends(verify_api_key)):
 from fastapi.responses import FileResponse
 import os
 
+
+@app.get("/mps/{mp_id}/scores")
+@db_session
+def get_mp_scores(mp_id: int):
+    """Get daily score history for an MP"""
+    try:
+        mp = MP.select(lambda m: m.id == mp_id).first()
+        if not mp:
+            raise HTTPException(status_code=404, detail="MP not found")
+        
+        scores = [
+            {"date": str(ds.date), "points": ds.points_today}
+            for ds in mp.daily_scores.order_by(DailyScore.date)
+        ]
+        
+        return {
+            "mp_id": mp_id,
+            "mp_name": mp.name,
+            "total_score": mp.total_score,
+            "scores": scores
+        }
+    except HTTPException:
+        raise
+    except Exception as e:
+        import traceback
+        raise HTTPException(status_code=500, detail=str(e))
 @app.get("/{path:path}")
 async def serve_spa(path: str):
     """Serve React SPA for all non-API routes."""
@@ -993,27 +1019,6 @@ async def populate_breakdowns(api_key: str = Depends(verify_api_key)):
     
     return {"updated": updated}
 
-@app.get("/mps/{mp_id}/scores")
-@db_session
-def get_mp_scores(mp_id: int):
-    """Get daily score history for an MP"""
-    try:
-        mp = MP.select(lambda m: m.id == mp_id).first()
-        if not mp:
-            raise HTTPException(status_code=404, detail="MP not found")
-        
-        scores = [
-            {"date": str(ds.date), "points": ds.points_today}
-            for ds in mp.daily_scores.order_by(DailyScore.date)
-        ]
-        
-        return {
-            "mp_id": mp_id,
-            "mp_name": mp.name,
-            "total_score": mp.total_score,
-            "scores": scores
-        }
-    except HTTPException:
         raise
     except Exception as e:
         import traceback
