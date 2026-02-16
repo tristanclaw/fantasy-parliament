@@ -1019,7 +1019,3 @@ async def populate_breakdowns(api_key: str = Depends(verify_api_key)):
     
     return {"updated": updated}
 
-        raise
-    except Exception as e:
-        import traceback
-        raise HTTPException(status_code=500, detail=str(e))
