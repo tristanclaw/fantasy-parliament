@@ -16,7 +16,8 @@ const Rules = () => {
               <div className="ml-10 flex items-baseline space-x-4">
                 <Link to="/" className="text-red-100 hover:bg-red-800 hover:text-white px-3 py-2 rounded-md text-sm font-medium transition">Dashboard</Link>
                 <a href="#" className="text-red-100 hover:bg-red-800 hover:text-white px-3 py-2 rounded-md text-sm font-medium transition">My Team</a>
-                <Link to="/rules" className="bg-red-800 px-3 py-2 rounded-md text-sm font-medium">Rules</Link>
+                <Link to="/rules" className="text-red-100 hover:bg-red-800 hover:text-white px-3 py-2 rounded-md text-sm font-medium transition">Rules</Link>
+                <Link to="/schedule" className="text-red-100 hover:bg-red-800 hover:text-white px-3 py-2 rounded-md text-sm font-medium transition">Schedule</Link>
               </div>
             </div>
             <div className="flex items-center space-x-2">

@@ -37,7 +37,12 @@ const MPProfile = () => {
       <nav className="bg-red-700 text-white shadow-md">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 h-16 flex items-center justify-between">
              <Link to="/" className="text-xl font-black tracking-tighter uppercase">Fantasy <span className="text-red-200">Parliament</span></Link>
-             <Link to="/" className="text-sm hover:underline">Back to Dashboard</Link>
+             <div className="flex items-center space-x-4">
+               <Link to="/" className="text-red-100 hover:text-white text-sm">Dashboard</Link>
+               <Link to="/my-team" className="text-red-100 hover:text-white text-sm">My Team</Link>
+               <Link to="/rules" className="text-red-100 hover:text-white text-sm">Rules</Link>
+               <Link to="/schedule" className="text-red-100 hover:text-white text-sm">Schedule</Link>
+             </div>
         </div>
       </nav>
 
