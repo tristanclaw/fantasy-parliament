@@ -848,12 +848,12 @@ scheduler = AsyncIOScheduler()
 
 def schedule_weekly_emails():
     """Schedule weekly emails (runs on Render)."""
-    # Schedule to run every Sunday at 18:00
+    # Schedule to run every Saturday at 10:00
     scheduler.add_job(
         trigger_weekly_emails, 
         'cron', 
-        day_of_week='sun', 
-        hour=18, 
+        day_of_week='sat', 
+        hour=10, 
         minute=0,
         id='weekly_emails'
     )
