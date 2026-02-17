@@ -490,7 +490,7 @@ def get_special_leaderboards():
         today = date.today()
         seed_val = f"{today.year}-{today.isocalendar()[1]}"
         rng = random.Random(seed_val)
-        random_mps = rng.sample(all_mps, min(4, len(all_mps)))
+        random_mps = rng.sample(all_mps, min(5, len(all_mps)))
         random_team_score = sum(mp.total_score for mp in random_mps)
         
         results.append({
