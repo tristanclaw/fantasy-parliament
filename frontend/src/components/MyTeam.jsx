@@ -11,9 +11,7 @@ const MyTeam = ({ team, username, onRemove }) => {
     const [isModalOpen, setIsModalOpen] = useState(false);
     const [formData, setFormData] = useState({
         displayName: username || '',
-        teamName: '',
-        email: '',
-        handicap: team?.handicap || false
+        teamName: ''
     });
     const [status, setStatus] = useState('idle'); // idle, submitting, success, error
     const [message, setMessage] = useState('');
@@ -23,10 +21,6 @@ const MyTeam = ({ team, username, onRemove }) => {
             setFormData(prev => ({ ...prev, displayName: username }));
         }
     }, [username]);
-
-    useEffect(() => {
-        setFormData(prev => ({ ...prev, handicap: team?.handicap || false }));
-    }, [team?.handicap]);
 
     const handleInputChange = (e) => {
         const { name, value, type, checked } = e.target;
@@ -46,10 +40,9 @@ const MyTeam = ({ team, username, onRemove }) => {
             user_id: userId,
             display_name: formData.displayName,
             team_name: formData.teamName || null,
-            email: formData.email,
             captain_mp_id: captain.id,
             team_mp_ids: members.map(m => m.id),
-            same_party_as_captain: formData.handicap
+            same_party_as_captain: team.handicap || false
         };
         
         const apiUrl = import.meta.env.VITE_API_URL || 'https://fantasy-parliament-web.onrender.com';
@@ -186,32 +179,6 @@ const MyTeam = ({ team, username, onRemove }) => {
                                         value={formData.teamName}
                                         onChange={handleInputChange}
                                     />
-                                </div>
-                                <div className="flex items-center">
-                                    <input
-                                        type="checkbox"
-                                        name="handicap"
-                                        id="handicap"
-                                        checked={formData.handicap}
-                                        onChange={handleInputChange}
-                                        className="h-4 w-4 text-red-600 focus:ring-red-500 border-gray-300 rounded"
-                                    />
-                                    <label htmlFor="handicap" className="ml-2 block text-sm text-gray-700">
-                                        Same party as captain <span className="text-gray-500">(handicap mode - harder to score, +50 bonus if enabled)</span>
-                                    </label>
-                                </div>
-                                <div>
-                                    <label className="block text-sm font-medium text-gray-700">Email Address <span className="text-red-500">*</span></label>
-                                    <input 
-                                        type="email" 
-                                        name="email"
-                                        required
-                                        className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-red-500 focus:ring-red-500 sm:text-sm p-3 border"
-                                        placeholder="you@example.com"
-                                        value={formData.email}
-                                        onChange={handleInputChange}
-                                    />
-                                    <p className="text-xs text-gray-500 mt-1">Required for season updates and prize notifications.</p>
                                 </div>
 
                                 {status === 'error' && (
