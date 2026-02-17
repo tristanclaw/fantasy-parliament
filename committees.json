@@ -1,0 +1,1862 @@
+[
+  {
+    "slug": "ziad-aboultaif",
+    "committees": [
+      "foreign-affairs"
+    ]
+  },
+  {
+    "slug": "burton-bailey",
+    "committees": [
+      "justice",
+      "health"
+    ]
+  },
+  {
+    "slug": "john-barlow",
+    "committees": [
+      "agriculture"
+    ]
+  },
+  {
+    "slug": "david-bexte",
+    "committees": [
+      "environment"
+    ]
+  },
+  {
+    "slug": "blaine-calkins",
+    "committees": [
+      "house-affairs"
+    ]
+  },
+  {
+    "slug": "michael-cooper",
+    "committees": [
+      "ethics"
+    ]
+  },
+  {
+    "slug": "kerry-diotte",
+    "committees": [
+      "canadian-heritage"
+    ]
+  },
+  {
+    "slug": "garnett-genuis",
+    "committees": [
+      "human-resources",
+      "justice"
+    ]
+  },
+  {
+    "slug": "amanpreet-gill",
+    "committees": [
+      "environment",
+      "library-of-parliament"
+    ]
+  },
+  {
+    "slug": "dalwinder-gill",
+    "committees": [
+      "ethics",
+      "official-languages"
+    ]
+  },
+  {
+    "slug": "laila-goodridge",
+    "committees": [
+      "human-resources",
+      "justice"
+    ]
+  },
+  {
+    "slug": "jasraj-singh-hallan",
+    "committees": [
+      "finance"
+    ]
+  },
+  {
+    "slug": "corey-hogan",
+    "committees": [
+      "natural-resources"
+    ]
+  },
+  {
+    "slug": "matt-jeneroux",
+    "committees": [
+      "international-trade"
+    ]
+  },
+  {
+    "slug": "pat-kelly",
+    "committees": [
+      "finance"
+    ]
+  },
+  {
+    "slug": "stephanie-kusie",
+    "committees": [
+      "public-accounts"
+    ]
+  },
+  {
+    "slug": "dane-lloyd",
+    "committees": [
+      "public-safety"
+    ]
+  },
+  {
+    "slug": "jagsharan-singh-mahal",
+    "committees": [
+      "science-and-research"
+    ]
+  },
+  {
+    "slug": "shuv-majumdar",
+    "committees": [
+      "ethics",
+      "international-human-rights"
+    ]
+  },
+  {
+    "slug": "kelly-mccauley",
+    "committees": [
+      "government-operations"
+    ]
+  },
+  {
+    "slug": "david-mckenzie",
+    "committees": [
+      "international-trade"
+    ]
+  },
+  {
+    "slug": "greg-mclean",
+    "committees": [
+      "finance"
+    ]
+  },
+  {
+    "slug": "billy-morin",
+    "committees": [
+      "indigenous-affairs"
+    ]
+  },
+  {
+    "slug": "glen-motz",
+    "committees": [
+      "public-safety",
+      "transport"
+    ]
+  },
+  {
+    "slug": "blake-richards",
+    "committees": [
+      "veterans-affairs"
+    ]
+  },
+  {
+    "slug": "william-stevenson",
+    "committees": [
+      "public-accounts",
+      "indigenous-affairs"
+    ]
+  },
+  {
+    "slug": "shannon-stubbs",
+    "committees": [
+      "natural-resources"
+    ]
+  },
+  {
+    "slug": "rachael-harder",
+    "committees": [
+      "canadian-heritage"
+    ]
+  },
+  {
+    "slug": "arnold-viersen",
+    "committees": [
+      "health"
+    ]
+  },
+  {
+    "slug": "dan-albas",
+    "committees": [
+      "finance",
+      "transport"
+    ]
+  },
+  {
+    "slug": "scott-anderson",
+    "committees": [
+      "national-defence"
+    ]
+  },
+  {
+    "slug": "mel-arnold",
+    "committees": [
+      "fisheries"
+    ]
+  },
+  {
+    "slug": "chak-au",
+    "committees": [
+      "public-safety",
+      "justice"
+    ]
+  },
+  {
+    "slug": "parm-bains",
+    "committees": [
+      "industry-and-technology"
+    ]
+  },
+  {
+    "slug": "terry-beech",
+    "committees": [
+      "human-resources"
+    ]
+  },
+  {
+    "slug": "frank-caputo",
+    "committees": [
+      "public-safety"
+    ]
+  },
+  {
+    "slug": "wade-chang",
+    "committees": [
+      "justice"
+    ]
+  },
+  {
+    "slug": "marc-dalton",
+    "committees": [
+      "official-languages",
+      "justice"
+    ]
+  },
+  {
+    "slug": "sukh-dhaliwal",
+    "committees": [
+      "library-of-parliament"
+    ]
+  },
+  {
+    "slug": "hedy-fry",
+    "committees": [
+      "health"
+    ]
+  },
+  {
+    "slug": "stephen-fuhr",
+    "committees": [
+      "national-defence"
+    ]
+  },
+  {
+    "slug": "sukhman-gill",
+    "committees": [
+      "public-safety"
+    ]
+  },
+  {
+    "slug": "wade-grant",
+    "committees": [
+      "transport",
+      "environment"
+    ]
+  },
+  {
+    "slug": "will-greaves",
+    "committees": [
+      "transport"
+    ]
+  },
+  {
+    "slug": "aaron-gunn",
+    "committees": [
+      "fisheries"
+    ]
+  },
+  {
+    "slug": "tamara-jansen",
+    "committees": [
+      "government-operations",
+      "veterans-affairs"
+    ]
+  },
+  {
+    "slug": "jeff-kibble",
+    "committees": [
+      "national-defence"
+    ]
+  },
+  {
+    "slug": "ernie-klassen",
+    "committees": [
+      "fisheries"
+    ]
+  },
+  {
+    "slug": "helena-konanz",
+    "committees": [
+      "health"
+    ]
+  },
+  {
+    "slug": "tamara-kronis",
+    "committees": [
+      "international-human-rights",
+      "justice",
+      "foreign-affairs"
+    ]
+  },
+  {
+    "slug": "jenny-kwan",
+    "committees": [
+      "public-safety"
+    ]
+  },
+  {
+    "slug": "elizabeth-may",
+    "committees": [
+      "public-safety"
+    ]
+  },
+  {
+    "slug": "ron-mckinnon",
+    "committees": [
+      "natural-resources",
+      "science-and-research"
+    ]
+  },
+  {
+    "slug": "jill-mcknight",
+    "committees": [
+      "veterans-affairs"
+    ]
+  },
+  {
+    "slug": "taleeb-noormohamed",
+    "committees": [
+      "science-and-research"
+    ]
+  },
+  {
+    "slug": "gregor-robertson",
+    "committees": [
+      "human-resources"
+    ]
+  },
+  {
+    "slug": "ellis-ross",
+    "committees": [
+      "environment"
+    ]
+  },
+  {
+    "slug": "zoe-royer",
+    "committees": [
+      "canadian-heritage",
+      "veterans-affairs"
+    ]
+  },
+  {
+    "slug": "gurbux-saini",
+    "committees": [
+      "ethics"
+    ]
+  },
+  {
+    "slug": "randeep-sarai",
+    "committees": [
+      "foreign-affairs"
+    ]
+  },
+  {
+    "slug": "jake-sawatzky",
+    "committees": [
+      "finance"
+    ]
+  },
+  {
+    "slug": "tako-van-popta",
+    "committees": [
+      "house-affairs"
+    ]
+  },
+  {
+    "slug": "brad-vis",
+    "committees": [
+      "science-and-research"
+    ]
+  },
+  {
+    "slug": "patrick-weiler",
+    "committees": [
+      "fisheries"
+    ]
+  },
+  {
+    "slug": "jonathan-wilkinson",
+    "committees": [
+      "house-affairs"
+    ]
+  },
+  {
+    "slug": "bob-zimmer",
+    "committees": [
+      "indigenous-affairs"
+    ]
+  },
+  {
+    "slug": "james-bezan",
+    "committees": [
+      "national-defence"
+    ]
+  },
+  {
+    "slug": "ben-carr",
+    "committees": [
+      "industry-and-technology"
+    ]
+  },
+  {
+    "slug": "rebecca-chartrand",
+    "committees": [
+      "indigenous-affairs"
+    ]
+  },
+  {
+    "slug": "raquel-dancho",
+    "committees": [
+      "industry-and-technology"
+    ]
+  },
+  {
+    "slug": "terry-duguid",
+    "committees": [
+      "natural-resources"
+    ]
+  },
+  {
+    "slug": "doug-eyolfson",
+    "committees": [
+      "health"
+    ]
+  },
+  {
+    "slug": "ted-falk",
+    "committees": [
+      "industry-and-technology"
+    ]
+  },
+  {
+    "slug": "grant-jackson",
+    "committees": [
+      "house-affairs",
+      "justice"
+    ]
+  },
+  {
+    "slug": "ginette-lavack",
+    "committees": [
+      "indigenous-affairs"
+    ]
+  },
+  {
+    "slug": "branden-leslie",
+    "committees": [
+      "environment"
+    ]
+  },
+  {
+    "slug": "dan-mazier",
+    "committees": [
+      "health"
+    ]
+  },
+  {
+    "slug": "colin-reynolds",
+    "committees": [
+      "human-resources"
+    ]
+  },
+  {
+    "slug": "richard-bragdon",
+    "committees": [
+      "agriculture"
+    ]
+  },
+  {
+    "slug": "serge-cormier",
+    "committees": [
+      "fisheries"
+    ]
+  },
+  {
+    "slug": "mike-dawson",
+    "committees": [
+      "fisheries"
+    ]
+  },
+  {
+    "slug": "guillaume-deschenes-theriault",
+    "committees": [
+      "official-languages",
+      "science-and-research"
+    ]
+  },
+  {
+    "slug": "wayne-long",
+    "committees": [
+      "public-accounts"
+    ]
+  },
+  {
+    "slug": "rob-moore",
+    "committees": [
+      "health"
+    ]
+  },
+  {
+    "slug": "david-myles",
+    "committees": [
+      "canadian-heritage"
+    ]
+  },
+  {
+    "slug": "ginette-petitpas-taylor",
+    "committees": [
+      "indigenous-affairs"
+    ]
+  },
+  {
+    "slug": "john-williamson",
+    "committees": [
+      "public-accounts"
+    ]
+  },
+  {
+    "slug": "carol-anstey",
+    "committees": [
+      "environment"
+    ]
+  },
+  {
+    "slug": "paul-connors",
+    "committees": [
+      "fisheries",
+      "agriculture"
+    ]
+  },
+  {
+    "slug": "philip-earle",
+    "committees": [
+      "fisheries",
+      "indigenous-affairs"
+    ]
+  },
+  {
+    "slug": "tom-osborne",
+    "committees": [
+      "government-operations",
+      "public-accounts"
+    ]
+  },
+  {
+    "slug": "jonathan-rowe",
+    "committees": [
+      "natural-resources",
+      "justice"
+    ]
+  },
+  {
+    "slug": "clifford-small",
+    "committees": [
+      "fisheries"
+    ]
+  },
+  {
+    "slug": "joanne-thompson",
+    "committees": [
+      "fisheries"
+    ]
+  },
+  {
+    "slug": "jaime-battiste",
+    "committees": [
+      "indigenous-affairs"
+    ]
+  },
+  {
+    "slug": "braedon-clark",
+    "committees": [
+      "canadian-heritage",
+      "veterans-affairs"
+    ]
+  },
+  {
+    "slug": "chris-dentremont",
+    "committees": [
+      "house-affairs",
+      "fisheries",
+      "veterans-affairs"
+    ]
+  },
+  {
+    "slug": "lena-metlege-diab",
+    "committees": [
+      "immigration"
+    ]
+  },
+  {
+    "slug": "jessica-fancy-landry",
+    "committees": [
+      "human-resources"
+    ]
+  },
+  {
+    "slug": "darren-fisher",
+    "committees": [
+      "ethics"
+    ]
+  },
+  {
+    "slug": "sean-fraser",
+    "committees": [
+      "justice"
+    ]
+  },
+  {
+    "slug": "alana-hirtle",
+    "committees": [
+      "veterans-affairs"
+    ]
+  },
+  {
+    "slug": "mike-kelloway",
+    "committees": [
+      "transport"
+    ]
+  },
+  {
+    "slug": "shannon-miedema",
+    "committees": [
+      "environment"
+    ]
+  },
+  {
+    "slug": "rebecca-alty",
+    "committees": [
+      "indigenous-affairs"
+    ]
+  },
+  {
+    "slug": "lori-idlout",
+    "committees": [
+      "national-defence",
+      "foreign-affairs"
+    ]
+  },
+  {
+    "slug": "sima-acan",
+    "committees": [
+      "public-safety"
+    ]
+  },
+  {
+    "slug": "scott-aitchison",
+    "committees": [
+      "human-resources"
+    ]
+  },
+  {
+    "slug": "shafqat-ali",
+    "committees": [
+      "government-operations"
+    ]
+  },
+  {
+    "slug": "dean-allison",
+    "committees": [
+      "natural-resources",
+      "justice"
+    ]
+  },
+  {
+    "slug": "fares-al-soud",
+    "committees": [
+      "house-affairs",
+      "canadian-heritage"
+    ]
+  },
+  {
+    "slug": "anita-anand",
+    "committees": [
+      "foreign-affairs"
+    ]
+  },
+  {
+    "slug": "gary-anandasangaree",
+    "committees": [
+      "public-safety"
+    ]
+  },
+  {
+    "slug": "roman-baber",
+    "committees": [
+      "justice"
+    ]
+  },
+  {
+    "slug": "yvan-baker",
+    "committees": [
+      "official-languages"
+    ]
+  },
+  {
+    "slug": "tony-baldinelli",
+    "committees": [
+      "science-and-research"
+    ]
+  },
+  {
+    "slug": "karim-bardeesy",
+    "committees": [
+      "industry-and-technology"
+    ]
+  },
+  {
+    "slug": "michael-barrett",
+    "committees": [
+      "ethics"
+    ]
+  },
+  {
+    "slug": "jim-belanger",
+    "committees": [
+      "official-languages"
+    ]
+  },
+  {
+    "slug": "chris-bittle",
+    "committees": [
+      "house-affairs"
+    ]
+  },
+  {
+    "slug": "bill-blair",
+    "committees": [
+      "public-safety",
+      "foreign-affairs"
+    ]
+  },
+  {
+    "slug": "kathy-borrelli",
+    "committees": [
+      "industry-and-technology"
+    ]
+  },
+  {
+    "slug": "john-brassard",
+    "committees": [
+      "ethics"
+    ]
+  },
+  {
+    "slug": "larry-brock",
+    "committees": [
+      "justice"
+    ]
+  },
+  {
+    "slug": "bardish-chagger",
+    "committees": [
+      "library-of-parliament"
+    ]
+  },
+  {
+    "slug": "adam-chambers",
+    "committees": [
+      "government-operations"
+    ]
+  },
+  {
+    "slug": "shaun-chen",
+    "committees": [
+      "status-of-women",
+      "science-and-research",
+      "veterans-affairs"
+    ]
+  },
+  {
+    "slug": "maggie-chi",
+    "committees": [
+      "health"
+    ]
+  },
+  {
+    "slug": "michael-chong",
+    "committees": [
+      "foreign-affairs"
+    ]
+  },
+  {
+    "slug": "leslie-church",
+    "committees": [
+      "ethics"
+    ]
+  },
+  {
+    "slug": "sandra-cobena",
+    "committees": [
+      "finance",
+      "human-resources"
+    ]
+  },
+  {
+    "slug": "connie-cody",
+    "committees": [
+      "transport",
+      "status-of-women"
+    ]
+  },
+  {
+    "slug": "michael-coteau",
+    "committees": [
+      "agriculture"
+    ]
+  },
+  {
+    "slug": "julie-dabrusin",
+    "committees": [
+      "environment"
+    ]
+  },
+  {
+    "slug": "john-paul-danko",
+    "committees": [
+      "natural-resources"
+    ]
+  },
+  {
+    "slug": "fred-davies",
+    "committees": [
+      "immigration"
+    ]
+  },
+  {
+    "slug": "kelly-deridder",
+    "committees": [
+      "science-and-research"
+    ]
+  },
+  {
+    "slug": "terry-dowdall",
+    "committees": [
+      "public-safety",
+      "veterans-affairs"
+    ]
+  },
+  {
+    "slug": "julie-dzerowicz",
+    "committees": [
+      "immigration"
+    ]
+  },
+  {
+    "slug": "ali-ehsassi",
+    "committees": [
+      "public-safety",
+      "international-human-rights"
+    ]
+  },
+  {
+    "slug": "dave-epp",
+    "committees": [
+      "agriculture"
+    ]
+  },
+  {
+    "slug": "nathaniel-erskine-smith",
+    "committees": [
+      "industry-and-technology",
+      "immigration"
+    ]
+  },
+  {
+    "slug": "bruce-fanjoy",
+    "committees": [
+      "environment"
+    ]
+  },
+  {
+    "slug": "peter-fonseca",
+    "committees": [
+      "international-trade"
+    ]
+  },
+  {
+    "slug": "mona-fortier",
+    "committees": [
+      "foreign-affairs"
+    ]
+  },
+  {
+    "slug": "iqwinder-gaheer",
+    "committees": [
+      "transport"
+    ]
+  },
+  {
+    "slug": "cheryl-gallant",
+    "committees": [
+      "national-defence",
+      "natural-resources"
+    ]
+  },
+  {
+    "slug": "vince-gasparro",
+    "committees": [
+      "government-operations"
+    ]
+  },
+  {
+    "slug": "harb-gill",
+    "committees": [
+      "government-operations",
+      "justice"
+    ]
+  },
+  {
+    "slug": "amarjeet-gill",
+    "committees": [
+      "justice"
+    ]
+  },
+  {
+    "slug": "marilyn-gladu",
+    "committees": [
+      "status-of-women"
+    ]
+  },
+  {
+    "slug": "karina-gould",
+    "committees": [
+      "finance"
+    ]
+  },
+  {
+    "slug": "michael-guglielmin",
+    "committees": [
+      "industry-and-technology"
+    ]
+  },
+  {
+    "slug": "emma-harrison",
+    "committees": [
+      "agriculture"
+    ]
+  },
+  {
+    "slug": "lisa-hepfner",
+    "committees": [
+      "canadian-heritage"
+    ]
+  },
+  {
+    "slug": "vincent-ho",
+    "committees": [
+      "international-human-rights",
+      "science-and-research"
+    ]
+  },
+  {
+    "slug": "kurt-holman",
+    "committees": [
+      "library-of-parliament",
+      "justice",
+      "science-and-research",
+      "foreign-affairs"
+    ]
+  },
+  {
+    "slug": "ahmed-hussen",
+    "committees": [
+      "foreign-affairs"
+    ]
+  },
+  {
+    "slug": "helena-jaczek",
+    "committees": [
+      "health",
+      "science-and-research"
+    ]
+  },
+  {
+    "slug": "jamil-jivani",
+    "committees": [
+      "justice"
+    ]
+  },
+  {
+    "slug": "arielle-kayabaga",
+    "committees": [
+      "house-affairs"
+    ]
+  },
+  {
+    "slug": "iqra-khalid",
+    "committees": [
+      "government-operations"
+    ]
+  },
+  {
+    "slug": "rhonda-kirkland",
+    "committees": [
+      "public-safety"
+    ]
+  },
+  {
+    "slug": "shelby-kramp-neuman",
+    "committees": [
+      "foreign-affairs"
+    ]
+  },
+  {
+    "slug": "ned-kuruc",
+    "committees": [
+      "public-accounts"
+    ]
+  },
+  {
+    "slug": "marie-france-lalonde",
+    "committees": [
+      "veterans-affairs"
+    ]
+  },
+  {
+    "slug": "melissa-lantsman",
+    "committees": [
+      "justice"
+    ]
+  },
+  {
+    "slug": "viviane-lapointe",
+    "committees": [
+      "national-defence"
+    ]
+  },
+  {
+    "slug": "philip-lawrence",
+    "committees": [
+      "transport",
+      "justice"
+    ]
+  },
+  {
+    "slug": "andrew-lawton",
+    "committees": [
+      "justice"
+    ]
+  },
+  {
+    "slug": "leslyn-lewis",
+    "committees": [
+      "human-resources",
+      "justice"
+    ]
+  },
+  {
+    "slug": "chris-lewis",
+    "committees": [
+      "transport"
+    ]
+  },
+  {
+    "slug": "ben-lobb",
+    "committees": [
+      "science-and-research"
+    ]
+  },
+  {
+    "slug": "tim-louis",
+    "committees": [
+      "house-affairs"
+    ]
+  },
+  {
+    "slug": "michael-ma",
+    "committees": [
+      "industry-and-technology",
+      "immigration"
+    ]
+  },
+  {
+    "slug": "chris-malette",
+    "committees": [
+      "national-defence"
+    ]
+  },
+  {
+    "slug": "gaetan-malette",
+    "committees": [
+      "natural-resources"
+    ]
+  },
+  {
+    "slug": "james-maloney",
+    "committees": [
+      "justice"
+    ]
+  },
+  {
+    "slug": "david-mcguinty",
+    "committees": [
+      "national-defence"
+    ]
+  },
+  {
+    "slug": "jennifer-mckelvie",
+    "committees": [
+      "science-and-research"
+    ]
+  },
+  {
+    "slug": "eric-melillo",
+    "committees": [
+      "indigenous-affairs"
+    ]
+  },
+  {
+    "slug": "costas-menegakis",
+    "committees": [
+      "immigration"
+    ]
+  },
+  {
+    "slug": "giovanna-mingarelli",
+    "committees": [
+      "official-languages"
+    ]
+  },
+  {
+    "slug": "dan-muys",
+    "committees": [
+      "finance",
+      "transport"
+    ]
+  },
+  {
+    "slug": "yasir-naqvi",
+    "committees": [
+      "international-trade"
+    ]
+  },
+  {
+    "slug": "juanita-nathan",
+    "committees": [
+      "status-of-women"
+    ]
+  },
+  {
+    "slug": "chi-nguyen",
+    "committees": [
+      "transport",
+      "status-of-women"
+    ]
+  },
+  {
+    "slug": "rob-oliphant",
+    "committees": [
+      "foreign-affairs"
+    ]
+  },
+  {
+    "slug": "dominique-orourke",
+    "committees": [
+      "industry-and-technology",
+      "transport"
+    ]
+  },
+  {
+    "slug": "marcus-powlowski",
+    "committees": [
+      "public-safety"
+    ]
+  },
+  {
+    "slug": "aslam-rana",
+    "committees": [
+      "public-accounts",
+      "science-and-research"
+    ]
+  },
+  {
+    "slug": "anna-roberts",
+    "committees": [
+      "status-of-women"
+    ]
+  },
+  {
+    "slug": "pauline-rochefort",
+    "committees": [
+      "government-operations"
+    ]
+  },
+  {
+    "slug": "lianne-rood",
+    "committees": [
+      "foreign-affairs"
+    ]
+  },
+  {
+    "slug": "alex-ruff",
+    "committees": [
+      "house-affairs",
+      "veterans-affairs"
+    ]
+  },
+  {
+    "slug": "jamie-schmale",
+    "committees": [
+      "indigenous-affairs"
+    ]
+  },
+  {
+    "slug": "kyle-seeback",
+    "committees": [
+      "transport"
+    ]
+  },
+  {
+    "slug": "judy-sgro",
+    "committees": [
+      "international-trade"
+    ]
+  },
+  {
+    "slug": "terry-sheehan",
+    "committees": [
+      "indigenous-affairs"
+    ]
+  },
+  {
+    "slug": "doug-shipley",
+    "committees": [
+      "justice"
+    ]
+  },
+  {
+    "slug": "sonia-sidhu",
+    "committees": [
+      "health"
+    ]
+  },
+  {
+    "slug": "maninder-sidhu",
+    "committees": [
+      "international-trade"
+    ]
+  },
+  {
+    "slug": "amandeep-sodhi",
+    "committees": [
+      "immigration"
+    ]
+  },
+  {
+    "slug": "evan-solomon",
+    "committees": [
+      "science-and-research"
+    ]
+  },
+  {
+    "slug": "charles-sousa",
+    "committees": [
+      "national-defence"
+    ]
+  },
+  {
+    "slug": "matt-strauss",
+    "committees": [
+      "public-safety",
+      "finance"
+    ]
+  },
+  {
+    "slug": "jenna-sudds",
+    "committees": [
+      "government-operations"
+    ]
+  },
+  {
+    "slug": "kristina-tesser",
+    "committees": [
+      "public-accounts"
+    ]
+  },
+  {
+    "slug": "ryan-turnbull",
+    "committees": [
+      "finance"
+    ]
+  },
+  {
+    "slug": "rechie-valdez",
+    "committees": [
+      "status-of-women"
+    ]
+  },
+  {
+    "slug": "anita-vandenbeld",
+    "committees": [
+      "international-human-rights",
+      "foreign-affairs"
+    ]
+  },
+  {
+    "slug": "jean-yip",
+    "committees": [
+      "public-accounts"
+    ]
+  },
+  {
+    "slug": "salma-zahid",
+    "committees": [
+      "science-and-research"
+    ]
+  },
+  {
+    "slug": "john-zerucelli",
+    "committees": [
+      "human-resources"
+    ]
+  },
+  {
+    "slug": "sean-casey",
+    "committees": [
+      "veterans-affairs"
+    ]
+  },
+  {
+    "slug": "heath-macdonald",
+    "committees": [
+      "agriculture"
+    ]
+  },
+  {
+    "slug": "kent-macdonald",
+    "committees": [
+      "finance"
+    ]
+  },
+  {
+    "slug": "bobby-morrissey",
+    "committees": [
+      "fisheries",
+      "human-resources"
+    ]
+  },
+  {
+    "slug": "tatiana-auguste",
+    "committees": [
+      "veterans-affairs"
+    ]
+  },
+  {
+    "slug": "xavier-barsalou-duval",
+    "committees": [
+      "transport"
+    ]
+  },
+  {
+    "slug": "mario-beaulieu",
+    "committees": [
+      "official-languages"
+    ]
+  },
+  {
+    "slug": "rachel-bendayan",
+    "committees": [
+      "finance"
+    ]
+  },
+  {
+    "slug": "maxime-blanchette-joncas",
+    "committees": [
+      "science-and-research"
+    ]
+  },
+  {
+    "slug": "patrick-bonin",
+    "committees": [
+      "environment"
+    ]
+  },
+  {
+    "slug": "alexandre-boulerice",
+    "committees": [
+      "government-operations"
+    ]
+  },
+  {
+    "slug": "elisabeth-briere",
+    "committees": [
+      "house-affairs"
+    ]
+  },
+  {
+    "slug": "alexis-brunelle-duceppe",
+    "committees": [
+      "international-human-rights"
+    ]
+  },
+  {
+    "slug": "martin-champoux",
+    "committees": [
+      "canadian-heritage"
+    ]
+  },
+  {
+    "slug": "sophie-chatel",
+    "committees": [
+      "agriculture"
+    ]
+  },
+  {
+    "slug": "madeleine-chenette",
+    "committees": [
+      "official-languages"
+    ]
+  },
+  {
+    "slug": "marianne-dandurand",
+    "committees": [
+      "public-safety",
+      "agriculture"
+    ]
+  },
+  {
+    "slug": "claude-debellefeuille",
+    "committees": [
+      "public-safety"
+    ]
+  },
+  {
+    "slug": "gerard-deltell",
+    "committees": [
+      "public-accounts"
+    ]
+  },
+  {
+    "slug": "alexis-deschenes",
+    "committees": [
+      "fisheries"
+    ]
+  },
+  {
+    "slug": "caroline-desrochers",
+    "committees": [
+      "human-resources"
+    ]
+  },
+  {
+    "slug": "anju-dhillon",
+    "committees": [
+      "justice"
+    ]
+  },
+  {
+    "slug": "jean-yves-duclos",
+    "committees": [
+      "public-safety"
+    ]
+  },
+  {
+    "slug": "faycal-el-khoury",
+    "committees": [
+      "international-human-rights"
+    ]
+  },
+  {
+    "slug": "greg-fergus",
+    "committees": [
+      "ethics",
+      "immigration"
+    ]
+  },
+  {
+    "slug": "rheal-fortin",
+    "committees": [
+      "justice"
+    ]
+  },
+  {
+    "slug": "anna-gainey",
+    "committees": [
+      "human-resources"
+    ]
+  },
+  {
+    "slug": "jean-denis-garon",
+    "committees": [
+      "finance"
+    ]
+  },
+  {
+    "slug": "marie-helene-gaudreau",
+    "committees": [
+      "government-operations",
+      "veterans-affairs"
+    ]
+  },
+  {
+    "slug": "bernard-genereux",
+    "committees": [
+      "canadian-heritage"
+    ]
+  },
+  {
+    "slug": "marilene-gill",
+    "committees": [
+      "human-resources"
+    ]
+  },
+  {
+    "slug": "joel-godin",
+    "committees": [
+      "official-languages"
+    ]
+  },
+  {
+    "slug": "jacques-gourde",
+    "committees": [
+      "agriculture"
+    ]
+  },
+  {
+    "slug": "jason-groleau",
+    "committees": [
+      "international-trade",
+      "transport"
+    ]
+  },
+  {
+    "slug": "claude-guay",
+    "committees": [
+      "natural-resources"
+    ]
+  },
+  {
+    "slug": "steven-guilbeault",
+    "committees": [
+      "foreign-affairs"
+    ]
+  },
+  {
+    "slug": "mandy-gull-masty",
+    "committees": [
+      "indigenous-affairs"
+    ]
+  },
+  {
+    "slug": "gabriel-hardy",
+    "committees": [
+      "ethics"
+    ]
+  },
+  {
+    "slug": "anthony-housefather",
+    "committees": [
+      "justice"
+    ]
+  },
+  {
+    "slug": "angelo-iacono",
+    "committees": [
+      "environment"
+    ]
+  },
+  {
+    "slug": "natilien-joseph",
+    "committees": [
+      "human-resources"
+    ]
+  },
+  {
+    "slug": "annie-koutrakis",
+    "committees": [
+      "human-resources"
+    ]
+  },
+  {
+    "slug": "emmanuella-lambropoulos",
+    "committees": [
+      "national-defence",
+      "status-of-women"
+    ]
+  },
+  {
+    "slug": "linda-lapointe",
+    "committees": [
+      "international-trade",
+      "ethics"
+    ]
+  },
+  {
+    "slug": "andreanne-larouche",
+    "committees": [
+      "human-resources"
+    ]
+  },
+  {
+    "slug": "patricia-lattanzio",
+    "committees": [
+      "justice"
+    ]
+  },
+  {
+    "slug": "stephane-lauzon",
+    "committees": [
+      "house-affairs",
+      "transport"
+    ]
+  },
+  {
+    "slug": "steeve-lavoie",
+    "committees": [
+      "finance",
+      "international-trade",
+      "public-safety"
+    ]
+  },
+  {
+    "slug": "eric-lefebvre",
+    "committees": [
+      "finance"
+    ]
+  },
+  {
+    "slug": "carlos-leitao",
+    "committees": [
+      "finance"
+    ]
+  },
+  {
+    "slug": "sebastien-lemire",
+    "committees": [
+      "agriculture",
+      "public-accounts"
+    ]
+  },
+  {
+    "slug": "richard-martel",
+    "committees": [
+      "natural-resources"
+    ]
+  },
+  {
+    "slug": "marie-gabrielle-menard",
+    "committees": [
+      "status-of-women"
+    ]
+  },
+  {
+    "slug": "marjorie-michel",
+    "committees": [
+      "health"
+    ]
+  },
+  {
+    "slug": "marc-miller",
+    "committees": [
+      "justice"
+    ]
+  },
+  {
+    "slug": "christine-normandin",
+    "committees": [
+      "national-defence"
+    ]
+  },
+  {
+    "slug": "bienvenu-olivier-ntumba",
+    "committees": [
+      "canadian-heritage"
+    ]
+  },
+  {
+    "slug": "louis-plamondon",
+    "committees": [
+      "library-of-parliament"
+    ]
+  },
+  {
+    "slug": "jacques-ramsay",
+    "committees": [
+      "public-safety"
+    ]
+  },
+  {
+    "slug": "sherry-romanado",
+    "committees": [
+      "national-defence"
+    ]
+  },
+  {
+    "slug": "abdelhaq-sari",
+    "committees": [
+      "ethics"
+    ]
+  },
+  {
+    "slug": "simon-pierre-savard-tremblay",
+    "committees": [
+      "national-defence"
+    ]
+  },
+  {
+    "slug": "peter-schiefke",
+    "committees": [
+      "transport"
+    ]
+  },
+  {
+    "slug": "mario-simard",
+    "committees": [
+      "natural-resources"
+    ]
+  },
+  {
+    "slug": "gabriel-ste-marie",
+    "committees": [
+      "industry-and-technology"
+    ]
+  },
+  {
+    "slug": "eric-st-pierre",
+    "committees": [
+      "environment"
+    ]
+  },
+  {
+    "slug": "luc-theriault",
+    "committees": [
+      "ethics"
+    ]
+  },
+  {
+    "slug": "dominique-vien",
+    "committees": [
+      "status-of-women"
+    ]
+  },
+  {
+    "slug": "louis-villeneuve",
+    "committees": [
+      "official-languages"
+    ]
+  },
+  {
+    "slug": "tim-watchorn",
+    "committees": [
+      "national-defence",
+      "foreign-affairs"
+    ]
+  },
+  {
+    "slug": "sameer-zuberi",
+    "committees": [
+      "public-safety",
+      "international-human-rights",
+      "immigration"
+    ]
+  },
+  {
+    "slug": "kelly-block",
+    "committees": [
+      "government-operations"
+    ]
+  },
+  {
+    "slug": "steven-bonk",
+    "committees": [
+      "agriculture"
+    ]
+  },
+  {
+    "slug": "rosemarie-falk",
+    "committees": [
+      "human-resources"
+    ]
+  },
+  {
+    "slug": "randy-hoback",
+    "committees": [
+      "international-trade",
+      "natural-resources",
+      "foreign-affairs"
+    ]
+  },
+  {
+    "slug": "michael-kram",
+    "committees": [
+      "house-affairs"
+    ]
+  },
+  {
+    "slug": "jeremy-patzer",
+    "committees": [
+      "industry-and-technology",
+      "government-operations"
+    ]
+  },
+  {
+    "slug": "brad-redekopp",
+    "committees": [
+      "immigration"
+    ]
+  },
+  {
+    "slug": "andrew-scheer",
+    "committees": [
+      "international-human-rights"
+    ]
+  },
+  {
+    "slug": "corey-tochor",
+    "committees": [
+      "natural-resources"
+    ]
+  },
+  {
+    "slug": "fraser-tolmie",
+    "committees": [
+      "veterans-affairs"
+    ]
+  },
+  {
+    "slug": "cathay-wagantall",
+    "committees": [
+      "justice",
+      "veterans-affairs"
+    ]
+  },
+  {
+    "slug": "kevin-waugh",
+    "committees": [
+      "canadian-heritage"
+    ]
+  },
+  {
+    "slug": "brendan-hanley",
+    "committees": [
+      "indigenous-affairs"
+    ]
+  }
+]
