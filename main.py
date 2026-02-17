@@ -362,15 +362,24 @@ def diag_env():
 @app.get("/admin/test-email")
 def test_email(email: str = "tristan@claude.ai"):
     """Test sending a single email."""
-    # First check if mailersend is available
-    try:
-        from mailersend import Email
-    except Exception as e:
-        return {"success": False, "error": f"import failed: {e}"}
+    import httpx
+    
+    # Use MailerSend API directly
+    url = "https://api.mailersend.com/v1/email"
+    headers = {
+        "Authorization": f"Bearer {MAILERSEND_API_KEY}",
+        "Content-Type": "application/json"
+    }
+    payload = {
+        "from": {"email": MAILERSEND_FROM_EMAIL, "name": "Test"},
+        "to": [{"email": email}],
+        "subject": "Test",
+        "text": "Test body"
+    }
     
     try:
-        result = send_score_email(email, "Test User", [3552])
-        return {"success": result, "email": email}
+        response = httpx.post(url, json=payload, headers=headers)
+        return {"status": response.status_code, "body": response.text}
     except Exception as e:
         return {"success": False, "error": str(e)}
 @app.get("/diag/db")
