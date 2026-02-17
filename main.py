@@ -742,23 +742,36 @@ Keep picking wisely!
 - Fantasy Parliament Team
 """
         
-        # Send email using MailerSend
-        print(f"MAILERSEND: Attempting to send to {email} with key={MAILERSEND_API_KEY[:20]}... and from={MAILERSEND_FROM_EMAIL}")
-        mailer = emails.NewMailer(MAILERSEND_API_KEY)
-        mailer.set_mail_from([MAILERSEND_FROM_EMAIL], {"name": "Fantasy Parliament"})
-        mailer.add_mail_to([email])
-        mailer.set_subject(subject)
-        mailer.set_text_content(body)
+        # Send email using MailerSend (new API)
+        from mailersend import Email, EmailRequest, EmailContact, MailerSendClient
         
-        response = mailer.send()
+        print(f"MAILERSEND: Attempting to send to {email} with from={MAILERSEND_FROM_EMAIL}")
         
-        print(f"MAILERSEND: Response: status={response.status_code}, text={response.text}, headers={response.headers}")
-        
-        if response.status_code in [200, 202]:
-            print(f"MAILERSEND: Email sent successfully to {email}")
-            return True
-        else:
-            print(f"MAILERSEND: Failed to send email to {email}: {response.status_code} - {response.text}")
+        try:
+            client = MailerSendClient(MAILERSEND_API_KEY)
+            
+            email_request = EmailRequest(
+                from_email=EmailContact(email=MAILERSEND_FROM_EMAIL, name="Fantasy Parliament"),
+                to=[EmailContact(email=email)],
+                subject=subject,
+                text=body
+            )
+            
+            mailer = Email(client)
+            response = mailer.send(email_request)
+            
+            print(f"MAILERSEND: Response status={response.status_code}")
+            
+            if response.status_code == 202:
+                print(f"MAILERSEND: Email sent successfully to {email}")
+                return True
+            else:
+                print(f"MAILERSEND: Failed to send email to {email}: {response.status_code}")
+                return False
+        except Exception as e:
+            print(f"MAILERSEND ERROR: {e}")
+            import traceback
+            traceback.print_exc()
             return False
             
     except Exception as e:
