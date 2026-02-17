@@ -690,7 +690,7 @@ def calculate_team_score(mp_ids: List[int]) -> int:
         mps = MP.select(lambda m: m.id in mp_ids)
         return sum(mp.total_score for mp in mps)
 
-async def send_score_email(email: str, name: str, mp_ids: List[int]) -> bool:
+def send_score_email(email: str, name: str, mp_ids: List[int]) -> bool:
     """Send weekly score email via MailerSend."""
     if not MAILERSEND_API_KEY:
         print(f"MAILERSEND: API key not configured, skipping email to {email}")
@@ -750,7 +750,7 @@ Keep picking wisely!
 
 @app.post("/subscribe")
 @db_session
-async def subscribe(request: SubscribeRequest):
+def subscribe(request: SubscribeRequest):
     """Add a new subscriber."""
     # Validate email
     email = request.email.strip()
@@ -827,7 +827,7 @@ def list_subscribers(api_key: str = Header(None)):
 
 @app.post("/cron/weekly-score-emails")
 @db_session
-async def trigger_weekly_emails(api_key: str = Header(None)):
+def trigger_weekly_emails(api_key: str = Header(None)):
     """Trigger weekly score emails to all subscribers."""
     # Skip API key check if called internally (scheduler passes None)
     if api_key is not None and api_key != API_KEY:
@@ -838,7 +838,7 @@ async def trigger_weekly_emails(api_key: str = Header(None)):
     failed = 0
     
     for sub in subscribers:
-        success = await send_score_email(sub.email, sub.name, sub.selected_mps)
+        success = send_score_email(sub.email, sub.name, sub.selected_mps)
         if success:
             count += 1
         else:
