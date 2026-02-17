@@ -679,7 +679,7 @@ profanity.load_censor_words()
 
 # MailerSend configuration
 MAILERSEND_API_KEY = os.getenv("MAILERSEND_API_KEY")
-MAILERSEND_FROM_EMAIL = "test@mlsender.io"  # Hardcoded for now
+MAILERSEND_FROM_EMAIL = "test@test-pzkmgq7yj0yl059v.mlsender.net"  # Verified test domain
 
 class SubscribeRequest(BaseModel):
     name: str
