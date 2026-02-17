@@ -362,10 +362,17 @@ def diag_env():
 @app.get("/admin/test-email")
 def test_email(email: str = "tristan@claude.ai"):
     """Test sending a single email."""
-    print(f"TEST_EMAIL: Called with {email}")
-    result = send_score_email(email, "Test User", [3552])
-    print(f"TEST_EMAIL: Result = {result}")
-    return {"success": result, "email": email}
+    # First check if mailersend is available
+    try:
+        from mailersend import Email
+    except Exception as e:
+        return {"success": False, "error": f"import failed: {e}"}
+    
+    try:
+        result = send_score_email(email, "Test User", [3552])
+        return {"success": result, "email": email}
+    except Exception as e:
+        return {"success": False, "error": str(e)}
 @app.get("/diag/db")
 @db_session
 def diag_db():
