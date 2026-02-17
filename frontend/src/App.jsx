@@ -289,6 +289,13 @@ function MyTeamViewWrapper() {
     });
     const navigate = useNavigate();
 
+    // Redirect to home if no username
+    useEffect(() => {
+        if (!username) {
+            navigate('/');
+        }
+    }, [username, navigate]);
+
     const handleRemove = (id) => {
         if (team.captain?.id === id) {
             if (confirm("Removing the captain will reset your team leader. Continue?")) {
@@ -304,10 +311,6 @@ function MyTeamViewWrapper() {
     }, [team]);
 
     if (!username) {
-        // Redirect to home to set username
-        useEffect(() => {
-            navigate('/');
-        }, [navigate]);
         return null;
     }
 
