@@ -362,7 +362,9 @@ def diag_env():
 @app.get("/admin/test-email")
 def test_email(email: str = "tristan@claude.ai"):
     """Test sending a single email."""
+    print(f"TEST_EMAIL: Called with {email}")
     result = send_score_email(email, "Test User", [3552])
+    print(f"TEST_EMAIL: Result = {result}")
     return {"success": result, "email": email}
 @app.get("/diag/db")
 @db_session
