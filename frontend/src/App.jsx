@@ -306,6 +306,16 @@ function MyTeamViewWrapper() {
             setTeam(prev => ({ ...prev, members: prev.members.filter(m => m.id !== id) }));
         }
     };
+
+    const handleForgetTeam = () => {
+        if (confirm("Are you sure you want to forget your team and start over? This cannot be undone.")) {
+            localStorage.removeItem('fp_username');
+            localStorage.removeItem('fp_team');
+            setUsername('');
+            setTeam({ captain: null, members: [] });
+            navigate('/');
+        }
+    };
     
     useEffect(() => {
         localStorage.setItem('fp_team', JSON.stringify(team));
@@ -362,6 +372,14 @@ function MyTeamViewWrapper() {
                 </div>
             </nav>
             <main className="max-w-7xl mx-auto py-8 px-4 sm:px-6 lg:px-8 flex-grow w-full">
+                <div className="flex justify-end mb-4">
+                    <button
+                        onClick={handleForgetTeam}
+                        className="text-sm text-red-600 hover:text-red-800 underline"
+                    >
+                        Forget my team & start over
+                    </button>
+                </div>
                 <div className="bg-white rounded-xl shadow-lg p-6 border border-gray-100">
                     <MyTeam team={team} username={username} onRemove={handleRemove} />
                 </div>
