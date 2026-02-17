@@ -752,7 +752,7 @@ Keep picking wisely!
         
         response = mailer.send()
         
-        print(f"MAILERSEND: Response: {response.status_code} - {response.text}")
+        print(f"MAILERSEND: Response: status={response.status_code}, text={response.text}, headers={response.headers}")
         
         if response.status_code in [200, 202]:
             print(f"MAILERSEND: Email sent successfully to {email}")
