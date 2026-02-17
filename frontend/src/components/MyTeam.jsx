@@ -41,7 +41,7 @@ const MyTeam = ({ team, username, onRemove }) => {
             display_name: formData.displayName,
             team_name: formData.teamName || null,
             captain_mp_id: captain.id,
-            team_mp_ids: members.map(m => m.id),
+            team_mp_ids: [captain.id, ...members.map(m => m.id)],
             same_party_as_captain: team.handicap || false
         };
         
