@@ -350,6 +350,14 @@ def get_mp(mp_id: int):
         traceback.print_exc()
         raise HTTPException(status_code=500, detail=str(e))
 
+@app.get("/diag/env")
+def diag_env():
+    """Debug endpoint to check environment variables."""
+    return {
+        "MAILERSEND_API_KEY_SET": bool(MAILERSEND_API_KEY),
+        "MAILERSEND_API_KEY_PREFIX": MAILERSEND_API_KEY[:20] + "..." if MAILERSEND_API_KEY else None,
+        "MAILERSEND_FROM_EMAIL": MAILERSEND_FROM_EMAIL,
+    }
 @app.get("/diag/db")
 @db_session
 def diag_db():
