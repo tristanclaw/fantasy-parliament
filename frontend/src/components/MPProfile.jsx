@@ -40,6 +40,7 @@ const MPProfile = () => {
   if (!mp) return null;
 
   const breakdown = mp.score_breakdown || {};
+  const committeeScore = mp.committee_score || { total: 0, breakdown: {} };
   
   // Calculate max points for chart scaling
   const maxPoints = Math.max(...scoreHistory.map(s => s.points), 1);
@@ -105,9 +106,11 @@ const MPProfile = () => {
                         <ul className="space-y-2">
                             {mp.committees.map((c, idx) => (
                                 <li key={idx} className="flex justify-between items-center p-3 border rounded-lg">
-                                    <span className="font-medium text-gray-800">{c.name}</span>
-                                    <span className={`text-xs px-2 py-1 rounded ${c.role === 'Chair' ? 'bg-yellow-100 text-yellow-800' : 'bg-green-100 text-green-800'}`}>
-                                        {c.role}
+                                    <span className="font-medium text-gray-800">
+                                        {typeof c === 'string' ? c.replace(/-/g, ' ').replace(/\b\w/g, l => l.toUpperCase()) : c.name}
+                                    </span>
+                                    <span className="text-xs px-2 py-1 rounded bg-green-100 text-green-800">
+                                        Member
                                     </span>
                                 </li>
                             ))}
@@ -116,9 +119,9 @@ const MPProfile = () => {
                         <p className="text-gray-500 italic">No committee assignments found.</p>
                     )}
                     
-                    {breakdown.committees > 0 && (
+                    {committeeScore.total > 0 && (
                         <div className="mt-4 p-3 bg-blue-50 border border-blue-100 rounded-lg text-blue-800">
-                            <strong>Committee Bonus:</strong> +{breakdown.committees} points
+                            <strong>Committee Bonus:</strong> +{committeeScore.total} points
                         </div>
                     )}
                 </div>
@@ -153,7 +156,7 @@ const MPProfile = () => {
                     <div className="bg-red-500 h-4" style={{ width: `${(breakdown.speeches || 0) / (mp.score || 1) * 100}%` }} title="Speeches"></div>
                     <div className="bg-blue-500 h-4" style={{ width: `${(breakdown.votes || 0) / (mp.score || 1) * 100}%` }} title="Votes"></div>
                     <div className="bg-green-500 h-4" style={{ width: `${(breakdown.bills || 0) / (mp.score || 1) * 100}%` }} title="Bills"></div>
-                    <div className="bg-yellow-500 h-4" style={{ width: `${(breakdown.committees || 0) / (mp.score || 1) * 100}%` }} title="Committees"></div>
+                    <div className="bg-yellow-500 h-4" style={{ width: `${(committeeScore.total || 0) / (mp.score || 1) * 100}%` }} title="Committees"></div>
                 </div>
                 <div className="flex text-xs mt-2 space-x-4">
                     <span className="flex items-center"><div className="w-3 h-3 bg-red-500 mr-1"></div> Speeches</span>
