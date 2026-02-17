@@ -565,7 +565,7 @@ def register_user(registration: RegistrationRequest, request: Request):
     else:
         client_ip = request.client.host if request.client else "unknown"
 
-    if Registration.select(lambda r: r.ip_address == client_ip).count() >= 3:
+    if Registration.select(lambda r: r.ip_address == client_ip).count() >= 50:
         raise HTTPException(status_code=429, detail="Too many registrations from this IP address")
 
     # 4. Input Validation & Sanitization

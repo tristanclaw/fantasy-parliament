@@ -13,7 +13,7 @@ const MyTeam = ({ team, username, onRemove }) => {
         displayName: username || '',
         teamName: '',
         email: '',
-        handicap: false
+        handicap: team?.handicap || false
     });
     const [status, setStatus] = useState('idle'); // idle, submitting, success, error
     const [message, setMessage] = useState('');
@@ -23,6 +23,10 @@ const MyTeam = ({ team, username, onRemove }) => {
             setFormData(prev => ({ ...prev, displayName: username }));
         }
     }, [username]);
+
+    useEffect(() => {
+        setFormData(prev => ({ ...prev, handicap: team?.handicap || false }));
+    }, [team?.handicap]);
 
     const handleInputChange = (e) => {
         const { name, value, type, checked } = e.target;
