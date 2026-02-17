@@ -272,6 +272,9 @@ async def run_sync():
         # Sync MPs roster
         await sync_mps(client)
         
+        # Sync committee memberships
+        await sync_committee_memberships(client, client)
+        
         # Sync past 7 days for initial data backfill
         today = date.today()
         for days_ago in range(7):
@@ -304,3 +307,65 @@ if __name__ == "__main__":
     db.bind(provider='sqlite', filename='db.sqlite', create_db=True)
     db.generate_mapping(create_tables=True)
     asyncio.run(run_sync())
+
+
+async def fetch_committee_memberships(client, session):
+    """Fetch committee memberships for all MPs based on their speeches."""
+    print("Fetching committee memberships from speeches...")
+    
+    # Get all MPs from database
+    with db_session:
+        all_mps = MP.select()
+        mp_map = {mp.slug: mp for mp in all_mps}
+    
+    headers = {
+        "User-Agent": "FantasyParliament/1.0",
+        "Accept": "application/json"
+    }
+    
+    committee_map = {}  # mp_slug -> set of committees
+    
+    for slug, mp in mp_map.items():
+        try:
+            # Fetch recent speeches (limit 50 to avoid rate limiting)
+            url = f"{BASE_URL}/speeches/?politician={slug}&limit=50&format=json"
+            response = await session.get(url, headers=headers)
+            if response.status != 200:
+                continue
+            
+            data = response.json()
+            committees = set()
+            
+            for speech in data.get('objects', []):
+                doc_url = speech.get('document_url', '')
+                if '/committees/' in doc_url:
+                    # Extract committee name from URL like /committees/justice/45-1/14/
+                    parts = doc_url.split('/')
+                    if 'committees' in parts:
+                        idx = parts.index('committees')
+                        if idx + 1 < len(parts):
+                            committee_slug = parts[idx + 1]
+                            committees.add(committee_slug)
+            
+            if committees:
+                committee_map[slug] = committees
+                print(f"  {mp.name}: {committees}")
+                
+        except Exception as e:
+            print(f"  Error fetching {slug}: {e}")
+    
+    return committee_map
+
+
+async def sync_committee_memberships(client, session):
+    """Update MP records with committee memberships."""
+    committee_map = await fetch_committee_memberships(client, session)
+    
+    with db_session:
+        for slug, committees in committee_map.items():
+            mp = MP.get(slug=slug)
+            if mp:
+                mp.committees = list(committees)
+                print(f"Updated {mp.name}: {mp.committees}")
+    
+    print(f"Committee memberships updated for {len(committee_map)} MPs")
