@@ -358,6 +358,12 @@ def diag_env():
         "MAILERSEND_API_KEY_PREFIX": MAILERSEND_API_KEY[:20] + "..." if MAILERSEND_API_KEY else None,
         "MAILERSEND_FROM_EMAIL": MAILERSEND_FROM_EMAIL,
     }
+
+@app.get("/admin/test-email")
+def test_email(email: str = "tristan@claude.ai"):
+    """Test sending a single email."""
+    result = send_score_email(email, "Test User", [3552])
+    return {"success": result, "email": email}
 @app.get("/diag/db")
 @db_session
 def diag_db():
