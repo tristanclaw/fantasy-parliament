@@ -763,6 +763,8 @@ Keep picking wisely!
             
     except Exception as e:
         print(f"MAILERSEND ERROR: {e}")
+        import traceback
+        traceback.print_exc()
         return False
 
 @app.post("/subscribe")
