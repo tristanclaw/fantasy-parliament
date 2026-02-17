@@ -901,6 +901,34 @@ async def sync_now(api_key: str = Depends(verify_api_key)):
     finally:
         sys.stdout = old_stdout
 
+@app.post("/admin/update-committees")
+async def update_committees(api_key: str = Depends(verify_api_key)):
+    """Update MP committee assignments from JSON payload."""
+    from pydantic import BaseModel
+    
+    class CommitteeUpdate(BaseModel):
+        slug: str
+        committees: list
+    
+    # Read JSON from request body
+    try:
+        data = await request.json()
+    except:
+        return {"status": "error", "message": "Invalid JSON"}
+    
+    if not isinstance(data, list):
+        return {"status": "error", "message": "Expected array of {slug, committees}"}
+    
+    updated = 0
+    with db_session:
+        for item in data:
+            mp = MP.get(slug=item.get("slug"))
+            if mp:
+                mp.committees = item.get("committees", [])
+                updated += 1
+    
+    return {"status": "success", "updated": updated}
+
 @app.post("/admin/test-sync")
 async def test_sync(api_key: str = Depends(verify_api_key)):
     """Test sync with just one MP"""
