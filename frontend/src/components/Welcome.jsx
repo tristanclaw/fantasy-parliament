@@ -8,6 +8,7 @@ const Welcome = ({ onComplete }) => {
   const [results, setResults] = useState([]);
   const [loading, setLoading] = useState(false);
   const [selectedMp, setSelectedMp] = useState(null);
+  const [samePartyHandicap, setSamePartyHandicap] = useState(false);
 
   const handleNameSubmit = (e) => {
     e.preventDefault();
@@ -32,7 +33,7 @@ const Welcome = ({ onComplete }) => {
 
   const confirmCaptain = () => {
     if (displayName && email && selectedMp) {
-        onComplete(displayName, email, selectedMp);
+        onComplete(displayName, email, selectedMp, samePartyHandicap);
     }
   };
 
@@ -162,6 +163,19 @@ const Welcome = ({ onComplete }) => {
                                 <span className="inline-block bg-gray-900 text-white text-xs font-bold px-3 py-1 rounded-full">
                                     {selectedMp.party}
                                 </span>
+                            </div>
+
+                            <div className="flex items-center justify-center gap-2 py-3">
+                                <input
+                                    type="checkbox"
+                                    id="handicap"
+                                    checked={samePartyHandicap}
+                                    onChange={(e) => setSamePartyHandicap(e.target.checked)}
+                                    className="h-4 w-4 text-red-600 focus:ring-red-500 border-gray-300 rounded"
+                                />
+                                <label htmlFor="handicap" className="text-sm text-gray-700">
+                                    Same party as captain <span className="text-gray-500">(handicap mode - harder to score, +50 bonus if enabled)</span>
+                                </label>
                             </div>
                             
                             <div className="flex gap-3 pt-2">

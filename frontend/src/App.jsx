@@ -33,13 +33,13 @@ function MainApp() {
     localStorage.setItem('fp_team', JSON.stringify(team));
   }, [team]);
 
-  const handleOnboardingComplete = async (name, email, captain) => {
+  const handleOnboardingComplete = async (name, email, captain, samePartyHandicap = false) => {
     // Don't register yet - just save captain and proceed to team building
     // Registration happens when team is complete (in MyTeam component)
     setUsername(name);
-    setTeam({ captain, members: [] });
+    setTeam({ captain, members: [], handicap: samePartyHandicap });
     localStorage.setItem('fp_username', name);
-    localStorage.setItem('fp_team', JSON.stringify({ captain, members: [] }));
+    localStorage.setItem('fp_team', JSON.stringify({ captain, members: [], handicap: samePartyHandicap }));
     
     // Subscribe to weekly emails (this is ok to do early)
     try {

@@ -4,9 +4,10 @@ import { Link } from 'react-router-dom';
 const PARTIES = ['All', 'Liberal', 'Conservative', 'NDP', 'Bloc', 'Green'];
 
 const DraftPool = ({ team, onDraft }) => {
-    // Check if team has a captain - if so, default to filtering by their party (handicap mode)
+    // Only lock to captain's party if handicap mode was chosen
     const captainParty = team?.captain?.party;
-    const [partyLock, setPartyLock] = useState(captainParty ? true : false);
+    const isHandicap = team?.handicap || false;
+    const [partyLock, setPartyLock] = useState(isHandicap);
     const [mps, setMps] = useState([]);
     const [search, setSearch] = useState('');
     const [loading, setLoading] = useState(false);
