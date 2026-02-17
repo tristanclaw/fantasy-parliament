@@ -594,22 +594,9 @@ def register_user(registration: RegistrationRequest, request: Request):
     if team_name and len(team_name) > 100:
         raise HTTPException(status_code=400, detail="Team name too long (max 100 chars)")
 
-    # 3. Email Validation
-    email = registration.email.strip()
-    if not re.match(r"[^@]+@[^@]+\.[^@]+", email):
-        raise HTTPException(status_code=400, detail="Invalid email format")
+    # 3. Email Validation (optional)
+    email = registration.email.strip() if registration.email else None
     
-    # Check if already registered (Silent Fail / Generic Message)
-    if Registration.get(email=email):
-         # Return success to prevent email enumeration
-         # In a real app, we might send an email saying "You tried to register but already have an account"
-         print(f"REGISTRATION ATTEMPT: Email {email} already exists. Returning success.")
-         return {
-            "status": "success", 
-            "message": "If this email is valid, you will receive a confirmation.",
-            "user_id": "existing" # Frontend should handle this gracefully
-        }
-
     # 1. Gameplay Validation
     # At least 1 team member (captain required)
     if len(registration.team_mp_ids) < 1:
