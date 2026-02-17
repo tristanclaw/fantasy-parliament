@@ -67,7 +67,7 @@ COMMITTEE_TIERS = {
 }
 
 # Base points for committee participation
-COMMITTEE_BASE_POINTS = 50  # Points per committee per scoring period
+COMMITTEE_BASE_POINTS = 10  # Points per committee per scoring period
 
 def get_committee_tier(committee_name: str) -> str:
     """Determine the tier of a committee by name"""

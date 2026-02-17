@@ -414,8 +414,18 @@ def get_mps(ids: str = None):
 @app.get("/scoreboard")
 @db_session
 def get_scoreboard():
-    mps = MP.select().order_by(desc(MP.total_score))[:10]
-    return [mp_to_dict(m) for m in mps]
+    # Get all MPs and sort by computed score (including committee bonus)
+    all_mps = MP.select()
+    scored_mps = []
+    for mp in all_mps:
+        committee_pts = calculate_committee_score(mp.committees).get("total", 0) if mp.committees else 0
+        total = mp.total_score + committee_pts
+        scored_mps.append((total, mp))
+    
+    # Sort by total score descending
+    scored_mps.sort(key=lambda x: x[0], reverse=True)
+    top_mps = [mp for _, mp in scored_mps[:10]]
+    return [mp_to_dict(m) for m in top_mps]
 
 @app.get("/leaderboard")
 @db_session
