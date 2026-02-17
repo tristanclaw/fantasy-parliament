@@ -595,7 +595,9 @@ def register_user(registration: RegistrationRequest, request: Request):
         raise HTTPException(status_code=400, detail="Team name too long (max 100 chars)")
 
     # 3. Email Validation (optional)
-    email = registration.email.strip() if registration.email else None
+    # Generate user_id first for placeholder email
+    new_user_id = str(uuid.uuid4())
+    email = registration.email.strip() if registration.email else f"user_{new_user_id}@placeholder.local"
     
     # 1. Gameplay Validation
     # At least 1 team member (captain required)
@@ -624,8 +626,7 @@ def register_user(registration: RegistrationRequest, request: Request):
         raise HTTPException(status_code=400, detail="Captain MP does not exist")
 
     # 2. Secure Identity
-    # Ignore client-provided user_id and generate a secure UUID
-    new_user_id = str(uuid.uuid4())
+    # Ignore client-provided user_id and generate a secure UUID (already done above for email)
 
     # Create registration
     try:
