@@ -33,6 +33,43 @@ function MainApp() {
     localStorage.setItem('fp_team', JSON.stringify(team));
   }, [team]);
 
+  // Refresh team member scores from API
+  useEffect(() => {
+    const refreshTeamScores = async () => {
+      if (!team.captain && !team.members.length) return;
+      
+      const apiUrl = 'https://fantasy-parliament-web.onrender.com';
+      const memberIds = [
+        ...(team.captain ? [team.captain.id] : []),
+        ...team.members.map(m => m.id)
+      ];
+      
+      try {
+        const response = await fetch(`${apiUrl}/mps?ids=${memberIds.join(',')}`);
+        if (!response.ok) return;
+        const freshMPs = await response.json();
+        
+        const mpMap = {};
+        freshMPs.forEach(mp => { mpMap[mp.id] = mp; });
+        
+        const updatedCaptain = team.captain ? mpMap[team.captain.id] : null;
+        const updatedMembers = team.members.map(m => mpMap[m.id] || m);
+        
+        if (updatedCaptain || updatedMembers.length) {
+          setTeam(prev => ({
+            ...prev,
+            captain: updatedCaptain || prev.captain,
+            members: updatedMembers
+          }));
+        }
+      } catch (e) {
+        console.error('Failed to refresh team scores:', e);
+      }
+    };
+    
+    refreshTeamScores();
+  }, []);
+
   const handleOnboardingComplete = async (name, email, captain, samePartyHandicap = false) => {
     // Don't register yet - just save captain and proceed to team building
     // Registration happens when team is complete (in MyTeam component)

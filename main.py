@@ -395,9 +395,15 @@ def diag_db():
         }
 
 @app.get("/mps")
-def get_mps():
+def get_mps(ids: str = None):
     print("DEBUG: Entering /mps endpoint")
     try:
+        if ids:
+            # Filter by IDs
+            id_list = [int(x.strip()) for x in ids.split(',') if x.strip().isdigit()]
+            with db_session:
+                mps = [MP.get(id=mid) for mid in id_list if MP.get(id=mid)]
+                return [mp_to_dict(mp) for mp in mps if mp]
         return get_cached_mps()
     except Exception as e:
         import traceback
