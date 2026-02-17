@@ -34,42 +34,26 @@ function MainApp() {
   }, [team]);
 
   const handleOnboardingComplete = async (name, email, captain) => {
+    // Don't register yet - just save captain and proceed to team building
+    // Registration happens when team is complete (in MyTeam component)
+    setUsername(name);
+    setTeam({ captain, members: [] });
+    localStorage.setItem('fp_username', name);
+    localStorage.setItem('fp_team', JSON.stringify({ captain, members: [] }));
+    
+    // Subscribe to weekly emails (this is ok to do early)
     try {
-      const response = await fetch('https://fantasy-parliament-web.onrender.com/api/register', {
+      await fetch('https://fantasy-parliament-web.onrender.com/subscribe', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
-          display_name: name,
+          name: name,
           email: email,
-          captain_mp_id: captain.id,
-          team_mp_ids: [captain.id]
+          selected_mps: [captain.id]
         })
       });
-      if (response.ok) {
-        setUsername(name);
-        setTeam({ captain, members: [] });
-        
-        // Auto-subscribe to weekly emails
-        try {
-          await fetch('https://fantasy-parliament-web.onrender.com/subscribe', {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({
-              name: name,
-              email: email,
-              selected_mps: [captain.id]
-            })
-          });
-        } catch (subErr) {
-          console.error("Subscription error:", subErr);
-        }
-      } else {
-        const err = await response.json();
-        alert("Registration failed: " + (err.detail || "Unknown error"));
-      }
-    } catch (e) {
-      console.error(e);
-      alert("Error registering. Try again.");
+    } catch (subErr) {
+      console.error("Subscription error:", subErr);
     }
   };
 

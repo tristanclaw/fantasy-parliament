@@ -552,6 +552,7 @@ class RegistrationRequest(BaseModel):
     email: str
     captain_mp_id: int
     team_mp_ids: List[int]
+    same_party_as_captain: bool = False
 
 @app.post("/api/register")
 @db_session
