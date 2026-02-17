@@ -7,5 +7,5 @@ python-dotenv
 pydantic
 better-profanity
 apscheduler
-mailersend
+mailersend>=2.0.0
 
