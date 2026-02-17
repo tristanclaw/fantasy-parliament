@@ -885,8 +885,12 @@ def trigger_weekly_emails(api_key: str = Header(None)):
     
     for sub in subscribers:
         print(f"EMAIL LOOP: Processing {sub.email} with MPs {sub.selected_mps}")
-        success = send_score_email(sub.email, sub.name, sub.selected_mps)
-        print(f"EMAIL LOOP: Result for {sub.email}: {success}")
+        try:
+            success = send_score_email(sub.email, sub.name, sub.selected_mps)
+            print(f"EMAIL LOOP: Result for {sub.email}: {success}")
+        except Exception as e:
+            print(f"EMAIL LOOP: Exception for {sub.email}: {e}")
+            success = False
         if success:
             count += 1
         else:
