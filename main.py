@@ -56,11 +56,11 @@ SPECIAL_TEAMS_CONFIG = {
     "all_whips": {
         "name": "All Whips",
         "slugs": [
-            "ruby-sahota",
-            "john-nater",
-            "don-davies",
-            "claude-debellefeuille",
-            "elizabeth-may"
+            "mark-gerretsen",
+            "elisabeth-briere",
+            "chris-warkentin",
+            "rob-moore",
+            "yves-perron"
         ]
     },
     "deputy_pm_shadows": {
