@@ -760,31 +760,30 @@ Keep picking wisely!
 - Fantasy Parliament Team
 """
         
-        # Send email using MailerSend (new API)
-        from mailersend import Email, EmailRequest, EmailContact, MailerSendClient
+        # Send email using MailerSend API directly
+        import httpx
         
-        print(f"MAILERSEND: Attempting to send to {email} with from={MAILERSEND_FROM_EMAIL}")
+        url = "https://api.mailersend.com/v1/email"
+        headers = {
+            "Authorization": f"Bearer {MAILERSEND_API_KEY}",
+            "Content-Type": "application/json"
+        }
+        payload = {
+            "from": {"email": MAILERSEND_FROM_EMAIL, "name": "Fantasy Parliament"},
+            "to": [{"email": email}],
+            "subject": subject,
+            "text": body
+        }
         
         try:
-            client = MailerSendClient(MAILERSEND_API_KEY)
-            
-            email_request = EmailRequest(
-                from_email=EmailContact(email=MAILERSEND_FROM_EMAIL, name="Fantasy Parliament"),
-                to=[EmailContact(email=email)],
-                subject=subject,
-                text=body
-            )
-            
-            mailer = Email(client)
-            response = mailer.send(email_request)
-            
+            response = httpx.post(url, json=payload, headers=headers)
             print(f"MAILERSEND: Response status={response.status_code}")
             
             if response.status_code == 202:
                 print(f"MAILERSEND: Email sent successfully to {email}")
                 return True
             else:
-                print(f"MAILERSEND: Failed to send email to {email}: {response.status_code}")
+                print(f"MAILERSEND: Failed to send email to {email}: {response.status_code} - {response.text}")
                 return False
         except Exception as e:
             print(f"MAILERSEND ERROR: {e}")
