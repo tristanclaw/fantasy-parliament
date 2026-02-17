@@ -8,7 +8,7 @@ class Registration(db.Entity):
     user_id = Required(str, unique=True)
     display_name = Required(str)
     team_name = Optional(str)
-    email = Required(str, unique=True)
+    email = Optional(str)
     captain_mp_id = Required(int)
     team_mp_ids = Required(Json)
     ip_address = Optional(str)

@@ -633,7 +633,7 @@ def register_user(registration: RegistrationRequest, request: Request):
             user_id=new_user_id,
             display_name=display_name,
             team_name=team_name or "",
-            email=email,
+            email=email or "",
             captain_mp_id=registration.captain_mp_id,
             team_mp_ids=registration.team_mp_ids,
             ip_address=client_ip or "",
