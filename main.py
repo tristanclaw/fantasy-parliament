@@ -729,6 +729,7 @@ Keep picking wisely!
 """
         
         # Send email using MailerSend
+        print(f"MAILERSEND: Attempting to send to {email} with key={MAILERSEND_API_KEY[:20]}... and from={MAILERSEND_FROM_EMAIL}")
         mailer = emails.NewMailer(MAILERSEND_API_KEY)
         mailer.set_mail_from([MAILERSEND_FROM_EMAIL], {"name": "Fantasy Parliament"})
         mailer.add_mail_to([email])
@@ -736,6 +737,8 @@ Keep picking wisely!
         mailer.set_text_content(body)
         
         response = mailer.send()
+        
+        print(f"MAILERSEND: Response: {response.status_code} - {response.text}")
         
         if response.status_code in [200, 202]:
             print(f"MAILERSEND: Email sent successfully to {email}")
