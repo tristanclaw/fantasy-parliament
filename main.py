@@ -280,7 +280,7 @@ def mp_to_dict(mp):
             "committees": mp.committees,
             "score_breakdown": mp.score_breakdown,
             "committee_score": calculate_committee_score(mp.committees) if mp.committees else {"total": 0, "breakdown": {}},
-            "committee_tiers": {c.get("name"): get_committee_tier(c.get("name", "")) for c in (mp.committees or [])}
+            "committee_tiers": {(c if isinstance(c, str) else c.get("name", "")): get_committee_tier(c if isinstance(c, str) else c.get("name", "")) for c in (mp.committees or [])}
         }
     except Exception as e:
         print(f"ERROR in mp_to_dict: {e}")
