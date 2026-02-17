@@ -867,6 +867,20 @@ def list_subscribers(api_key: str = Header(None)):
         "subscribers": [{"name": s.name, "email": s.email, "created_at": s.created_at.isoformat()} for s in subscribers]
     }
 
+@app.delete("/subscribers/{email}")
+@db_session
+def delete_subscriber(email: str, api_key: str = Header(None)):
+    """Admin endpoint to delete a subscriber."""
+    if api_key != API_KEY:
+        raise HTTPException(status_code=403, detail="Invalid API Key")
+    
+    sub = Subscriber.get(email=email)
+    if not sub:
+        raise HTTPException(status_code=404, detail="Subscriber not found")
+    
+    sub.delete()
+    return {"status": "deleted", "email": email}
+
 # ============================================
 # Cron Endpoint for Weekly Score Emails
 # ============================================
