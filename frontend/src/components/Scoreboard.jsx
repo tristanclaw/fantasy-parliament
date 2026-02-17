@@ -48,28 +48,28 @@ const Scoreboard = () => {
         <div className="bg-white rounded-xl shadow-lg p-6 border border-gray-100 h-full">
             <div className="flex justify-between items-center mb-6 border-b pb-2">
                 <h2 className="text-2xl font-bold text-red-700">Rankings</h2>
-                <div className="flex space-x-2 bg-gray-100 p-1 rounded-lg">
+                <div className="flex space-x-1 bg-gray-100 p-1 rounded-lg">
                     <button 
                         onClick={() => setView('mps')}
-                        className={`px-3 py-1 text-xs font-bold rounded-md transition ${view === 'mps' ? 'bg-white text-red-700 shadow-sm' : 'text-gray-500 hover:text-gray-700'}`}
+                        className={`px-2 py-1 text-xs font-bold rounded-md transition ${view === 'mps' ? 'bg-white text-red-700 shadow-sm' : 'text-gray-500 hover:text-gray-700'}`}
                     >
                         MPs
                     </button>
                     <button 
                         onClick={() => setView('users')}
-                        className={`px-3 py-1 text-xs font-bold rounded-md transition ${view === 'users' ? 'bg-white text-red-700 shadow-sm' : 'text-gray-500 hover:text-gray-700'}`}
+                        className={`px-2 py-1 text-xs font-bold rounded-md transition ${view === 'users' ? 'bg-white text-red-700 shadow-sm' : 'text-gray-500 hover:text-gray-700'}`}
                     >
                         Users
                     </button>
                     <button 
                         onClick={() => setView('party')}
-                        className={`px-3 py-1 text-xs font-bold rounded-md transition ${view === 'party' ? 'bg-white text-red-700 shadow-sm' : 'text-gray-500 hover:text-gray-700'}`}
+                        className={`px-2 py-1 text-xs font-bold rounded-md transition ${view === 'party' ? 'bg-white text-red-700 shadow-sm' : 'text-gray-500 hover:text-gray-700'}`}
                     >
                         Parties
                     </button>
                     <button 
                         onClick={() => setView('special')}
-                        className={`px-3 py-1 text-xs font-bold rounded-md transition ${view === 'special' ? 'bg-white text-red-700 shadow-sm' : 'text-gray-500 hover:text-gray-700'}`}
+                        className={`px-2 py-1 text-xs font-bold rounded-md transition ${view === 'special' ? 'bg-white text-red-700 shadow-sm' : 'text-gray-500 hover:text-gray-700'}`}
                     >
                         Special
                     </button>
