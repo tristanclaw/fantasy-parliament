@@ -729,9 +729,6 @@ def send_score_email(email: str, name: str, mp_ids: List[int]) -> bool:
         return False
     
     try:
-        import mailersend
-        from mailersend import emails
-        
         # Calculate team score
         team_score = calculate_team_score(mp_ids)
         
