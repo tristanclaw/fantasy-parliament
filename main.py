@@ -5,7 +5,7 @@ from fastapi.staticfiles import StaticFiles
 from pony.orm import db_session, select, desc
 from models import MP, LeaderboardEntry, Registration, Subscriber, DailyScore, init_db, run_migrations, db
 from scraper import run_sync, run_sync_mps_only
-from committee_tiers import calculate_committee_score, COMMITTEE_TIERS, get_committee_tier
+from committee_tiers import calculate_committee_score, COMMITTEE_TIERS, get_committee_tier, COMMITTEE_BASE_POINTS
 import os
 import asyncio
 from dotenv import load_dotenv
@@ -416,8 +416,6 @@ def get_leaderboard():
     entries = LeaderboardEntry.select().order_by(desc(LeaderboardEntry.score))[:50]
     return [{"username": e.username, "score": e.score, "updated_at": e.updated_at.isoformat()} for e in entries]
 
-@app.get("/leaderboard/party")
-
 @app.get("/committees")
 def get_committee_tiers_info():
     """Return committee tier information and scoring rules"""
@@ -430,6 +428,8 @@ def get_committee_tiers_info():
             "Member": 1.0
         }
     }
+
+@app.get("/leaderboard/party")
 @db_session
 def get_party_leaderboard():
     """Rank parties by their top 5 MPs' combined scores"""
