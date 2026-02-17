@@ -679,7 +679,7 @@ profanity.load_censor_words()
 
 # MailerSend configuration
 MAILERSEND_API_KEY = os.getenv("MAILERSEND_API_KEY")
-MAILERSEND_FROM_EMAIL = os.getenv("MAILERSEND_FROM_EMAIL", "test@mlsender.io")
+MAILERSEND_FROM_EMAIL = "test@mlsender.io"  # Hardcoded for now
 
 class SubscribeRequest(BaseModel):
     name: str
