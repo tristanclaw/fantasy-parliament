@@ -124,10 +124,10 @@ const Rules = () => {
               </div>
 
               <div className="mt-4 bg-gray-50 p-4 rounded-lg">
-                <p className="text-sm text-gray-700"><strong>Base Points:</strong> 50 points per committee</p>
+                <p className="text-sm text-gray-700"><strong>Base Points:</strong> 10 points per committee</p>
                 <p className="text-sm text-gray-700"><strong>Role Multipliers:</strong> Chair = 1.5x, Vice-Chair = 1.25x, Member = 1.0x</p>
                 <p className="text-sm text-gray-500 mt-2">
-                  <em>Example: An MP on Finance Committee (A-Tier) as Chair gets 50 × 2.0 × 1.5 = <strong>150 points</strong> per scoring period!</em>
+                  <em>Example: An MP on Finance Committee (A-Tier) as Chair gets 10 × 2.0 × 1.5 = <strong>30 points</strong> per scoring period!</em>
                 </p>
               </div>
             </section>
