@@ -1,4 +1,4 @@
-from fastapi import FastAPI, BackgroundTasks, HTTPException, Header, Depends, Query, Request, APIRouter, Body
+from fastapi import FastAPI, BackgroundTasks, HTTPException, Header, Depends, Query, Request, APIRouter
 from fastapi.responses import JSONResponse, FileResponse
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.staticfiles import StaticFiles
@@ -902,8 +902,18 @@ async def sync_now(api_key: str = Depends(verify_api_key)):
         sys.stdout = old_stdout
 
 @app.post("/admin/update-committees")
-async def update_committees(committee_data: List[dict] = Body(...), api_key: str = Depends(verify_api_key)):
+async def update_committees(request: Request, api_key: str = Depends(verify_api_key)):
     """Update MP committee assignments from JSON payload."""
+    body = await request.body()
+    import json
+    try:
+        committee_data = json.loads(body)
+    except:
+        return {"status": "error", "message": "Invalid JSON body"}
+    
+    if not isinstance(committee_data, list):
+        return {"status": "error", "message": "Expected array of {slug, committees}"}
+    
     updated = 0
     with db_session:
         for item in committee_data:
