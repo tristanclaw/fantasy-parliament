@@ -566,7 +566,7 @@ class RegistrationRequest(BaseModel):
     user_id: Optional[str] = None
     display_name: str
     team_name: Optional[str] = None
-    email: str
+    email: Optional[str] = None
     captain_mp_id: int
     team_mp_ids: List[int]
     same_party_as_captain: bool = False
