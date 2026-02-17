@@ -2,11 +2,12 @@ import React, { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
 
 const MyTeam = ({ team, username, onRemove }) => {
-    const { captain, members } = team;
-    const allMembers = captain ? [captain, ...members] : (members || []);
+    const safeTeam = team || { captain: null, members: [] };
+    const { captain, members } = safeTeam;
+    const allMembers = captain ? [captain, ...(members || [])] : (members || []);
     
     // Calculate total score safely
-    const totalScore = allMembers.reduce((sum, mp) => sum + (mp.score || 0), 0);
+    const totalScore = allMembers.reduce((sum, mp) => sum + (mp?.score || 0), 0);
 
     const [isModalOpen, setIsModalOpen] = useState(false);
     const [formData, setFormData] = useState({
