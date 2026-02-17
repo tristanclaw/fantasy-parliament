@@ -269,17 +269,18 @@ async def startup():
     
 def mp_to_dict(mp):
     try:
+        committee_score = calculate_committee_score(mp.committees) if mp.committees else {"total": 0, "breakdown": {}}
         return {
             "id": mp.id,
             "name": mp.name,
             "party": mp.party,
             "constituency": mp.riding,
-            "score": mp.total_score,
+            "score": mp.total_score + committee_score.get("total", 0),
             "slug": mp.slug,
             "image_url": mp.image_url,
             "committees": mp.committees,
             "score_breakdown": mp.score_breakdown,
-            "committee_score": calculate_committee_score(mp.committees) if mp.committees else {"total": 0, "breakdown": {}},
+            "committee_score": committee_score,
             "committee_tiers": {(c if isinstance(c, str) else c.get("name", "")): get_committee_tier(c if isinstance(c, str) else c.get("name", "")) for c in (mp.committees or [])}
         }
     except Exception as e:
