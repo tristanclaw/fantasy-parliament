@@ -90,7 +90,9 @@ def calculate_committee_score(committees: list) -> dict:
     Calculate committee points based on tier weighting.
     
     Args:
-        committees: List of dicts like [{"name": "Finance", "role": "Chair"}, ...]
+        committees: Can be either:
+            - List of strings: ["justice", "science-and-research"]
+            - List of dicts: [{"name": "Finance", "role": "Chair"}, ...]
     
     Returns:
         dict with tier breakdown and total points
@@ -102,8 +104,16 @@ def calculate_committee_score(committees: list) -> dict:
     breakdown = {}
     
     for committee in committees:
-        name = committee.get("name", "")
-        role = committee.get("role", "Member")
+        # Handle both string format and dict format
+        if isinstance(committee, str):
+            # String format: "justice" -> name="justice", role="Member"
+            name = committee
+            role = "Member"
+        else:
+            # Dict format: {"name": "Finance", "role": "Chair"}
+            name = committee.get("name", "")
+            role = committee.get("role", "Member")
+        
         tier = get_committee_tier(name)
         weight = get_tier_weight(tier)
         
