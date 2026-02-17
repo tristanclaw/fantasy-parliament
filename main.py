@@ -358,6 +358,7 @@ def diag_db():
         lb_count = LeaderboardEntry.select().count()
         ds_count = DailyScore.select().count()
         reg_count = Registration.select().count()
+        sub_count = Subscriber.select().count()
         
         # Check registration columns
         from models import db
@@ -380,7 +381,8 @@ def diag_db():
                 "mp": mp_count,
                 "leaderboard": lb_count,
                 "daily_scores": ds_count,
-                "registrations": reg_count
+                "registrations": reg_count,
+                "subscribers": sub_count
             },
             "registration_schema": cols,
             "last_scores": last_scores,
