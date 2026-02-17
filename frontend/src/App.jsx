@@ -287,6 +287,7 @@ function MyTeamViewWrapper() {
         const saved = localStorage.getItem('fp_team');
         return saved ? JSON.parse(saved) : { captain: null, members: [] };
     });
+    const [darkMode, setDarkMode] = useState(() => localStorage.getItem('fp_darkMode') !== 'false');
     const navigate = useNavigate();
 
     // Redirect to home if no username
@@ -309,6 +310,11 @@ function MyTeamViewWrapper() {
     useEffect(() => {
         localStorage.setItem('fp_team', JSON.stringify(team));
     }, [team]);
+
+    useEffect(() => {
+        localStorage.setItem('fp_darkMode', darkMode);
+        document.documentElement.classList.toggle('dark', darkMode);
+    }, [darkMode]);
 
     if (!username) {
         return null;
