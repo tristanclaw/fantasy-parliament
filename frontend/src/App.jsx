@@ -36,13 +36,15 @@ function MainApp() {
   // Refresh team member scores from API
   useEffect(() => {
     const refreshTeamScores = async () => {
-      if (!team.captain && !team.members.length) return;
+      if (!team?.captain && !(team?.members?.length > 0)) return;
       
       const apiUrl = 'https://fantasy-parliament-web.onrender.com';
       const memberIds = [
         ...(team.captain ? [team.captain.id] : []),
-        ...team.members.map(m => m.id)
+        ...(team.members || []).map(m => m.id)
       ];
+      
+      if (!memberIds.length) return;
       
       try {
         const response = await fetch(`${apiUrl}/mps?ids=${memberIds.join(',')}`);
@@ -53,7 +55,7 @@ function MainApp() {
         freshMPs.forEach(mp => { mpMap[mp.id] = mp; });
         
         const updatedCaptain = team.captain ? mpMap[team.captain.id] : null;
-        const updatedMembers = team.members.map(m => mpMap[m.id] || m);
+        const updatedMembers = (team.members || []).map(m => mpMap[m.id] || m);
         
         if (updatedCaptain || updatedMembers.length) {
           setTeam(prev => ({
