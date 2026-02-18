@@ -913,7 +913,7 @@ Top MPs This Week:
 """ + "\n".join([f"  - {m[0]} ({m[1]}): {m[2]}" for m in top_details]) + f"""
 
 Party Leaders Benchmark: {leader_score} points
-{'You\\'re ahead!' if team_score > leader_score else 'Keep picking wisely!'}
+{"You're ahead!" if team_score > leader_score else "Keep picking wisely!"}
 
 Visit https://fantasyparlament.onrender.com to manage your team.
 """
