@@ -380,9 +380,21 @@ def test_email(email: str = "munky99999@gmail.com"):
         "team_name": reg.team_name if reg else "N/A",
         "mp_ids": mp_ids
     }
-@app.get("/diag/db")
+@app.get("/admin/list-registrations")
 @db_session
-def diag_db():
+def list_registrations(api_key: str = Query(None)):
+    """Admin endpoint to list all registrations."""
+    if api_key != API_KEY:
+        raise HTTPException(status_code=403, detail="Invalid API Key")
+    
+    regs = Registration.select()[:]
+    return [
+        {
+            "display_name": r.display_name,
+            "email": r.email,
+            "registered_at": r.registered_at.isoformat()
+        } for r in regs
+    ]
     try:
         mp_count = MP.select().count()
         lb_count = LeaderboardEntry.select().count()
