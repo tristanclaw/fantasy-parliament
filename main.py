@@ -757,32 +757,136 @@ def send_score_email(email: str, name: str, mp_ids: List[int]) -> bool:
     provider = "Resend" if use_resend else "MailerSend"
     
     try:
+        # Get user's current team from Registration (not from subscription)
+        with db_session:
+            reg = Registration.get(email=email)
+            if reg:
+                mp_ids = reg.team_mp_ids
+                team_name = reg.team_name or "Your Team"
+            else:
+                team_name = "Your Team"
+        
         # Calculate team score
         team_score = calculate_team_score(mp_ids)
         
-        # Get leaderboard benchmark
+        # Get MP details for the email
         with db_session:
+            mps = MP.select(lambda m: m.id in mp_ids)[:] if mp_ids else []
+            mp_details = [(m.name, m.party, m.total_score) for m in mps]
+            mp_details.sort(key=lambda x: x[2], reverse=True)
+            
             leader = LeaderboardEntry.select().order_by(desc(LeaderboardEntry.score)).first()
             leader_score = leader.score if leader else 0
-        
-        # Get top 3 from scoreboard
-        with db_session:
+            
             top_mps = MP.select().order_by(desc(MP.total_score))[:3]
-            top_names = ", ".join([m.name for m in top_mps])
+            top_details = [(m.name, m.party, m.total_score) for m in top_mps]
         
-        # Email content
-        subject = f"Your Fantasy Parliament Score: {team_score} points"
-        body = f"""Hello {name},
+        # Build HTML email
+        mp_rows = ""
+        for mp_name, mp_party, mp_score in mp_details:
+            mp_rows += f"""
+            <tr>
+                <td style="padding: 10px; border-bottom: 1px solid #eee;">{mp_name}</td>
+                <td style="padding: 10px; border-bottom: 1px solid #eee;">{mp_party}</td>
+                <td style="padding: 10px; border-bottom: 1px solid #eee; text-align: right; font-weight: bold;">{mp_score}</td>
+            </tr>"""
+        
+        top_rows = ""
+        for mp_name, mp_party, mp_score in top_details:
+            top_rows += f"""
+            <tr>
+                <td style="padding: 8px;">{mp_name}</td>
+                <td style="padding: 8px;">{mp_party}</td>
+                <td style="padding: 8px; text-align: right;">{mp_score}</td>
+            </tr>"""
+        
+        subject = f"🏆 Your Fantasy Parliament Score: {team_score} points"
+        
+        html_body = f"""<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Fantasy Parliament Weekly Update</title>
+</head>
+<body style="font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif; line-height: 1.6; color: #333; max-width: 600px; margin: 0 auto; padding: 20px;">
+    <div style="background: linear-gradient(135deg, #1a1a2e 0%, #16213e 100%); padding: 30px; border-radius: 12px 12px 0 0;">
+        <h1 style="color: #fff; margin: 0; font-size: 28px;">� Fantasy Parliament</h1>
+        <p style="color: #aaa; margin: 5px 0 0 0;">Weekly Score Update</p>
+    </div>
+    
+    <div style="background: #fff; padding: 30px; border: 1px solid #e1e1e1; border-top: none; border-radius: 0 0 12px 12px;">
+        <p style="margin-top: 0;">Hi {name},</p>
+        
+        <div style="background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); color: white; padding: 25px; border-radius: 12px; text-align: center; margin: 20px 0;">
+            <p style="margin: 0; font-size: 16px; opacity: 0.9;">Your Total Score</p>
+            <p style="margin: 10px 0 0 0; font-size: 48px; font-weight: bold;">{team_score}</p>
+            <p style="margin: 10px 0 0 0; font-size: 14px; opacity: 0.8;">points this week</p>
+        </div>
+        
+        <h3 style="color: #1a1a2e; margin-bottom: 15px;">📊 Your Team</h3>
+        <table style="width: 100%; border-collapse: collapse; margin-bottom: 25px; background: #f9f9f9; border-radius: 8px; overflow: hidden;">
+            <thead>
+                <tr style="background: #f0f0f0;">
+                    <th style="padding: 12px; text-align: left; font-size: 14px;">MP Name</th>
+                    <th style="padding: 12px; text-align: left; font-size: 14px;">Party</th>
+                    <th style="padding: 12px; text-align: right; font-size: 14px;">Score</th>
+                </tr>
+            </thead>
+            <tbody>
+                {mp_rows}
+            </tbody>
+        </table>
+        
+        <h3 style="color: #1a1a2e; margin-bottom: 15px;">🌟 Top MPs This Week</h3>
+        <table style="width: 100%; border-collapse: collapse; margin-bottom: 25px; background: #f9f9f9; border-radius: 8px; overflow: hidden;">
+            <thead>
+                <tr style="background: #f0f0f0;">
+                    <th style="padding: 12px; text-align: left; font-size: 14px;">MP Name</th>
+                    <th style="padding: 12px; text-align: left; font-size: 14px;">Party</th>
+                    <th style="padding: 12px; text-align: right; font-size: 14px;">Score</th>
+                </tr>
+            </thead>
+            <tbody>
+                {top_rows}
+            </tbody>
+        </table>
+        
+        <div style="background: #f5f5f5; padding: 15px; border-radius: 8px; margin-bottom: 20px;">
+            <p style="margin: 0; font-size: 14px;">
+                <strong>🏛️ Party Leaders Benchmark:</strong> {leader_score} points
+                {'🎉 You\'re ahead of the Party Leaders!' if team_score > leader_score else f' 🔄 Keep picking wisely to beat them!'}
+            </p>
+        </div>
+        
+        <p style="margin-bottom: 0; font-size: 14px; color: #666;">
+            Visit <a href="https://fantasyparlament.onrender.com" style="color: #667eea;">fantasyparlament.onrender.com</a> to manage your team and check the full leaderboard.
+        </p>
+    </div>
+    
+    <div style="text-align: center; padding: 20px; color: #999; font-size: 12px;">
+        <p style="margin: 0;">You're receiving this because you subscribed to Fantasy Parliament updates.</p>
+        <p style="margin: 5px 0;"><a href="#" style="color: #999;">Unsubscribe</a></p>
+    </div>
+</body>
+</html>"""
+        
+        text_body = f"""Fantasy Parliament Weekly Score
 
-Your Fantasy Parliament team scored: {team_score} points this week.
+Hi {name},
 
-{'You are ahead of the Party Leaders benchmark!' if team_score > leader_score else f'Party Leaders benchmark: {leader_score} points'}
+Your Total Score: {team_score} points
 
-Top MPs this week: {top_names}
+Your Team:
+""" + "\n".join([f"  - {m[0]} ({m[1]}): {m[2]}" for m in mp_details]) + f"""
 
-Keep picking wisely!
+Top MPs This Week:
+""" + "\n".join([f"  - {m[0]} ({m[1]}): {m[2]}" for m in top_details]) + f"""
 
-- Fantasy Parliament Team
+Party Leaders Benchmark: {leader_score} points
+{'You\\'re ahead!' if team_score > leader_score else 'Keep picking wisely!'}
+
+Visit https://fantasyparlament.onrender.com to manage your team.
 """
         
         # Send email using Resend or MailerSend
@@ -798,7 +902,8 @@ Keep picking wisely!
                 "from": RESEND_FROM_EMAIL,
                 "to": [email],
                 "subject": subject,
-                "text": body
+                "html": html_body,
+                "text": text_body
             }
         else:
             url = "https://api.mailersend.com/v1/email"
@@ -810,7 +915,8 @@ Keep picking wisely!
                 "from": {"email": MAILERSEND_FROM_EMAIL, "name": "Fantasy Parliament"},
                 "to": [{"email": email}],
                 "subject": subject,
-                "text": body
+                "html": html_body,
+                "text": text_body
             }
         
         try:
