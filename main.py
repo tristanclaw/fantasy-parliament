@@ -851,15 +851,15 @@ def send_score_email(email: str, name: str, mp_ids: List[int]) -> bool:
     <title>Fantasy Parliament Weekly Update</title>
 </head>
 <body style="font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif; line-height: 1.6; color: #333; max-width: 600px; margin: 0 auto; padding: 20px;">
-    <div style="background: linear-gradient(135deg, #1a1a2e 0%, #16213e 100%); padding: 30px; border-radius: 12px 12px 0 0;">
+    <div style="background: linear-gradient(135deg, #c41e3a 0%, #8b0000 100%); padding: 30px; border-radius: 12px 12px 0 0;">
         <h1 style="color: #fff; margin: 0; font-size: 28px;">Fantasy Parliament</h1>
-        <p style="color: #aaa; margin: 5px 0 0 0;">Weekly Score Update</p>
+        <p style="color: #fff; margin: 5px 0 0 0; opacity: 0.9;">Weekly Score Update</p>
     </div>
     
     <div style="background: #fff; padding: 30px; border: 1px solid #e1e1e1; border-top: none; border-radius: 0 0 12px 12px;">
         <p style="margin-top: 0;">Hi {name},</p>
         
-        <div style="background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); color: white; padding: 25px; border-radius: 12px; text-align: center; margin: 20px 0;">
+        <div style="background: linear-gradient(135deg, #c41e3a 0%, #8b0000 100%); color: white; padding: 25px; border-radius: 12px; text-align: center; margin: 20px 0;">
             <p style="margin: 0; font-size: 16px; opacity: 0.9;">Your Total Score</p>
             <p style="margin: 10px 0 0 0; font-size: 48px; font-weight: bold;">{team_score}</p>
             <p style="margin: 10px 0 0 0; font-size: 14px; opacity: 0.8;">points this week</p>
