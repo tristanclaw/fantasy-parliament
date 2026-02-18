@@ -192,6 +192,15 @@ def run_migrations(dsn=None, **kwargs):
                     except Exception as e:
                         print(f"Migration warning ({table}.active): {e}")
 
+            # Migration 11: MP.penalty
+            for table in ['mp', 'MP']:
+                if table in tables:
+                    try:
+                        cur.execute(f'ALTER TABLE "{table}" ADD COLUMN IF NOT EXISTS "penalty" INTEGER NOT NULL DEFAULT 0')
+                        print(f"Applied/Checked: {table}.penalty")
+                    except Exception as e:
+                        print(f"Migration warning ({table}.penalty): {e}")
+
             # Migration 7: Subscriber table
             if 'subscriber' not in tables and 'Subscriber' not in tables:
                 try:
