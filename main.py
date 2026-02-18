@@ -399,6 +399,10 @@ def list_registrations(api_key: str = Query(None)):
             "registered_at": r.registered_at.isoformat()
         })
     return result
+
+@app.get("/diag/db")
+@db_session
+def diag_db():
     try:
         mp_count = MP.select().count()
         lb_count = LeaderboardEntry.select().count()
