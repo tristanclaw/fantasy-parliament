@@ -2,14 +2,17 @@ import React, { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
 
 // Mock Parliament events - in production, fetch from OpenParliament.ca API
+// Hardcoded Parliament schedule - should be fetched from API in production
+// Last actual score: 2026-02-14 (recess since then)
 const PARLIAMENT_EVENTS = [
-  { date: '2026-02-16', type: 'sitting', title: 'House of Commons sits', description: 'Question Period expected' },
-  { date: '2026-02-17', type: 'sitting', title: 'House of Commons sits', description: 'Budget presentation possible' },
-  { date: '2026-02-18', type: 'sitting', title: 'House of Commons sits', description: 'Committee meetings' },
-  { date: '2026-02-19', type: 'sitting', title: 'House of Commons sits', description: 'Votes expected' },
-  { date: '2026-02-20', type: 'sitting', title: 'House of Commons sits', description: 'Last sitting day before break' },
+  { date: '2026-02-16', type: 'recess', title: 'Parliament Recess', description: 'No scheduled sittings' },
+  { date: '2026-02-17', type: 'recess', title: 'Parliament Recess', description: 'No scheduled sittings' },
+  { date: '2026-02-18', type: 'recess', title: 'Parliament Recess', description: 'No scheduled sittings' },
+  { date: '2026-02-19', type: 'recess', title: 'Parliament Recess', description: 'No scheduled sittings' },
+  { date: '2026-02-20', type: 'recess', title: 'Parliament Recess', description: 'No scheduled sittings' },
   { date: '2026-02-21', type: 'break', title: 'No Sitting', description: 'Weekend' },
-  { date: '2026-02-23', type: 'break', title: 'No Sitting', description: 'Family Day (Ontario) / Reading Week' },
+  { date: '2026-02-22', type: 'break', title: 'No Sitting', description: 'Weekend' },
+  { date: '2026-02-23', type: 'recess', title: 'Parliament Recess', description: 'Winter break continues' },
 ];
 
 function getParliamentSchedule() {
@@ -115,7 +118,7 @@ function Schedule() {
             {PARLIAMENT_EVENTS.map((event, idx) => (
               <li key={idx} className="px-4 py-4 sm:px-6 hover:bg-gray-50">
                 <div className="flex items-start">
-                  <div className={`flex-shrink-0 w-3 h-3 rounded-full mt-2 mr-3 ${event.type === 'sitting' ? 'bg-green-500' : 'bg-gray-300'}`}></div>
+                  <div className={`flex-shrink-0 w-3 h-3 rounded-full mt-2 mr-3 ${event.type === 'sitting' ? 'bg-green-500' : event.type === 'recess' ? 'bg-yellow-500' : 'bg-gray-300'}`}></div>
                   <div className="flex-1">
                     <p className="text-sm font-medium text-gray-900">{event.title}</p>
                     <p className="text-sm text-gray-500">{event.description}</p>
