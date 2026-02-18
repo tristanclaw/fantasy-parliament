@@ -193,6 +193,7 @@ def run_migrations(dsn=None, **kwargs):
                         print(f"Migration warning ({table}.active): {e}")
 
             # Migration 11: MP.penalty
+            print("DEBUG: Checking for penalty migration...")
             for table in ['mp', 'MP']:
                 if table in tables:
                     try:
