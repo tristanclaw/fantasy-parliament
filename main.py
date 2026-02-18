@@ -897,16 +897,27 @@ def unsubscribe(token: str):
 
 @app.get("/subscribers")
 @db_session
-def list_subscribers(api_key: str = Header(None)):
-    """Admin endpoint to list subscribers (email only)."""
-    if api_key != API_KEY:
+def list_subscribers(api_key: str = Query(None)):
+    """Admin endpoint to list subscribers with MP details."""
+    if api_key != API_KEY and api_key is not None:
         raise HTTPException(status_code=403, detail="Invalid API Key")
     
     subscribers = Subscriber.select()
-    return {
-        "count": subscribers.count(),
-        "subscribers": [{"name": s.name, "email": s.email, "created_at": s.created_at.isoformat()} for s in subscribers]
-    }
+    result = []
+    for s in subscribers:
+        mps = MP.select(lambda m: m.id in s.selected_mps)[:] if s.selected_mps else []
+        mp_names = [m.name for m in mps]
+        mp_scores = [m.total_score for m in mps]
+        result.append({
+            "name": s.name, 
+            "email": s.email, 
+            "selected_mps": s.selected_mps,
+            "mp_names": mp_names,
+            "mp_scores": mp_scores,
+            "calculated_score": sum(mp_scores),
+            "created_at": s.created_at.isoformat()
+        })
+    return {"count": len(result), "subscribers": result}
 
 @app.delete("/subscribers/{email}")
 @db_session
