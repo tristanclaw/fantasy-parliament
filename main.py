@@ -402,6 +402,33 @@ def test_email(email: str = "tristan@claude.ai"):
         return {"provider": provider, "status": response.status_code, "body": response.text}
     except Exception as e:
         return {"success": False, "error": str(e)}
+
+@app.get("/admin/test-full-email")
+@db_session
+def test_full_email(email: str = "munky99999@gmail.com"):
+    """Test the full score email with actual team data."""
+    # Look up registration
+    reg = Registration.get(email=email)
+    if not reg:
+        return {"error": f"No registration found for {email}"}
+    
+    mp_ids = reg.team_mp_ids
+    
+    # Get MP details
+    mps = MP.select(lambda m: m.id in mp_ids)[:] if mp_ids else []
+    mp_details = [(m.name, m.party, m.total_score) for m in mps]
+    mp_details.sort(key=lambda x: x[2], reverse=True)
+    
+    team_score = sum(s for _, _, s in mp_details)
+    
+    return {
+        "email": email,
+        "registration_found": True,
+        "team_name": reg.team_name,
+        "mp_ids": mp_ids,
+        "mp_details": mp_details,
+        "team_score": team_score
+    }
 @app.get("/diag/db")
 @db_session
 def diag_db():
