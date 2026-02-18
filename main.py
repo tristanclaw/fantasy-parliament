@@ -267,16 +267,35 @@ async def startup():
         except Exception as e:
             print(f"SCHEDULER ERROR: {e}")
     
-def mp_to_dict(mp):
+def mp_to_dict(mp, include_weekly=True):
+    from datetime import date, timedelta
+    
     try:
         committee_score = calculate_committee_score(mp.committees) if mp.committees else {"total": 0, "breakdown": {}}
         penalty = mp.penalty or 0
+        
+        # Calculate weekly score (this week's points)
+        weekly_score = 0
+        if include_weekly:
+            today = date.today()
+            week_start = today - timedelta(days=today.weekday())
+            weekly_score = sum(
+                ds.points_today for ds in mp.daily_scores 
+                if ds.date >= week_start
+            )
+        
+        # Total score = all-time + committee (once) - penalty
+        total_score = mp.total_score + committee_score.get("total", 0) - penalty
+        
         return {
             "id": mp.id,
             "name": mp.name,
             "party": mp.party,
             "constituency": mp.riding,
-            "score": mp.total_score + committee_score.get("total", 0) - penalty,
+            "score": weekly_score,  # Default score is weekly for game
+            "weekly_score": weekly_score,
+            "total_score": mp.total_score,  # All-time without committee
+            "total_score_with_committee": total_score,
             "slug": mp.slug,
             "image_url": mp.image_url,
             "committees": mp.committees,
@@ -294,11 +313,13 @@ def mp_to_dict(mp):
             "party": mp.party,
             "constituency": mp.riding,
             "score": getattr(mp, 'total_score', 0),
+            "weekly_score": 0,
+            "total_score": getattr(mp, 'total_score', 0),
             "slug": mp.slug,
             "image_url": getattr(mp, 'image_url', None),
             "committees": getattr(mp, 'committees', None),
             "score_breakdown": getattr(mp, 'score_breakdown', None),
-            "penalty": getattr(mp, 'penalty', 0)
+            "penalty": getattr(mp, 'penalty', 0),
         }
 
 @app.get("/mps/search")
@@ -469,15 +490,25 @@ def get_mps(ids: str = None):
 @app.get("/scoreboard")
 @db_session
 def get_scoreboard():
-    # Get all MPs and sort by computed score (including committee bonus)
+    # Get all MPs and sort by weekly score (this week's points + committee once - penalty)
+    from datetime import date, timedelta
+    
+    today = date.today()
+    week_start = today - timedelta(days=today.weekday())
+    
     all_mps = MP.select()
     scored_mps = []
     for mp in all_mps:
+        # Weekly score = this week's points
+        weekly_pts = sum(ds.points_today for ds in mp.daily_scores if ds.date >= week_start)
+        # Committee bonus (counts ONCE)
         committee_pts = calculate_committee_score(mp.committees).get("total", 0) if mp.committees else 0
-        total = mp.total_score + committee_pts
+        # Subtract penalty
+        penalty = mp.penalty or 0
+        total = weekly_pts + committee_pts - penalty
         scored_mps.append((total, mp))
     
-    # Sort by total score descending
+    # Sort by weekly score descending
     scored_mps.sort(key=lambda x: x[0], reverse=True)
     top_mps = [mp for _, mp in scored_mps[:10]]
     return [mp_to_dict(m) for m in top_mps]
@@ -575,19 +606,31 @@ def get_special_leaderboards():
     return results
 
 def calculate_leaderboard_background():
-    """Background task to calculate user scores from their team MPs."""
+    """Background task to calculate user weekly scores from their team MPs."""
+    from datetime import date, timedelta
+    
     print("LEADERBOARD: Starting background calculation...")
     try:
         with db_session:
             # Fetch all registrations (users)
             registrations = Registration.select()
             
-            # Cache MP scores (base + committee - penalty)
+            # Calculate start of this week (Monday)
+            today = date.today()
+            week_start = today - timedelta(days=today.weekday())
+            
+            # Cache MP weekly scores (weekly points + committee once - penalty)
             mp_scores = {}
             for mp in MP.select():
+                # Weekly score = sum of this week's daily scores
+                weekly_pts = sum(
+                    ds.points_today for ds in mp.daily_scores 
+                    if ds.date >= week_start
+                )
+                # Committee bonus (counts ONCE, not every week)
                 committee_bonus = calculate_committee_score(mp.committees).get("total", 0) if mp.committees else 0
                 penalty = mp.penalty or 0
-                mp_scores[mp.id] = mp.total_score + committee_bonus - penalty
+                mp_scores[mp.id] = weekly_pts + committee_bonus - penalty
             
             updated_count = 0
             for reg in registrations:
@@ -767,18 +810,28 @@ def sanitize_name(name: str) -> str:
     return name.strip()
 
 def calculate_team_score(mp_ids: List[int]) -> int:
-    """Calculate total score for a list of MP IDs, including committee bonuses and penalties."""
+    """Calculate weekly score for a list of MP IDs (weekly points + committee once + penalties)."""
+    from datetime import date, timedelta
+    
     with db_session:
         mps = MP.select(lambda m: m.id in mp_ids)
         total = 0
+        # Get today's date and calculate start of week (Monday)
+        today = date.today()
+        week_start = today - timedelta(days=today.weekday())  # Monday
+        
         for mp in mps:
-            # Base score from daily_scores
-            base = mp.total_score
-            # Committee bonus
+            # Weekly score = sum of this week's daily scores
+            weekly_pts = sum(
+                ds.points_today for ds in mp.daily_scores 
+                if ds.date >= week_start
+            )
+            # Committee bonus (counts ONCE, not every week)
             committee_bonus = calculate_committee_score(mp.committees).get("total", 0) if mp.committees else 0
             # Subtract penalty
             penalty = mp.penalty or 0
-            total += base + committee_bonus - penalty
+            
+            total += weekly_pts + committee_bonus - penalty
         return total
 
 def send_score_email(email: str, name: str, mp_ids: List[int]) -> bool:
@@ -805,12 +858,25 @@ def send_score_email(email: str, name: str, mp_ids: List[int]) -> bool:
         # Calculate team score
         team_score = calculate_team_score(mp_ids)
         
-        # Get MP details for the email
+        # Get MP details for the email (show weekly scores)
+        from datetime import date, timedelta
+        today = date.today()
+        week_start = today - timedelta(days=today.weekday())
+        
         with db_session:
             mps = MP.select(lambda m: m.id in mp_ids)[:] if mp_ids else []
-            mp_details = [(m.name, m.party, m.total_score) for m in mps]
+            mp_details = []
+            for m in mps:
+                # Weekly score
+                weekly_pts = sum(ds.points_today for ds in m.daily_scores if ds.date >= week_start)
+                # Committee bonus (counts once)
+                committee_bonus = calculate_committee_score(m.committees).get("total", 0) if m.committees else 0
+                penalty = m.penalty or 0
+                display_score = weekly_pts + committee_bonus - penalty
+                mp_details.append((m.name, m.party, display_score))
             mp_details.sort(key=lambda x: x[2], reverse=True)
             
+            # Also calculate weekly for leaderboard
             leader = LeaderboardEntry.select().order_by(desc(LeaderboardEntry.score)).first()
             leader_score = leader.score if leader else 0
             
