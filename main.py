@@ -270,17 +270,19 @@ async def startup():
 def mp_to_dict(mp):
     try:
         committee_score = calculate_committee_score(mp.committees) if mp.committees else {"total": 0, "breakdown": {}}
+        penalty = mp.penalty or 0
         return {
             "id": mp.id,
             "name": mp.name,
             "party": mp.party,
             "constituency": mp.riding,
-            "score": mp.total_score + committee_score.get("total", 0),
+            "score": mp.total_score + committee_score.get("total", 0) - penalty,
             "slug": mp.slug,
             "image_url": mp.image_url,
             "committees": mp.committees,
             "score_breakdown": mp.score_breakdown,
             "committee_score": committee_score,
+            "penalty": penalty,
             "committee_tiers": {(c if isinstance(c, str) else c.get("name", "")): get_committee_tier(c if isinstance(c, str) else c.get("name", "")) for c in (mp.committees or [])}
         }
     except Exception as e:
@@ -295,7 +297,8 @@ def mp_to_dict(mp):
             "slug": mp.slug,
             "image_url": getattr(mp, 'image_url', None),
             "committees": getattr(mp, 'committees', None),
-            "score_breakdown": getattr(mp, 'score_breakdown', None)
+            "score_breakdown": getattr(mp, 'score_breakdown', None),
+            "penalty": getattr(mp, 'penalty', 0)
         }
 
 @app.get("/mps/search")
@@ -579,8 +582,12 @@ def calculate_leaderboard_background():
             # Fetch all registrations (users)
             registrations = Registration.select()
             
-            # Cache MP scores to avoid repeated queries
-            mp_scores = {mp.id: mp.total_score for mp in MP.select()}
+            # Cache MP scores (base + committee - penalty)
+            mp_scores = {}
+            for mp in MP.select():
+                committee_bonus = calculate_committee_score(mp.committees).get("total", 0) if mp.committees else 0
+                penalty = mp.penalty or 0
+                mp_scores[mp.id] = mp.total_score + committee_bonus - penalty
             
             updated_count = 0
             for reg in registrations:
@@ -613,6 +620,29 @@ async def trigger_leaderboard_recalc(background_tasks: BackgroundTasks, api_key:
     """Manually trigger leaderboard recalculation."""
     background_tasks.add_task(calculate_leaderboard_background)
     return {"status": "success", "message": "Leaderboard recalculation started in background"}
+
+class SetPenaltyRequest(BaseModel):
+    mp_id: int
+    penalty: int
+
+@app.post("/admin/set-penalty")
+@db_session
+def set_mp_penalty(request: SetPenaltyRequest, api_key: str = Depends(verify_api_key)):
+    """Set a permanent penalty for an MP."""
+    mp = MP.get(id=request.mp_id)
+    if not mp:
+        raise HTTPException(status_code=404, detail="MP not found")
+    
+    old_penalty = mp.penalty or 0
+    mp.penalty = request.penalty
+    
+    return {
+        "status": "success",
+        "mp_id": mp.id,
+        "mp_name": mp.name,
+        "old_penalty": old_penalty,
+        "new_penalty": request.penalty
+    }
 
 class RegistrationRequest(BaseModel):
     user_id: Optional[str] = None
@@ -737,10 +767,19 @@ def sanitize_name(name: str) -> str:
     return name.strip()
 
 def calculate_team_score(mp_ids: List[int]) -> int:
-    """Calculate total score for a list of MP IDs."""
+    """Calculate total score for a list of MP IDs, including committee bonuses and penalties."""
     with db_session:
         mps = MP.select(lambda m: m.id in mp_ids)
-        return sum(mp.total_score for mp in mps)
+        total = 0
+        for mp in mps:
+            # Base score from daily_scores
+            base = mp.total_score
+            # Committee bonus
+            committee_bonus = calculate_committee_score(mp.committees).get("total", 0) if mp.committees else 0
+            # Subtract penalty
+            penalty = mp.penalty or 0
+            total += base + committee_bonus - penalty
+        return total
 
 def send_score_email(email: str, name: str, mp_ids: List[int]) -> bool:
     """Send weekly score email via Resend (primary) or MailerSend (fallback)."""

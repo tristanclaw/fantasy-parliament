@@ -29,6 +29,7 @@ class MP(db.Entity):
     daily_scores = Set('DailyScore')
     total_score = Required(int, default=0)
     score_breakdown = Optional(Json) # Stores points from speeches, votes, bills, committees
+    penalty = Optional(int, default=0) # Permanent penalty subtracted from score
 
 class DailyScore(db.Entity):
     _table_ = 'dailyscore'
