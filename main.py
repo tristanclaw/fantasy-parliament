@@ -829,7 +829,7 @@ def send_score_email(email: str, name: str, mp_ids: List[int]) -> bool:
                 <td style="padding: 8px; text-align: right;">{mp_score}</td>
             </tr>"""
         
-        subject = f"🏆 Your Fantasy Parliament Score: {team_score} points"
+        subject = f"Your Fantasy Parliament Score: {team_score} points"
         
         html_body = f"""<!DOCTYPE html>
 <html>
@@ -840,7 +840,7 @@ def send_score_email(email: str, name: str, mp_ids: List[int]) -> bool:
 </head>
 <body style="font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif; line-height: 1.6; color: #333; max-width: 600px; margin: 0 auto; padding: 20px;">
     <div style="background: linear-gradient(135deg, #1a1a2e 0%, #16213e 100%); padding: 30px; border-radius: 12px 12px 0 0;">
-        <h1 style="color: #fff; margin: 0; font-size: 28px;">� Fantasy Parliament</h1>
+        <h1 style="color: #fff; margin: 0; font-size: 28px;">Fantasy Parliament</h1>
         <p style="color: #aaa; margin: 5px 0 0 0;">Weekly Score Update</p>
     </div>
     
@@ -853,7 +853,7 @@ def send_score_email(email: str, name: str, mp_ids: List[int]) -> bool:
             <p style="margin: 10px 0 0 0; font-size: 14px; opacity: 0.8;">points this week</p>
         </div>
         
-        <h3 style="color: #1a1a2e; margin-bottom: 15px;">📊 Your Team</h3>
+        <h3 style="color: #1a1a2e; margin-bottom: 15px;"> Your Team</h3>
         <table style="width: 100%; border-collapse: collapse; margin-bottom: 25px; background: #f9f9f9; border-radius: 8px; overflow: hidden;">
             <thead>
                 <tr style="background: #f0f0f0;">
@@ -867,7 +867,7 @@ def send_score_email(email: str, name: str, mp_ids: List[int]) -> bool:
             </tbody>
         </table>
         
-        <h3 style="color: #1a1a2e; margin-bottom: 15px;">🌟 Top MPs This Week</h3>
+        <h3 style="color: #1a1a2e; margin-bottom: 15px;"> Top MPs This Week</h3>
         <table style="width: 100%; border-collapse: collapse; margin-bottom: 25px; background: #f9f9f9; border-radius: 8px; overflow: hidden;">
             <thead>
                 <tr style="background: #f0f0f0;">
@@ -883,8 +883,8 @@ def send_score_email(email: str, name: str, mp_ids: List[int]) -> bool:
         
         <div style="background: #f5f5f5; padding: 15px; border-radius: 8px; margin-bottom: 20px;">
             <p style="margin: 0; font-size: 14px;">
-                <strong>🏛️ Party Leaders Benchmark:</strong> {leader_score} points
-                {'🎉 You\'re ahead of the Party Leaders!' if team_score > leader_score else f' 🔄 Keep picking wisely to beat them!'}
+                <strong> Party Leaders Benchmark:</strong> {leader_score} points
+                {' You\'re ahead of the Party Leaders!' if team_score > leader_score else f'  Keep picking wisely to beat them!'}
             </p>
         </div>
         
