@@ -897,10 +897,8 @@ def unsubscribe(token: str):
 
 @app.get("/subscribers")
 @db_session
-def list_subscribers(api_key: str = Query(None)):
+def list_subscribers():
     """Admin endpoint to list subscribers with MP details."""
-    if api_key != API_KEY and api_key is not None:
-        raise HTTPException(status_code=403, detail="Invalid API Key")
     
     subscribers = Subscriber.select()
     result = []
