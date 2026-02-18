@@ -759,12 +759,16 @@ def send_score_email(email: str, name: str, mp_ids: List[int]) -> bool:
     try:
         # Get user's current team from Registration (not from subscription)
         with db_session:
+            print(f"EMAIL DEBUG: Looking up registration for email={email}")
             reg = Registration.get(email=email)
+            print(f"EMAIL DEBUG: Found registration: {reg}")
             if reg:
                 mp_ids = reg.team_mp_ids
                 team_name = reg.team_name or "Your Team"
+                print(f"EMAIL DEBUG: Using mp_ids from registration: {mp_ids}")
             else:
                 team_name = "Your Team"
+                print(f"EMAIL DEBUG: No registration found, using original mp_ids: {mp_ids}")
         
         # Calculate team score
         team_score = calculate_team_score(mp_ids)
