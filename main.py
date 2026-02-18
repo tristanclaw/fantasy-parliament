@@ -388,13 +388,17 @@ def list_registrations(api_key: str = Query(None)):
         raise HTTPException(status_code=403, detail="Invalid API Key")
     
     regs = Registration.select()[:]
-    return [
-        {
+    result = []
+    for r in regs:
+        score = calculate_team_score(r.team_mp_ids)
+        result.append({
             "display_name": r.display_name,
             "email": r.email,
+            "mp_ids": r.team_mp_ids,
+            "score": score,
             "registered_at": r.registered_at.isoformat()
-        } for r in regs
-    ]
+        })
+    return result
     try:
         mp_count = MP.select().count()
         lb_count = LeaderboardEntry.select().count()
