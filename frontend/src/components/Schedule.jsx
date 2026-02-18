@@ -59,11 +59,15 @@ function Schedule() {
   const [schedule, setSchedule] = useState([]);
   const username = localStorage.getItem('fp_username');
   
+  // Check if Parliament is in recess (no sitting events)
+  const hasSittings = PARLIAMENT_EVENTS.some(e => e.type === 'sitting');
+  const isRecess = PARLIAMENT_EVENTS.every(e => e.type !== 'sitting');
+  
   useEffect(() => {
     setSchedule(getParliamentSchedule());
   }, []);
   
-  const nextProcessingDate = schedule.length > 0 ? schedule[0].processingDate : null;
+  const nextProcessingDate = schedule.length > 0 && hasSittings ? schedule[0].processingDate : null;
   
   return (
     <div className="min-h-screen bg-gray-50 font-sans text-gray-900 flex flex-col">
@@ -104,6 +108,14 @@ function Schedule() {
           <div className="bg-red-50 border-l-4 border-red-500 p-4 mb-8">
             <p className="text-red-700 font-medium">
               Next score processing: Saturday, {new Date(nextProcessingDate + 'T00:00:00').toLocaleDateString('en-CA', { month: 'long', day: 'numeric' })}
+            </p>
+          </div>
+        )}
+        
+        {isRecess && (
+          <div className="bg-yellow-50 border-l-4 border-yellow-500 p-4 mb-8">
+            <p className="text-yellow-700 font-medium">
+              📢 Parliament is currently in recess. No score updates until they return.
             </p>
           </div>
         )}
