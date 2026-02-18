@@ -361,25 +361,42 @@ def diag_env():
 
 @app.get("/admin/test-email")
 def test_email(email: str = "tristan@claude.ai"):
-    """Test sending a single email."""
+    """Test sending a single email via Resend (primary) or MailerSend (fallback)."""
     import httpx
     
-    # Use MailerSend API directly
-    url = "https://api.mailersend.com/v1/email"
-    headers = {
-        "Authorization": f"Bearer {MAILERSEND_API_KEY}",
-        "Content-Type": "application/json"
-    }
-    payload = {
-        "from": {"email": MAILERSEND_FROM_EMAIL, "name": "Test"},
-        "to": [{"email": email}],
-        "subject": "Test",
-        "text": "Test body"
-    }
+    # Try Resend first, then fall back to MailerSend
+    if RESEND_API_KEY:
+        url = "https://api.resend.com/emails"
+        headers = {
+            "Authorization": f"Bearer {RESEND_API_KEY}",
+            "Content-Type": "application/json"
+        }
+        payload = {
+            "from": RESEND_FROM_EMAIL,
+            "to": [email],
+            "subject": "Test from Fantasy Parliament",
+            "text": "If you're reading this, the Resend integration is working!"
+        }
+        provider = "Resend"
+    elif MAILERSEND_API_KEY:
+        url = "https://api.mailersend.com/v1/email"
+        headers = {
+            "Authorization": f"Bearer {MAILERSEND_API_KEY}",
+            "Content-Type": "application/json"
+        }
+        payload = {
+            "from": {"email": MAILERSEND_FROM_EMAIL, "name": "Test"},
+            "to": [{"email": email}],
+            "subject": "Test",
+            "text": "Test body"
+        }
+        provider = "MailerSend"
+    else:
+        return {"success": False, "error": "No email API key configured (RESEND_API_KEY or MAILERSEND_API_KEY)"}
     
     try:
         response = httpx.post(url, json=payload, headers=headers)
-        return {"status": response.status_code, "body": response.text}
+        return {"provider": provider, "status": response.status_code, "body": response.text}
     except Exception as e:
         return {"success": False, "error": str(e)}
 @app.get("/diag/db")
@@ -695,9 +712,11 @@ def register_user(registration: RegistrationRequest, request: Request):
 # Initialize profanity filter
 profanity.load_censor_words()
 
-# MailerSend configuration
-MAILERSEND_API_KEY = os.getenv("MAILERSEND_API_KEY")
-MAILERSEND_FROM_EMAIL = "test@test-pzkmgq7yj0yl059v.mlsender.net"  # Verified test domain
+# Email configuration (Resend primary, MailerSend fallback)
+RESEND_API_KEY = os.getenv("RESEND_API_KEY")
+RESEND_FROM_EMAIL = "Fantasy Parliament <fantasy@tristanclaw.com>"
+MAILERSEND_API_KEY = os.getenv("MAILERSEND_API_KEY")  # Fallback
+MAILERSEND_FROM_EMAIL = "test@test-pzkmgq7yj0yl059v.mlsender.net"  # Fallback
 
 class SubscribeRequest(BaseModel):
     name: str
@@ -723,10 +742,15 @@ def calculate_team_score(mp_ids: List[int]) -> int:
         return sum(mp.total_score for mp in mps)
 
 def send_score_email(email: str, name: str, mp_ids: List[int]) -> bool:
-    """Send weekly score email via MailerSend."""
-    if not MAILERSEND_API_KEY:
-        print(f"MAILERSEND: API key not configured, skipping email to {email}")
+    """Send weekly score email via Resend (primary) or MailerSend (fallback)."""
+    # Try Resend first, then fall back to MailerSend
+    api_key = RESEND_API_KEY or MAILERSEND_API_KEY
+    if not api_key:
+        print(f"EMAIL: No API key configured (Resend or MailerSend), skipping email to {email}")
         return False
+    
+    use_resend = bool(RESEND_API_KEY)
+    provider = "Resend" if use_resend else "MailerSend"
     
     try:
         # Calculate team score
@@ -757,39 +781,52 @@ Keep picking wisely!
 - Fantasy Parliament Team
 """
         
-        # Send email using MailerSend API directly
+        # Send email using Resend or MailerSend
         import httpx
         
-        url = "https://api.mailersend.com/v1/email"
-        headers = {
-            "Authorization": f"Bearer {MAILERSEND_API_KEY}",
-            "Content-Type": "application/json"
-        }
-        payload = {
-            "from": {"email": MAILERSEND_FROM_EMAIL, "name": "Fantasy Parliament"},
-            "to": [{"email": email}],
-            "subject": subject,
-            "text": body
-        }
+        if use_resend:
+            url = "https://api.resend.com/emails"
+            headers = {
+                "Authorization": f"Bearer {RESEND_API_KEY}",
+                "Content-Type": "application/json"
+            }
+            payload = {
+                "from": RESEND_FROM_EMAIL,
+                "to": [email],
+                "subject": subject,
+                "text": body
+            }
+        else:
+            url = "https://api.mailersend.com/v1/email"
+            headers = {
+                "Authorization": f"Bearer {MAILERSEND_API_KEY}",
+                "Content-Type": "application/json"
+            }
+            payload = {
+                "from": {"email": MAILERSEND_FROM_EMAIL, "name": "Fantasy Parliament"},
+                "to": [{"email": email}],
+                "subject": subject,
+                "text": body
+            }
         
         try:
             response = httpx.post(url, json=payload, headers=headers)
-            print(f"MAILERSEND: Response status={response.status_code}")
+            print(f"{provider}: Response status={response.status_code}")
             
-            if response.status_code == 202:
-                print(f"MAILERSEND: Email sent successfully to {email}")
+            if response.status_code in (200, 202):
+                print(f"{provider}: Email sent successfully to {email}")
                 return True
             else:
-                print(f"MAILERSEND: Failed to send email to {email}: {response.status_code} - {response.text}")
+                print(f"{provider}: Failed to send email to {email}: {response.status_code} - {response.text}")
                 return False
         except Exception as e:
-            print(f"MAILERSEND ERROR: {e}")
+            print(f"{provider} ERROR: {e}")
             import traceback
             traceback.print_exc()
             return False
             
     except Exception as e:
-        print(f"MAILERSEND ERROR: {e}")
+        print(f"{provider} ERROR: {e}")
         import traceback
         traceback.print_exc()
         return False
