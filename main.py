@@ -714,7 +714,8 @@ profanity.load_censor_words()
 
 # Email configuration (Resend primary, MailerSend fallback)
 RESEND_API_KEY = os.getenv("RESEND_API_KEY")
-RESEND_FROM_EMAIL = "Fantasy Parliament <fantasy@tristanclaw.com>"
+# Use resend.dev for testing if domain not verified, otherwise use custom domain
+RESEND_FROM_EMAIL = os.getenv("RESEND_FROM_EMAIL", "onboarding@resend.dev")
 MAILERSEND_API_KEY = os.getenv("MAILERSEND_API_KEY")  # Fallback
 MAILERSEND_FROM_EMAIL = "test@test-pzkmgq7yj0yl059v.mlsender.net"  # Fallback
 
