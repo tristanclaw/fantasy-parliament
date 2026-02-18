@@ -687,6 +687,30 @@ def set_mp_penalty(request: SetPenaltyRequest, api_key: str = Depends(verify_api
         "new_penalty": request.penalty
     }
 
+class UpdateMPRequest(BaseModel):
+    mp_id: int
+    party: Optional[str] = None
+
+@app.post("/admin/update-mp")
+@db_session
+def update_mp(request: UpdateMPRequest, api_key: str = Depends(verify_api_key)):
+    """Update MP details."""
+    mp = MP.get(id=request.mp_id)
+    if not mp:
+        raise HTTPException(status_code=404, detail="MP not found")
+    
+    if request.party:
+        old_party = mp.party
+        mp.party = request.party
+    
+    return {
+        "status": "success",
+        "mp_id": mp.id,
+        "mp_name": mp.name,
+        "old_party": old_party if request.party else mp.party,
+        "new_party": mp.party
+    }
+
 class RegistrationRequest(BaseModel):
     user_id: Optional[str] = None
     display_name: str
