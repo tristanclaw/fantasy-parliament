@@ -357,78 +357,31 @@ def diag_env():
         "MAILERSEND_API_KEY_SET": bool(MAILERSEND_API_KEY),
         "MAILERSEND_API_KEY_PREFIX": MAILERSEND_API_KEY[:20] + "..." if MAILERSEND_API_KEY else None,
         "MAILERSEND_FROM_EMAIL": MAILERSEND_FROM_EMAIL,
-        "RESEND_API_KEY_SET": bool(RESEND_API_KEY),
-        "RESEND_API_KEY_PREFIX": RESEND_API_KEY[:20] + "..." if RESEND_API_KEY else None,
-        "RESEND_FROM_EMAIL": RESEND_FROM_EMAIL,
     }
 
 @app.get("/admin/test-email")
 def test_email(email: str = "tristan@claude.ai"):
-    """Test sending a single email via Resend (primary) or MailerSend (fallback)."""
+    """Test sending a single email."""
     import httpx
     
-    # Try Resend first, then fall back to MailerSend
-    if RESEND_API_KEY:
-        url = "https://api.resend.com/emails"
-        headers = {
-            "Authorization": f"Bearer {RESEND_API_KEY}",
-            "Content-Type": "application/json"
-        }
-        payload = {
-            "from": RESEND_FROM_EMAIL,
-            "to": [email],
-            "subject": "Test from Fantasy Parliament",
-            "text": "If you're reading this, the Resend integration is working!"
-        }
-        provider = "Resend"
-    elif MAILERSEND_API_KEY:
-        url = "https://api.mailersend.com/v1/email"
-        headers = {
-            "Authorization": f"Bearer {MAILERSEND_API_KEY}",
-            "Content-Type": "application/json"
-        }
-        payload = {
-            "from": {"email": MAILERSEND_FROM_EMAIL, "name": "Test"},
-            "to": [{"email": email}],
-            "subject": "Test",
-            "text": "Test body"
-        }
-        provider = "MailerSend"
-    else:
-        return {"success": False, "error": "No email API key configured (RESEND_API_KEY or MAILERSEND_API_KEY)"}
+    # Use MailerSend API directly
+    url = "https://api.mailersend.com/v1/email"
+    headers = {
+        "Authorization": f"Bearer {MAILERSEND_API_KEY}",
+        "Content-Type": "application/json"
+    }
+    payload = {
+        "from": {"email": MAILERSEND_FROM_EMAIL, "name": "Test"},
+        "to": [{"email": email}],
+        "subject": "Test",
+        "text": "Test body"
+    }
     
     try:
         response = httpx.post(url, json=payload, headers=headers)
-        return {"provider": provider, "status": response.status_code, "body": response.text}
+        return {"status": response.status_code, "body": response.text}
     except Exception as e:
         return {"success": False, "error": str(e)}
-
-@app.get("/admin/test-full-email")
-@db_session
-def test_full_email(email: str = "munky99999@gmail.com"):
-    """Test the full score email with actual team data."""
-    # Look up registration
-    reg = Registration.get(email=email)
-    if not reg:
-        return {"error": f"No registration found for {email}"}
-    
-    mp_ids = reg.team_mp_ids
-    
-    # Get MP details
-    mps = MP.select(lambda m: m.id in mp_ids)[:] if mp_ids else []
-    mp_details = [(m.name, m.party, m.total_score) for m in mps]
-    mp_details.sort(key=lambda x: x[2], reverse=True)
-    
-    team_score = sum(s for _, _, s in mp_details)
-    
-    return {
-        "email": email,
-        "registration_found": True,
-        "team_name": reg.team_name,
-        "mp_ids": mp_ids,
-        "mp_details": mp_details,
-        "team_score": team_score
-    }
 @app.get("/diag/db")
 @db_session
 def diag_db():
@@ -742,12 +695,9 @@ def register_user(registration: RegistrationRequest, request: Request):
 # Initialize profanity filter
 profanity.load_censor_words()
 
-# Email configuration (Resend primary, MailerSend fallback)
-RESEND_API_KEY = os.getenv("RESEND_API_KEY")
-# Use resend.dev for testing if domain not verified, otherwise use custom domain
-RESEND_FROM_EMAIL = os.getenv("RESEND_FROM_EMAIL", "onboarding@resend.dev")
-MAILERSEND_API_KEY = os.getenv("MAILERSEND_API_KEY")  # Fallback
-MAILERSEND_FROM_EMAIL = "test@test-pzkmgq7yj0yl059v.mlsender.net"  # Fallback
+# MailerSend configuration
+MAILERSEND_API_KEY = os.getenv("MAILERSEND_API_KEY")
+MAILERSEND_FROM_EMAIL = "test@test-pzkmgq7yj0yl059v.mlsender.net"  # Verified test domain
 
 class SubscribeRequest(BaseModel):
     name: str
@@ -773,199 +723,73 @@ def calculate_team_score(mp_ids: List[int]) -> int:
         return sum(mp.total_score for mp in mps)
 
 def send_score_email(email: str, name: str, mp_ids: List[int]) -> bool:
-    """Send weekly score email via Resend (primary) or MailerSend (fallback)."""
-    # Try Resend first, then fall back to MailerSend
-    api_key = RESEND_API_KEY or MAILERSEND_API_KEY
-    if not api_key:
-        print(f"EMAIL: No API key configured (Resend or MailerSend), skipping email to {email}")
+    """Send weekly score email via MailerSend."""
+    if not MAILERSEND_API_KEY:
+        print(f"MAILERSEND: API key not configured, skipping email to {email}")
         return False
     
-    use_resend = bool(RESEND_API_KEY)
-    provider = "Resend" if use_resend else "MailerSend"
-    
     try:
-        # Get user's current team from Registration (not from subscription)
-        with db_session:
-            reg = Registration.get(email=email)
-            if reg:
-                mp_ids = reg.team_mp_ids
-                team_name = reg.team_name or "Your Team"
-            else:
-                team_name = "Your Team"
-        
-        print(f"EMAIL: Sending to {email} with mp_ids={mp_ids}, team_score will be recalculated")
-        
         # Calculate team score
         team_score = calculate_team_score(mp_ids)
         
-        # Get MP details for the email
+        # Get leaderboard benchmark
         with db_session:
-            mps = MP.select(lambda m: m.id in mp_ids)[:] if mp_ids else []
-            mp_details = [(m.name, m.party, m.total_score) for m in mps]
-            mp_details.sort(key=lambda x: x[2], reverse=True)
-            
             leader = LeaderboardEntry.select().order_by(desc(LeaderboardEntry.score)).first()
             leader_score = leader.score if leader else 0
-            
+        
+        # Get top 3 from scoreboard
+        with db_session:
             top_mps = MP.select().order_by(desc(MP.total_score))[:3]
-            top_details = [(m.name, m.party, m.total_score) for m in top_mps]
+            top_names = ", ".join([m.name for m in top_mps])
         
-        # Build HTML email
-        mp_rows = ""
-        for mp_name, mp_party, mp_score in mp_details:
-            mp_rows += f"""
-            <tr>
-                <td style="padding: 10px; border-bottom: 1px solid #eee;">{mp_name}</td>
-                <td style="padding: 10px; border-bottom: 1px solid #eee;">{mp_party}</td>
-                <td style="padding: 10px; border-bottom: 1px solid #eee; text-align: right; font-weight: bold;">{mp_score}</td>
-            </tr>"""
-        
-        top_rows = ""
-        for mp_name, mp_party, mp_score in top_details:
-            top_rows += f"""
-            <tr>
-                <td style="padding: 8px;">{mp_name}</td>
-                <td style="padding: 8px;">{mp_party}</td>
-                <td style="padding: 8px; text-align: right;">{mp_score}</td>
-            </tr>"""
-        
+        # Email content
         subject = f"Your Fantasy Parliament Score: {team_score} points"
-        
-        html_body = f"""<!DOCTYPE html>
-<html>
-<head>
-    <meta charset="utf-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Fantasy Parliament Weekly Update</title>
-</head>
-<body style="font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif; line-height: 1.6; color: #333; max-width: 600px; margin: 0 auto; padding: 20px;">
-    <div style="background: linear-gradient(135deg, #1a1a2e 0%, #16213e 100%); padding: 30px; border-radius: 12px 12px 0 0;">
-        <h1 style="color: #fff; margin: 0; font-size: 28px;">Fantasy Parliament</h1>
-        <p style="color: #aaa; margin: 5px 0 0 0;">Weekly Score Update</p>
-    </div>
-    
-    <div style="background: #fff; padding: 30px; border: 1px solid #e1e1e1; border-top: none; border-radius: 0 0 12px 12px;">
-        <p style="margin-top: 0;">Hi {name},</p>
-        
-        <div style="background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); color: white; padding: 25px; border-radius: 12px; text-align: center; margin: 20px 0;">
-            <p style="margin: 0; font-size: 16px; opacity: 0.9;">Your Total Score</p>
-            <p style="margin: 10px 0 0 0; font-size: 48px; font-weight: bold;">{team_score}</p>
-            <p style="margin: 10px 0 0 0; font-size: 14px; opacity: 0.8;">points this week</p>
-        </div>
-        
-        <h3 style="color: #1a1a2e; margin-bottom: 15px;"> Your Team</h3>
-        <table style="width: 100%; border-collapse: collapse; margin-bottom: 25px; background: #f9f9f9; border-radius: 8px; overflow: hidden;">
-            <thead>
-                <tr style="background: #f0f0f0;">
-                    <th style="padding: 12px; text-align: left; font-size: 14px;">MP Name</th>
-                    <th style="padding: 12px; text-align: left; font-size: 14px;">Party</th>
-                    <th style="padding: 12px; text-align: right; font-size: 14px;">Score</th>
-                </tr>
-            </thead>
-            <tbody>
-                {mp_rows}
-            </tbody>
-        </table>
-        
-        <h3 style="color: #1a1a2e; margin-bottom: 15px;"> Top MPs This Week</h3>
-        <table style="width: 100%; border-collapse: collapse; margin-bottom: 25px; background: #f9f9f9; border-radius: 8px; overflow: hidden;">
-            <thead>
-                <tr style="background: #f0f0f0;">
-                    <th style="padding: 12px; text-align: left; font-size: 14px;">MP Name</th>
-                    <th style="padding: 12px; text-align: left; font-size: 14px;">Party</th>
-                    <th style="padding: 12px; text-align: right; font-size: 14px;">Score</th>
-                </tr>
-            </thead>
-            <tbody>
-                {top_rows}
-            </tbody>
-        </table>
-        
-        <div style="background: #f5f5f5; padding: 15px; border-radius: 8px; margin-bottom: 20px;">
-            <p style="margin: 0; font-size: 14px;">
-                <strong> Party Leaders Benchmark:</strong> {leader_score} points
-                {' You\'re ahead of the Party Leaders!' if team_score > leader_score else f'  Keep picking wisely to beat them!'}
-            </p>
-        </div>
-        
-        <p style="margin-bottom: 0; font-size: 14px; color: #666;">
-            Visit <a href="https://fantasyparlament.onrender.com" style="color: #667eea;">fantasyparlament.onrender.com</a> to manage your team and check the full leaderboard.
-        </p>
-    </div>
-    
-    <div style="text-align: center; padding: 20px; color: #999; font-size: 12px;">
-        <p style="margin: 0;">You're receiving this because you subscribed to Fantasy Parliament updates.</p>
-        <p style="margin: 5px 0;"><a href="#" style="color: #999;">Unsubscribe</a></p>
-    </div>
-</body>
-</html>"""
-        
-        text_body = f"""Fantasy Parliament Weekly Score
+        body = f"""Hello {name},
 
-Hi {name},
+Your Fantasy Parliament team scored: {team_score} points this week.
 
-Your Total Score: {team_score} points
+{'You are ahead of the Party Leaders benchmark!' if team_score > leader_score else f'Party Leaders benchmark: {leader_score} points'}
 
-Your Team:
-""" + "\n".join([f"  - {m[0]} ({m[1]}): {m[2]}" for m in mp_details]) + f"""
+Top MPs this week: {top_names}
 
-Top MPs This Week:
-""" + "\n".join([f"  - {m[0]} ({m[1]}): {m[2]}" for m in top_details]) + f"""
+Keep picking wisely!
 
-Party Leaders Benchmark: {leader_score} points
-{"You're ahead!" if team_score > leader_score else "Keep picking wisely!"}
-
-Visit https://fantasyparlament.onrender.com to manage your team.
+- Fantasy Parliament Team
 """
         
-        # Send email using Resend or MailerSend
+        # Send email using MailerSend API directly
         import httpx
         
-        if use_resend:
-            url = "https://api.resend.com/emails"
-            headers = {
-                "Authorization": f"Bearer {RESEND_API_KEY}",
-                "Content-Type": "application/json"
-            }
-            payload = {
-                "from": RESEND_FROM_EMAIL,
-                "to": [email],
-                "subject": subject,
-                "html": html_body,
-                "text": text_body
-            }
-        else:
-            url = "https://api.mailersend.com/v1/email"
-            headers = {
-                "Authorization": f"Bearer {MAILERSEND_API_KEY}",
-                "Content-Type": "application/json"
-            }
-            payload = {
-                "from": {"email": MAILERSEND_FROM_EMAIL, "name": "Fantasy Parliament"},
-                "to": [{"email": email}],
-                "subject": subject,
-                "html": html_body,
-                "text": text_body
-            }
+        url = "https://api.mailersend.com/v1/email"
+        headers = {
+            "Authorization": f"Bearer {MAILERSEND_API_KEY}",
+            "Content-Type": "application/json"
+        }
+        payload = {
+            "from": {"email": MAILERSEND_FROM_EMAIL, "name": "Fantasy Parliament"},
+            "to": [{"email": email}],
+            "subject": subject,
+            "text": body
+        }
         
         try:
             response = httpx.post(url, json=payload, headers=headers)
-            print(f"{provider}: Response status={response.status_code}")
+            print(f"MAILERSEND: Response status={response.status_code}")
             
-            if response.status_code in (200, 202):
-                print(f"{provider}: Email sent successfully to {email}")
+            if response.status_code == 202:
+                print(f"MAILERSEND: Email sent successfully to {email}")
                 return True
             else:
-                print(f"{provider}: Failed to send email to {email}: {response.status_code} - {response.text}")
+                print(f"MAILERSEND: Failed to send email to {email}: {response.status_code} - {response.text}")
                 return False
         except Exception as e:
-            print(f"{provider} ERROR: {e}")
+            print(f"MAILERSEND ERROR: {e}")
             import traceback
             traceback.print_exc()
             return False
             
     except Exception as e:
-        print(f"{provider} ERROR: {e}")
+        print(f"MAILERSEND ERROR: {e}")
         import traceback
         traceback.print_exc()
         return False
@@ -1032,25 +856,16 @@ def unsubscribe(token: str):
 
 @app.get("/subscribers")
 @db_session
-def list_subscribers():
-    """Admin endpoint to list subscribers with MP details."""
+def list_subscribers(api_key: str = Header(None)):
+    """Admin endpoint to list subscribers (email only)."""
+    if api_key != API_KEY:
+        raise HTTPException(status_code=403, detail="Invalid API Key")
     
     subscribers = Subscriber.select()
-    result = []
-    for s in subscribers:
-        mps = MP.select(lambda m: m.id in s.selected_mps)[:] if s.selected_mps else []
-        mp_names = [m.name for m in mps]
-        mp_scores = [m.total_score for m in mps]
-        result.append({
-            "name": s.name, 
-            "email": s.email, 
-            "selected_mps": s.selected_mps,
-            "mp_names": mp_names,
-            "mp_scores": mp_scores,
-            "calculated_score": sum(mp_scores),
-            "created_at": s.created_at.isoformat()
-        })
-    return {"count": len(result), "subscribers": result}
+    return {
+        "count": subscribers.count(),
+        "subscribers": [{"name": s.name, "email": s.email, "created_at": s.created_at.isoformat()} for s in subscribers]
+    }
 
 @app.delete("/subscribers/{email}")
 @db_session
