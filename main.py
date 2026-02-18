@@ -719,6 +719,18 @@ class RegistrationRequest(BaseModel):
     captain_mp_id: int
     team_mp_ids: List[int]
     same_party_as_captain: bool = False
+    
+    @field_validator('email')
+    @classmethod
+    def validate_email(cls, v):
+        import re
+        if v is None:
+            return v
+        # Strict email regex
+        email_regex = r'^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$'
+        if not re.match(email_regex, v):
+            raise ValueError('Invalid email format')
+        return v
 
 @app.post("/api/register")
 @db_session
@@ -822,7 +834,9 @@ class SubscribeRequest(BaseModel):
     selected_mps: List[int]
 
 def sanitize_name(name: str) -> str:
-    """Sanitize display name: max 30 chars + profanity filter."""
+    """Sanitize display name: max 30 chars + profanity filter + HTML escape."""
+    import html
+    
     # Character limit
     if len(name) > 30:
         raise HTTPException(status_code=400, detail="Display name too long (max 30 characters)")
@@ -831,7 +845,8 @@ def sanitize_name(name: str) -> str:
     if profanity.contains_profanity(name):
         raise HTTPException(status_code=400, detail="Display name contains inappropriate content")
     
-    return name.strip()
+    # HTML escape to prevent XSS
+    return html.escape(name.strip())
 
 def calculate_team_score(mp_ids: List[int]) -> int:
     """Calculate weekly score for a list of MP IDs (weekly points + committee once + penalties)."""
