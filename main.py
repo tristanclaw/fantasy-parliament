@@ -357,6 +357,9 @@ def diag_env():
         "MAILERSEND_API_KEY_SET": bool(MAILERSEND_API_KEY),
         "MAILERSEND_API_KEY_PREFIX": MAILERSEND_API_KEY[:20] + "..." if MAILERSEND_API_KEY else None,
         "MAILERSEND_FROM_EMAIL": MAILERSEND_FROM_EMAIL,
+        "RESEND_API_KEY_SET": bool(RESEND_API_KEY),
+        "RESEND_API_KEY_PREFIX": RESEND_API_KEY[:20] + "..." if RESEND_API_KEY else None,
+        "RESEND_FROM_EMAIL": RESEND_FROM_EMAIL,
     }
 
 @app.get("/admin/test-email")
