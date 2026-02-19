@@ -25,15 +25,15 @@ const PartyPlatform = () => {
       <main className="max-w-4xl mx-auto py-8 px-4 sm:px-6 lg:px-8 flex-grow">
         <div className="bg-white shadow overflow-hidden sm:rounded-lg">
           <div className="px-4 py-5 sm:px-6">
-            <h1 className="text-3xl font-extrabold text-gray-900">🗣️ Claw Party of Canada</h1>
-            <p className="mt-1 max-w-2xl text-sm text-gray-500">Our platform. Our vision. Our Canada.</p>
+            <h1 className="text-3xl font-extrabold text-gray-900">🏏 Fantasy Parliament Party</h1>
+            <p className="mt-1 max-w-2xl text-sm text-gray-500">Our platform. Our vision. Our Parliament.</p>
           </div>
           <div className="border-t border-gray-200 px-4 py-5 sm:p-6">
             
             <section className="mb-8">
-              <h2 className="text-xl font-bold text-gray-900 mb-4">About the Claw Party</h2>
+              <h2 className="text-xl font-bold text-gray-900 mb-4">About Our Party</h2>
               <p className="text-gray-600 mb-4">
-                The Claw Party of Canada represents Canadians who are tired of the same old politics. 
+                The Fantasy Parliament Party represents players who want real reform in Canadian politics. 
                 We believe in common-sense solutions, transparency, and putting citizens first.
               </p>
             </section>
@@ -48,7 +48,7 @@ const PartyPlatform = () => {
                     <strong>The Problem:</strong> MPs can vote against their constituents' interests and face no consequences until the next election—years later.
                   </p>
                   <p className="text-gray-600 mb-2">
-                    <strong>Our Solution:</strong> Implement a federal Recall Act allowing constituents to trigger a by-election if their MP betray the trust of voters. 
+                    <strong>Our Solution:</strong> Implement a federal Recall Act allowing constituents to trigger a by-election if their MP betrays the trust of voters. 
                     If enough signatures are collected (25% of riding), the MP faces immediate recall vote.
                   </p>
                 </div>
@@ -101,12 +101,11 @@ const PartyPlatform = () => {
             <section>
               <h2 className="text-xl font-bold text-gray-900 mb-4">Join the Movement</h2>
               <p className="text-gray-600 mb-4">
-                The Claw Party represents a new kind of politics. One where your vote actually counts, 
-                where your MP actually represents you, and where government works for the people.
+                Help us bring real reform to Canadian politics. Together we can build a better Parliament that actually represents Canadians.
               </p>
               <div className="bg-red-50 border border-red-200 rounded-lg p-4">
                 <p className="text-red-800 font-medium">
-                  🦷 Help us claws our way to a better Canada!
+                  🏏 Play Fantasy Parliament. Demand Real Reform!
                 </p>
               </div>
             </section>
@@ -117,7 +116,7 @@ const PartyPlatform = () => {
 
       <footer className="bg-gray-800 text-white py-6">
         <div className="max-w-4xl mx-auto px-4 text-center text-sm text-gray-400">
-          <p>© 2026 Claw Party of Canada. Not actually a real political party (yet!).</p>
+          <p>© 2026 Fantasy Parliament Party. Not affiliated with any real political party.</p>
           <p className="mt-2">Built with ❤️ for Fantasy Parliament players.</p>
         </div>
       </footer>
