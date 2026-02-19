@@ -10,6 +10,7 @@ import Schedule from './components/Schedule';
 import Compare from './components/Compare';
 import ConnectionStatus from './components/ConnectionStatus';
 import Admin from './components/Admin';
+import PartyPlatform from './components/PartyPlatform';
 
 function MainApp() {
   const [username, setUsername] = useState(() => localStorage.getItem('fp_username') || '');
@@ -170,6 +171,7 @@ function MainApp() {
                 <Link to="/" className="bg-red-800 px-3 py-2 rounded-md text-sm font-medium">Dashboard</Link>
                 <Link to="/my-team" className="text-red-100 hover:bg-red-800 hover:text-white px-3 py-2 rounded-md text-sm font-medium transition">My Team</Link>
                 <Link to="/rules" className="text-red-100 hover:bg-red-800 hover:text-white px-3 py-2 rounded-md text-sm font-medium transition">Rules</Link>
+                <Link to="/party" className="text-red-100 hover:bg-red-800 hover:text-white px-3 py-2 rounded-md text-sm font-medium transition">Party</Link>
                 <Link to="/schedule" className="text-red-100 hover:bg-red-800 hover:text-white px-3 py-2 rounded-md text-sm font-medium transition">Schedule</Link>
                 <Link to="/compare" className="text-red-100 hover:bg-red-800 hover:text-white px-3 py-2 rounded-md text-sm font-medium transition">Compare</Link>
               </div>
@@ -222,6 +224,7 @@ function MainApp() {
               <Link to="/" className="block px-3 py-2 rounded-md text-base font-medium hover:bg-red-700">Dashboard</Link>
               <Link to="/my-team" className="block px-3 py-2 rounded-md text-base font-medium hover:bg-red-700">My Team</Link>
               <Link to="/rules" className="block px-3 py-2 rounded-md text-base font-medium hover:bg-red-700">Rules</Link>
+                <Link to="/party" className="block px-3 py-2 rounded-md text-base font-medium hover:bg-red-700">Party Platform</Link>
                 <Link to="/schedule" className="block px-3 py-2 rounded-md text-base font-medium hover:bg-red-700">Schedule</Link>
             </div>
             <div className="pt-4 pb-2 border-t border-red-700">
@@ -291,6 +294,7 @@ function App() {
         <Route path="/rules" element={<Rules />} />
         <Route path="/schedule" element={<Schedule />} />
         <Route path="/compare" element={<Compare />} />
+        <Route path="/party" element={<PartyPlatform />} />
         <Route path="/admin" element={<Admin />} />
       </Routes>
     </HashRouter>
